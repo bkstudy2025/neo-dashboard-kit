@@ -1,0 +1,29 @@
+{
+  "name": "neo-dashboard-kit",
+  "version": "0.4.0-dev",
+  "description": "Eine kuratierte Sammlung von Lovelace-Karten mit modernem Look für Home Assistant.",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "hacs",
+    "dashboard"
+  ],
+  "author": "bkstudy2025",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bkstudy2025/neo-dashboard-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bkstudy2025/neo-dashboard-kit/issues"
+  },
+  "homepage": "https://github.com/bkstudy2025/neo-dashboard-kit#readme"
+}
