@@ -1,4 +1,5 @@
 import "./cards/neo-demo-card.js";
+import "./cards/neo-header-card.js";
 
 const NEO_VERSION = "0.4.0-dev";
 
@@ -10,6 +11,15 @@ if (!window.customCards.some((c) => c.type === "neo-demo-card")) {
     name: "Neo Demo Card",
     description: "Demo-Karte zum Testen des Neo-Fundaments.",
     preview: false,
+  });
+}
+
+if (!window.customCards.some((c) => c.type === "neo-header-card")) {
+  window.customCards.push({
+    type: "neo-header-card",
+    name: "Neo Header Card",
+    description: "Persönlicher Header mit Begrüßung, Avatar und Status.",
+    preview: true,
   });
 }
 

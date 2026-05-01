@@ -4,12 +4,14 @@
   "description": "Eine kuratierte Sammlung von Lovelace-Karten mit modernem Look für Home Assistant.",
   "type": "module",
   "scripts": {
-    "build": "rollup -c",
-    "watch": "rollup -c -w",
-    "lint": "eslint src",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
+  "build": "rollup -c",
+  "watch": "rollup -c -w",
+  "lint": "eslint src",
+  "test": "vitest run",
+  "test:watch": "vitest",
+  "deploy": "scp dist/neo-dashboard-kit.js root@10.1.30.4:/config/www/neo-dashboard-kit/neo-dashboard-kit.js",
+  "release": "npm run build && npm run deploy"
+},
   "keywords": [
     "home-assistant",
     "lovelace",
