@@ -29,7 +29,6 @@ const DEFAULT_CONFIG = {
 
 const DEFAULT_TAP_ACTION = { action: "more-info" };
 
-// Hold-/Double-Tap-Timing (HA-übliche Werte)
 const HOLD_DURATION_MS = 500;
 const DOUBLE_TAP_WINDOW_MS = 250;
 
@@ -37,10 +36,6 @@ const DOUBLE_TAP_WINDOW_MS = 250;
 // Pure Helper — exportiert für Tests
 // ============================================================================
 
-/**
- * Validiert eine Sensor-Card-Config. Wirft sprechende Fehler bei
- * ungültigen Eingaben. Wird von _validateConfig aufgerufen.
- */
 export function validateSensorConfig(config, cardName = "NeoSensorCard") {
   if (!config.entity || typeof config.entity !== "string") {
     throw new Error(`${cardName}: 'entity' ist erforderlich`);
@@ -74,31 +69,18 @@ export function validateSensorConfig(config, cardName = "NeoSensorCard") {
   }
 }
 
-/**
- * Formatiert einen Sensor-Wert für die Anzeige.
- * - Wenn der State numerisch ist und decimals gesetzt: runden.
- * - Sonst: unverändert als String zurückgeben.
- * - Leere/undefined States: leerer String (Render-Funktion zeigt dann "—").
- */
 export function formatSensorValue(rawState, decimals) {
   if (rawState === undefined || rawState === null || rawState === "") return "";
 
-  // Versuch, als Zahl zu parsen
   const num = parseNumber(rawState);
 
   if (Number.isFinite(num) && decimals !== undefined) {
     return formatNumber(num, decimals);
   }
 
-  // Wenn numerisch aber kein decimals gesetzt → unverändert
-  // Wenn nicht-numerisch → unverändert
   return String(rawState);
 }
 
-/**
- * Liefert den Secondary-Info-Text gemäß config.secondary_info.
- * Gibt leeren String zurück, wenn "none" oder nichts berechenbar ist.
- */
 export function resolveSecondaryInfo(hass, config) {
   const mode = config.secondary_info || "none";
 
@@ -113,11 +95,6 @@ export function resolveSecondaryInfo(hass, config) {
   return "";
 }
 
-/**
- * Erzeugt eine kurze relative Zeitangabe auf Deutsch:
- * "gerade eben", "vor 2 Min.", "vor 3 Std.", "vor 4 Tagen".
- * Bewusst klein gehalten, ohne externe Library.
- */
 export function formatRelativeTime(date, now = new Date()) {
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.round(diffMs / 1000);
@@ -136,15 +113,6 @@ export function formatRelativeTime(date, now = new Date()) {
   return `vor ${diffDay} Tagen`;
 }
 
-/**
- * Berechnet das vollständige View-Model der Card aus hass + config.
- * Reine Funktion — keine DOM-Abhängigkeiten, vollständig testbar.
- *
- * Status:
- *   "missing" — Entity nicht in hass.states
- *   "muted"   — Entity vorhanden, State unavailable/unknown
- *   "ok"      — alles normal
- */
 export function resolveSensorViewModel(hass, config) {
   if (!config) {
     return {
@@ -164,22 +132,17 @@ export function resolveSensorViewModel(hass, config) {
     ? config.layout
     : "compact";
 
-  // Name: config.name > friendly_name > entity_id-Fallback
   const name = safe(
     config.name,
     safe(friendlyName(hass, config.entity, ""), config.entity || "")
   );
 
-  // Icon: config.icon > stateIcon-Helper
   const icon = config.icon || stateIcon(hass, config.entity);
 
-  // Unit: config.unit > unit_of_measurement
   const unit = safe(config.unit, unitOf(hass, config.entity));
 
-  // Secondary
   const secondary = resolveSecondaryInfo(hass, config);
 
-  // Status und Wert
   if (!entity) {
     return {
       status: "missing",
@@ -244,13 +207,11 @@ class NeoSensorCard extends NeoElement {
         padding: var(--neo-space-md) var(--neo-space-lg);
       }
 
-      /* Compact: Icon links, Text rechts */
       .body.compact {
         grid-template-columns: auto minmax(0, 1fr);
         min-height: 64px;
       }
 
-      /* Large: Wert prominent oben, Name unten */
       .body.large {
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-rows: auto auto;
@@ -354,7 +315,6 @@ class NeoSensorCard extends NeoElement {
         margin-top: 2px;
       }
 
-      /* Muted-Zustand: alles gedämpft */
       .body.is-muted .name,
       .body.is-muted .value {
         color: var(--neo-color-text-muted);
@@ -365,7 +325,6 @@ class NeoSensorCard extends NeoElement {
         opacity: 0.7;
       }
 
-      /* Missing-Zustand: ähnlich gedämpft, aber neutraler */
       .body.is-missing .icon ha-icon {
         color: var(--neo-color-text-muted);
         opacity: 0.6;
@@ -398,7 +357,6 @@ class NeoSensorCard extends NeoElement {
   }
 
   static getStubConfig(hass) {
-    // Versucht eine sinnvolle Default-Entity zu finden.
     if (hass?.states) {
       const sensorIds = Object.keys(hass.states).filter(
         (id) => domainOf(id) === "sensor"
@@ -410,7 +368,70 @@ class NeoSensorCard extends NeoElement {
     return { entity: "" };
   }
 
-  // ----- Action-Handling --------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Editor-Anbindung (Phase 3.B)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Schema für den generischen NeoCardEditor.
+   * Wird von getConfigElement() an den Editor übergeben.
+   */
+  static getConfigSchema() {
+    return [
+      {
+        name: "entity",
+        required: true,
+        selector: { entity: { domain: ["sensor", "binary_sensor"] } },
+      },
+      { name: "name", selector: { text: {} } },
+      { name: "icon", selector: { icon: {} } },
+      { name: "unit", selector: { text: {} } },
+      {
+        name: "decimals",
+        selector: { number: { min: 0, max: 10, mode: "box" } },
+      },
+      {
+        name: "secondary_info",
+        selector: {
+          select: {
+            options: [
+              { value: "none", label: "Keine" },
+              { value: "last_changed", label: "Letzte Änderung" },
+              { value: "entity_id", label: "Entity-ID" },
+            ],
+          },
+        },
+      },
+      {
+        name: "layout",
+        selector: {
+          select: {
+            options: [
+              { value: "compact", label: "Kompakt" },
+              { value: "large", label: "Groß" },
+            ],
+          },
+        },
+      },
+      { name: "tap_action", selector: { ui_action: {} } },
+      { name: "hold_action", selector: { ui_action: {} } },
+      { name: "double_tap_action", selector: { ui_action: {} } },
+    ];
+  }
+
+  /**
+   * Erzeugt den Editor für diese Card und übergibt ihm das Schema.
+   * Wird von Home Assistant beim Öffnen des Card-Editors aufgerufen.
+   */
+  static getConfigElement() {
+    const editor = document.createElement("neo-card-editor");
+    editor.schema = this.getConfigSchema();
+    return editor;
+  }
+
+  // -------------------------------------------------------------------------
+  // Action-Handling
+  // -------------------------------------------------------------------------
 
   _onPointerDown() {
     this._holdFired = false;
@@ -427,13 +448,11 @@ class NeoSensorCard extends NeoElement {
     }
 
     if (this._holdFired) {
-      // Hold wurde bereits ausgelöst, kein Tap mehr.
       return;
     }
 
     const now = Date.now();
     if (now - this._lastTapAt < DOUBLE_TAP_WINDOW_MS) {
-      // Zweiter Tap innerhalb des Fensters → Double-Tap
       this._lastTapAt = 0;
       handleAction(this.hass, this, this._config, "double_tap");
       return;
@@ -441,8 +460,6 @@ class NeoSensorCard extends NeoElement {
 
     this._lastTapAt = now;
 
-    // Wenn keine double_tap_action konfiguriert ist, sofort als Tap auslösen,
-    // statt das Fenster abzuwarten. Das fühlt sich responsiver an.
     if (!this._config?.double_tap_action) {
       this._lastTapAt = 0;
       handleAction(
@@ -454,7 +471,6 @@ class NeoSensorCard extends NeoElement {
       return;
     }
 
-    // Sonst: Fenster abwarten, ob ein zweiter Tap kommt.
     window.setTimeout(() => {
       if (this._lastTapAt !== 0 && Date.now() - this._lastTapAt >= DOUBLE_TAP_WINDOW_MS) {
         this._lastTapAt = 0;
@@ -476,7 +492,9 @@ class NeoSensorCard extends NeoElement {
     this._holdFired = false;
   }
 
-  // ----- Render -----------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
 
   render() {
     if (!this._config) return html``;
@@ -520,6 +538,9 @@ class NeoSensorCard extends NeoElement {
     `;
   }
 }
+
+// Klasse exportieren, damit Tests auf statische Methoden zugreifen können.
+export { NeoSensorCard };
 
 if (!customElements.get("neo-sensor-card")) {
   customElements.define("neo-sensor-card", NeoSensorCard);
