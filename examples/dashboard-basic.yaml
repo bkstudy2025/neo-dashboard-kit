@@ -1,0 +1,102 @@
+# Basic Neo Dashboard example
+# Dieses Beispiel kann als Dashboard-/View-YAML genutzt werden.
+# Ersetze alle example_* Entitäten durch deine eigenen Home-Assistant-Entities.
+
+title: Neo Dashboard Basic
+views:
+  - title: Zuhause
+    path: home
+    icon: mdi:home
+    type: sections
+    max_columns: 2
+    cards:
+      - type: custom:neo-header-card
+        title: Zuhause
+        subtitle: Willkommen zurück
+        avatar_icon: mdi:home
+        show_avatar: true
+        show_time: true
+        # Optional:
+        # person_entity: person.example_user
+
+      - type: custom:neo-demo-card
+        title: Neo Dashboard Kit
+        subtitle: Basic Example
+
+      - type: grid
+        title: Klima
+        columns: 2
+        square: false
+        cards:
+          - type: custom:neo-sensor-card
+            entity: sensor.example_living_room_temperature # Ersetzen
+            name: Temperatur
+            icon: mdi:thermometer
+            unit: °C
+            decimals: 1
+            secondary_info: last_changed
+            layout: compact
+
+          - type: custom:neo-sensor-card
+            entity: sensor.example_living_room_humidity # Ersetzen
+            name: Luftfeuchtigkeit
+            icon: mdi:water-percent
+            unit: "%"
+            decimals: 0
+            secondary_info: last_changed
+            layout: compact
+
+      - type: grid
+        title: Steuerung
+        columns: 2
+        square: false
+        cards:
+          - type: custom:neo-tile-card
+            entity: light.example_living_room # Ersetzen
+            name: Wohnzimmer Licht
+            icon: mdi:ceiling-light
+            show_state: true
+            secondary_info: last_changed
+            layout: compact
+            tap_action:
+              action: toggle
+            hold_action:
+              action: more-info
+
+          - type: custom:neo-tile-card
+            entity: switch.example_socket # Ersetzen
+            name: Steckdose
+            icon: mdi:power-socket-eu
+            show_state: true
+            secondary_info: last_changed
+            layout: compact
+            tap_action:
+              action: toggle
+            hold_action:
+              action: more-info
+
+          - type: custom:neo-tile-card
+            entity: scene.example_evening # Ersetzen
+            name: Abendmodus
+            icon: mdi:weather-night
+            show_state: false
+            secondary_info: none
+            layout: large
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              target:
+                entity_id: scene.example_evening
+
+          - type: custom:neo-tile-card
+            entity: script.example_good_morning # Ersetzen
+            name: Guten Morgen
+            icon: mdi:weather-sunny
+            show_state: false
+            secondary_info: none
+            layout: large
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              target:
+                entity_id: script.example_good_morning

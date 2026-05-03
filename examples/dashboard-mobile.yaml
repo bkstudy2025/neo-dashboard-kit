@@ -1,0 +1,91 @@
+# Mobile Neo Dashboard example
+# Optimiert für Smartphone / schmales Tablet.
+# Ersetze alle example_* Entitäten durch deine eigenen Home-Assistant-Entities.
+
+title: Neo Dashboard Mobile
+views:
+  - title: Mobile
+    path: mobile
+    icon: mdi:cellphone
+    type: masonry
+    cards:
+      - type: custom:neo-header-card
+        title: Zuhause
+        subtitle: Mobile Übersicht
+        avatar_icon: mdi:account-circle
+        show_avatar: true
+        show_time: true
+        # Optional:
+        # person_entity: person.example_user
+
+      - type: vertical-stack
+        cards:
+          - type: custom:neo-sensor-card
+            entity: sensor.example_living_room_temperature # Ersetzen
+            name: Wohnzimmer Temperatur
+            icon: mdi:thermometer
+            unit: °C
+            decimals: 1
+            secondary_info: last_changed
+            layout: large
+
+          - type: custom:neo-sensor-card
+            entity: sensor.example_living_room_humidity # Ersetzen
+            name: Luftfeuchtigkeit
+            icon: mdi:water-percent
+            unit: "%"
+            decimals: 0
+            secondary_info: last_changed
+            layout: compact
+
+      - type: vertical-stack
+        cards:
+          - type: custom:neo-tile-card
+            entity: light.example_living_room # Ersetzen
+            name: Licht
+            icon: mdi:ceiling-light
+            show_state: true
+            secondary_info: last_changed
+            layout: large
+            tap_action:
+              action: toggle
+            hold_action:
+              action: more-info
+
+          - type: custom:neo-tile-card
+            entity: switch.example_socket # Ersetzen
+            name: Steckdose
+            icon: mdi:power-socket-eu
+            show_state: true
+            secondary_info: last_changed
+            layout: compact
+            tap_action:
+              action: toggle
+            hold_action:
+              action: more-info
+
+          - type: custom:neo-tile-card
+            entity: scene.example_evening # Ersetzen
+            name: Abendmodus
+            icon: mdi:weather-night
+            show_state: false
+            secondary_info: none
+            layout: compact
+            tap_action:
+              action: call-service
+              service: scene.turn_on
+              target:
+                entity_id: scene.example_evening
+
+          - type: custom:neo-tile-card
+            entity: script.example_good_morning # Ersetzen
+            name: Guten Morgen
+            icon: mdi:weather-sunny
+            show_state: false
+            secondary_info: none
+            layout: compact
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              target:
+                entity_id: script.example_good_morning
