@@ -6,6 +6,8 @@ import { neoSharedStyles } from "./neo-shared.css.js";
  * - Stellt geteilte Styles bereit
  * - Vereinheitlicht setConfig / hass / getCardSize
  * - Erlaubt Subklassen, eine eigene Validierung über _validateConfig zu definieren
+ * - Erlaubt Subklassen, sich über _watchedEntities auf relevante Entity-Updates
+ *   zu beschränken (Performance-Optimierung)
  */
 export class NeoElement extends LitElement {
   static properties = {
@@ -52,6 +54,63 @@ export class NeoElement extends LitElement {
   // eslint-disable-next-line no-unused-vars
   _validateConfig(config) {
     // no-op
+  }
+
+  /**
+   * Hook für Subklassen. Standardmäßig null (= keine Beschränkung).
+   * Subklassen können ein Array von Entity-IDs zurückgeben, auf die
+   * die Card reagieren soll. Dann rendert sie bei hass-Updates nur dann
+   * neu, wenn sich mindestens eine dieser Entities geändert hat.
+   *
+   *   _watchedEntities() {
+   *     return [this._config.entity, this._config.icon_entity];
+   *   }
+   *
+   * Ungültige Werte (null, undefined, leere Strings, Nicht-Strings)
+   * werden ignoriert. Bleibt nach dem Filtern nichts übrig, fällt die
+   * Karte auf das Default-Verhalten zurück (immer rendern).
+   */
+  _watchedEntities() {
+    return null;
+  }
+
+  /**
+   * Performance-Optimierung. Cards rendern bei hass-Updates nur dann neu,
+   * wenn sich mindestens eine in _watchedEntities() deklarierte Entity
+   * tatsächlich geändert hat. Andere Property-Änderungen (z. B. _config)
+   * triggern wie üblich einen Render.
+   */
+  shouldUpdate(changedProps) {
+    // Wurde mehr geändert als nur hass? → normal rendern.
+    if (changedProps.size > 1 || !changedProps.has("hass")) {
+      return true;
+    }
+
+    const oldHass = changedProps.get("hass");
+    const newHass = this.hass;
+
+    // Beim ersten hass oder bei plötzlich verschwundenem hass: normal rendern.
+    if (!oldHass || !newHass) {
+      return true;
+    }
+
+    // Watched-Liste prüfen. Ungültige Werte filtern.
+    const watched = this._watchedEntities();
+    if (!Array.isArray(watched)) {
+      return true;
+    }
+
+    const validEntities = watched.filter(
+      (id) => typeof id === "string" && id.length > 0
+    );
+    if (validEntities.length === 0) {
+      return true;
+    }
+
+    // Nur dann rendern, wenn sich mindestens eine watched Entity geändert hat.
+    return validEntities.some(
+      (id) => oldHass.states?.[id] !== newHass.states?.[id]
+    );
   }
 
   getCardSize() {

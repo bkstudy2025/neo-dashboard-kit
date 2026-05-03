@@ -1,5 +1,8 @@
 import "./cards/neo-demo-card.js";
 import "./cards/neo-header-card.js";
+import "./cards/neo-sensor-card.js";
+import "./cards/neo-tile-card.js";
+import "./editors/neo-card-editor.js";
 
 const NEO_VERSION = "0.4.0-dev";
 
@@ -34,6 +37,20 @@ registerCard({
   type: "neo-header-card",
   name: "Neo Header Card",
   description: "Persönlicher Header mit Begrüßung, Avatar und Status.",
+  preview: true,
+});
+
+registerCard({
+  type: "neo-sensor-card",
+  name: "Neo Sensor Card",
+  description: "Anzeige eines Sensors mit Icon, Wert und optionaler Sekundär-Info.",
+  preview: true,
+});
+
+registerCard({
+  type: "neo-tile-card",
+  name: "Neo Tile Card",
+  description: "Touchfreundliche Klickkarte für Lichter, Schalter, Szenen und Skripte.",
   preview: true,
 });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDate, formatTime, greeting } from "../src/core/helpers/dates.js";
+import { formatDate, formatTime, greeting, formatRelativeTime } from "../src/core/helpers/dates.js";
 
 describe("formatDate", () => {
   // 1. Mai 2025 war ein Donnerstag.
@@ -73,5 +73,39 @@ describe("greeting", () => {
   it("liefert ohne Argument einen der definierten Werte", () => {
     const valid = ["Gute Nacht", "Guten Morgen", "Guten Tag", "Guten Abend"];
     expect(valid).toContain(greeting());
+  });
+});
+
+describe("formatRelativeTime", () => {
+  const now = new Date("2025-05-03T12:00:00.000Z");
+
+  it("liefert 'gerade eben' für sehr kurze Differenzen", () => {
+    const date = new Date(now.getTime() - 10 * 1000);
+    expect(formatRelativeTime(date, now)).toBe("gerade eben");
+  });
+
+  it("liefert 'vor 1 Min.' für 1 Minute", () => {
+    const date = new Date(now.getTime() - 60 * 1000);
+    expect(formatRelativeTime(date, now)).toBe("vor 1 Min.");
+  });
+
+  it("liefert Minuten für unter 1 Stunde", () => {
+    const date = new Date(now.getTime() - 30 * 60 * 1000);
+    expect(formatRelativeTime(date, now)).toBe("vor 30 Min.");
+  });
+
+  it("liefert Stunden für unter 1 Tag", () => {
+    const date = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+    expect(formatRelativeTime(date, now)).toBe("vor 3 Std.");
+  });
+
+  it("liefert 'vor 1 Tag' für genau 1 Tag", () => {
+    const date = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    expect(formatRelativeTime(date, now)).toBe("vor 1 Tag");
+  });
+
+  it("liefert Tage für mehrere Tage", () => {
+    const date = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+    expect(formatRelativeTime(date, now)).toBe("vor 5 Tagen");
   });
 });
