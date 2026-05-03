@@ -1,5 +1,6 @@
 import "./cards/neo-demo-card.js";
 import "./cards/neo-header-card.js";
+import "./editors/neo-header-card-editor.js";
 
 const NEO_VERSION = "0.4.0-dev";
 
