@@ -160,12 +160,13 @@ class NeoSensorCard extends NeoElement {
     css`
       ha-card {
         cursor: pointer;
-        transition: transform 100ms ease;
+        transition: transform var(--neo-transition, 180ms ease),
+          box-shadow var(--neo-transition, 180ms ease);
         -webkit-tap-highlight-color: transparent;
       }
 
       ha-card:active {
-        transform: scale(0.98);
+        transform: scale(0.985);
       }
 
       .body {
@@ -173,57 +174,71 @@ class NeoSensorCard extends NeoElement {
         align-items: center;
         gap: var(--neo-space-md);
         padding: var(--neo-space-md) var(--neo-space-lg);
+        box-sizing: border-box;
       }
 
       .body.compact {
         grid-template-columns: auto minmax(0, 1fr);
-        min-height: 64px;
+        min-height: 72px;
       }
 
       .body.large {
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-rows: auto auto;
         align-items: start;
+        gap: var(--neo-space-lg);
         padding: var(--neo-space-lg);
-        min-height: 120px;
+        min-height: 124px;
       }
 
       .icon {
-        width: 44px;
-        height: 44px;
+        width: 52px;
+        height: 52px;
         border-radius: 999px;
         background: var(--neo-color-surface-alt);
         display: grid;
         place-items: center;
         flex: 0 0 auto;
+        transition: background var(--neo-transition, 180ms ease),
+          box-shadow var(--neo-transition, 180ms ease),
+          opacity var(--neo-transition, 180ms ease);
       }
 
       .icon ha-icon {
-        --mdc-icon-size: 24px;
+        --mdc-icon-size: 26px;
         color: var(--neo-color-accent);
+        transition: color var(--neo-transition, 180ms ease),
+          opacity var(--neo-transition, 180ms ease);
       }
 
       .body.large .icon {
+        width: 64px;
+        height: 64px;
         grid-column: 2;
         grid-row: 1;
         align-self: start;
+      }
+
+      .body.large .icon ha-icon {
+        --mdc-icon-size: 32px;
       }
 
       .text {
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 3px;
       }
 
       .body.large .text {
         grid-column: 1;
         grid-row: 1 / span 2;
+        gap: 5px;
       }
 
       .name {
         font-size: var(--neo-font-md);
-        font-weight: 600;
+        font-weight: 650;
         color: var(--neo-color-text);
         line-height: 1.2;
         white-space: nowrap;
@@ -231,17 +246,28 @@ class NeoSensorCard extends NeoElement {
         text-overflow: ellipsis;
       }
 
+      .body.large .name {
+        order: 2;
+        font-size: var(--neo-font-md);
+        color: var(--neo-color-text-muted);
+      }
+
       .value-row {
         display: flex;
         align-items: baseline;
-        gap: 4px;
+        gap: 5px;
         min-width: 0;
+      }
+
+      .body.large .value-row {
+        order: 1;
       }
 
       .value {
         font-size: var(--neo-font-sm);
         color: var(--neo-color-text-muted);
-        font-weight: 500;
+        font-weight: 550;
+        line-height: 1.2;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -249,23 +275,16 @@ class NeoSensorCard extends NeoElement {
 
       .body.large .value {
         font-size: var(--neo-font-xl);
-        font-weight: 700;
+        font-weight: 750;
         color: var(--neo-color-text);
         font-variant-numeric: tabular-nums;
-      }
-
-      .body.large .name {
-        order: 2;
-      }
-
-      .body.large .value-row {
-        order: 1;
+        letter-spacing: -0.03em;
       }
 
       .unit {
         font-size: var(--neo-font-xs);
         color: var(--neo-color-text-muted);
-        font-weight: 500;
+        font-weight: 550;
         white-space: nowrap;
       }
 
@@ -277,6 +296,7 @@ class NeoSensorCard extends NeoElement {
         font-size: var(--neo-font-xs);
         color: var(--neo-color-text-muted);
         font-weight: 500;
+        line-height: 1.25;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -284,18 +304,37 @@ class NeoSensorCard extends NeoElement {
       }
 
       .body.is-muted .name,
-      .body.is-muted .value {
+      .body.is-muted .value,
+      .body.is-muted .unit,
+      .body.is-muted .secondary {
         color: var(--neo-color-text-muted);
+      }
+
+      .body.is-muted .icon {
+        background: var(--neo-color-surface-alt);
+        opacity: 0.78;
       }
 
       .body.is-muted .icon ha-icon {
         color: var(--neo-color-text-muted);
-        opacity: 0.7;
+        opacity: 0.75;
+      }
+
+      .body.is-missing .name,
+      .body.is-missing .value,
+      .body.is-missing .unit,
+      .body.is-missing .secondary {
+        color: var(--neo-color-text-muted);
+      }
+
+      .body.is-missing .icon {
+        background: var(--neo-color-surface-alt);
+        opacity: 0.65;
       }
 
       .body.is-missing .icon ha-icon {
         color: var(--neo-color-text-muted);
-        opacity: 0.6;
+        opacity: 0.65;
       }
     `,
   ];
@@ -336,14 +375,6 @@ class NeoSensorCard extends NeoElement {
     return { entity: "" };
   }
 
-  // -------------------------------------------------------------------------
-  // Editor-Anbindung (Phase 3.B)
-  // -------------------------------------------------------------------------
-
-  /**
-   * Schema für den generischen NeoCardEditor.
-   * Wird von getConfigElement() an den Editor übergeben.
-   */
   static getConfigSchema() {
     return [
       {
@@ -387,19 +418,11 @@ class NeoSensorCard extends NeoElement {
     ];
   }
 
-  /**
-   * Erzeugt den Editor für diese Card und übergibt ihm das Schema.
-   * Wird von Home Assistant beim Öffnen des Card-Editors aufgerufen.
-   */
   static getConfigElement() {
     const editor = document.createElement("neo-card-editor");
     editor.schema = this.getConfigSchema();
     return editor;
   }
-
-  // -------------------------------------------------------------------------
-  // Action-Handling
-  // -------------------------------------------------------------------------
 
   _onPointerDown() {
     this._holdFired = false;
@@ -460,10 +483,6 @@ class NeoSensorCard extends NeoElement {
     this._holdFired = false;
   }
 
-  // -------------------------------------------------------------------------
-  // Render
-  // -------------------------------------------------------------------------
-
   render() {
     if (!this._config) return html``;
 
@@ -507,7 +526,6 @@ class NeoSensorCard extends NeoElement {
   }
 }
 
-// Klasse exportieren, damit Tests auf statische Methoden zugreifen können.
 export { NeoSensorCard };
 
 if (!customElements.get("neo-sensor-card")) {

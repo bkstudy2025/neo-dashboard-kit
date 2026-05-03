@@ -20,11 +20,6 @@ export const VALID_LAYOUTS = ["compact", "large"];
 export const VALID_SECONDARY_INFO = ["none", "last_changed", "entity_id"];
 export const MUTED_STATES = ["unavailable", "unknown", ""];
 
-/**
- * Domains, die typischerweise interaktiv sind und einen sinnvollen
- * Toggle/Trigger-Default haben. Reine Information für Tests und Doku;
- * die eigentliche Tap-Action-Logik steht in resolveTileTapAction().
- */
 export const INTERACTIVE_DOMAINS = [
   "light",
   "switch",
@@ -47,10 +42,6 @@ const DOUBLE_TAP_WINDOW_MS = 250;
 // Pure Helper — exportiert für Tests
 // ============================================================================
 
-/**
- * Validiert eine Tile-Card-Config. Wirft sprechende Fehler bei
- * ungültigen Eingaben.
- */
 export function validateTileConfig(config, cardName = "NeoTileCard") {
   if (!config.entity || typeof config.entity !== "string") {
     throw new Error(`${cardName}: 'entity' ist erforderlich`);
@@ -76,11 +67,6 @@ export function validateTileConfig(config, cardName = "NeoTileCard") {
   }
 }
 
-/**
- * Bestimmt die Tap-Action für die Tile-Card.
- * Wenn config.tap_action explizit gesetzt ist, wird diese genutzt.
- * Sonst wird ein Domain-abhängiger Default ermittelt.
- */
 export function resolveTileTapAction(config) {
   if (config?.tap_action) return config.tap_action;
 
@@ -113,17 +99,6 @@ export function resolveTileTapAction(config) {
   }
 }
 
-/**
- * Berechnet das vollständige View-Model für die Tile-Card.
- * Reine Funktion — keine DOM-Abhängigkeiten.
- *
- * Status:
- *   "missing" — Entity nicht in hass.states
- *   "muted"   — Entity vorhanden, State unavailable/unknown
- *   "ok"      — alles normal
- *
- * isActive: nur im "ok"-Status relevant. Bestimmt die visuelle Aktivität.
- */
 export function resolveTileViewModel(hass, config) {
   if (!config) {
     return {
@@ -205,12 +180,13 @@ class NeoTileCard extends NeoElement {
     css`
       ha-card {
         cursor: pointer;
-        transition: transform 100ms ease;
+        transition: transform var(--neo-transition, 180ms ease),
+          box-shadow var(--neo-transition, 180ms ease);
         -webkit-tap-highlight-color: transparent;
       }
 
       ha-card:active {
-        transform: scale(0.98);
+        transform: scale(0.985);
       }
 
       .body {
@@ -218,6 +194,7 @@ class NeoTileCard extends NeoElement {
         align-items: center;
         gap: var(--neo-space-md);
         padding: var(--neo-space-md) var(--neo-space-lg);
+        box-sizing: border-box;
       }
 
       .body.compact {
@@ -227,11 +204,11 @@ class NeoTileCard extends NeoElement {
 
       .body.large {
         grid-template-columns: auto minmax(0, 1fr);
+        gap: var(--neo-space-lg);
         padding: var(--neo-space-lg);
-        min-height: 110px;
+        min-height: 124px;
       }
 
-      /* Icon-Container */
       .icon {
         position: relative;
         width: 52px;
@@ -241,7 +218,10 @@ class NeoTileCard extends NeoElement {
         display: grid;
         place-items: center;
         flex: 0 0 auto;
-        transition: background 200ms ease, box-shadow 200ms ease;
+        overflow: hidden;
+        transition: background var(--neo-transition, 180ms ease),
+          box-shadow var(--neo-transition, 180ms ease),
+          opacity var(--neo-transition, 180ms ease);
       }
 
       .body.large .icon {
@@ -249,15 +229,14 @@ class NeoTileCard extends NeoElement {
         height: 64px;
       }
 
-      /* Aktivitäts-Tönung über Pseudo-Element (kein color-mix nötig) */
       .icon::before {
         content: "";
         position: absolute;
         inset: 0;
-        border-radius: 999px;
+        border-radius: inherit;
         background: var(--neo-color-accent);
         opacity: 0;
-        transition: opacity 200ms ease;
+        transition: opacity var(--neo-transition, 180ms ease);
         pointer-events: none;
       }
 
@@ -266,41 +245,40 @@ class NeoTileCard extends NeoElement {
         z-index: 1;
         --mdc-icon-size: 26px;
         color: var(--neo-color-text-muted);
-        transition: color 200ms ease;
+        transition: color var(--neo-transition, 180ms ease),
+          opacity var(--neo-transition, 180ms ease);
       }
 
       .body.large .icon ha-icon {
         --mdc-icon-size: 32px;
       }
 
-      /* Aktiv-Zustand: Akzent + dezenter Glow */
       .body.is-active .icon::before {
-        opacity: 0.18;
+        opacity: 0.16;
       }
 
       .body.is-active .icon {
-        box-shadow: 0 0 12px rgba(3, 169, 244, 0.25);
-        box-shadow: 0 0 12px var(--neo-color-accent);
-        /* Fallback: erste Zeile mit Hardcoded-Alpha;
-           zweite Zeile überschreibt mit Token, sofern unterstützt.
-           Browser, die var() in box-shadow können, nehmen das Token. */
+        box-shadow: var(--neo-shadow-glow);
       }
 
       .body.is-active .icon ha-icon {
         color: var(--neo-color-accent);
       }
 
-      /* Text */
       .text {
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 3px;
+      }
+
+      .body.large .text {
+        gap: 5px;
       }
 
       .name {
         font-size: var(--neo-font-md);
-        font-weight: 600;
+        font-weight: 650;
         color: var(--neo-color-text);
         line-height: 1.2;
         white-space: nowrap;
@@ -315,7 +293,8 @@ class NeoTileCard extends NeoElement {
       .state {
         font-size: var(--neo-font-sm);
         color: var(--neo-color-text-muted);
-        font-weight: 500;
+        font-weight: 550;
+        line-height: 1.2;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -325,25 +304,53 @@ class NeoTileCard extends NeoElement {
         font-size: var(--neo-font-xs);
         color: var(--neo-color-text-muted);
         font-weight: 500;
+        line-height: 1.25;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         margin-top: 2px;
       }
 
-      /* Muted-Zustand */
       .body.is-muted .name,
-      .body.is-muted .state {
+      .body.is-muted .state,
+      .body.is-muted .secondary {
         color: var(--neo-color-text-muted);
       }
 
-      .body.is-muted .icon ha-icon {
-        opacity: 0.7;
+      .body.is-muted .icon {
+        background: var(--neo-color-surface-alt);
+        opacity: 0.78;
+        box-shadow: none;
       }
 
-      /* Missing-Zustand */
+      .body.is-muted .icon::before {
+        opacity: 0;
+      }
+
+      .body.is-muted .icon ha-icon {
+        color: var(--neo-color-text-muted);
+        opacity: 0.75;
+      }
+
+      .body.is-missing .name,
+      .body.is-missing .state,
+      .body.is-missing .secondary {
+        color: var(--neo-color-text-muted);
+      }
+
+      .body.is-missing .icon {
+        background: var(--neo-color-surface-alt);
+        opacity: 0.65;
+        box-shadow: none;
+      }
+
+      .body.is-missing .icon::before {
+        opacity: 0;
+      }
+
       .body.is-missing .icon ha-icon {
-        opacity: 0.6;
+        color: var(--neo-color-text-muted);
+        opacity: 0.65;
       }
     `,
   ];
@@ -383,10 +390,6 @@ class NeoTileCard extends NeoElement {
     }
     return { entity: "" };
   }
-
-  // -------------------------------------------------------------------------
-  // Editor-Anbindung (Schema-basiert über NeoCardEditor)
-  // -------------------------------------------------------------------------
 
   static getConfigSchema() {
     return [
@@ -437,15 +440,6 @@ class NeoTileCard extends NeoElement {
     return editor;
   }
 
-  // -------------------------------------------------------------------------
-  // Action-Handling
-  // -------------------------------------------------------------------------
-
-  /**
-   * Augmentiert die Config mit der Default-Tap-Action, falls keine
-   * explizit gesetzt ist. Damit nutzt handleAction() automatisch
-   * den Domain-abhängigen Default.
-   */
   _augmentedConfig() {
     return {
       ...this._config,
@@ -455,7 +449,7 @@ class NeoTileCard extends NeoElement {
 
   _onPointerDown() {
     this._holdFired = false;
-    // Hold-Timer nur starten, wenn hold_action explizit konfiguriert ist.
+
     if (!this._config?.hold_action) return;
 
     this._holdTimer = window.setTimeout(() => {
@@ -486,14 +480,12 @@ class NeoTileCard extends NeoElement {
 
     this._lastTapAt = now;
 
-    // Wenn keine double_tap_action konfiguriert ist: Tap sofort auslösen.
     if (!this._config?.double_tap_action) {
       this._lastTapAt = 0;
       handleAction(this.hass, this, this._augmentedConfig(), "tap");
       return;
     }
 
-    // Double-Tap-Fenster abwarten, bevor Tap ausgelöst wird.
     window.setTimeout(() => {
       if (
         this._lastTapAt !== 0 &&
@@ -512,10 +504,6 @@ class NeoTileCard extends NeoElement {
     }
     this._holdFired = false;
   }
-
-  // -------------------------------------------------------------------------
-  // Render
-  // -------------------------------------------------------------------------
 
   render() {
     if (!this._config) return html``;
@@ -558,7 +546,6 @@ class NeoTileCard extends NeoElement {
   }
 }
 
-// Klasse exportieren, damit Tests auf statische Methoden zugreifen können.
 export { NeoTileCard };
 
 if (!customElements.get("neo-tile-card")) {
