@@ -1,0 +1,42 @@
+# Neo Sensor Card examples
+# Ersetze die Platzhalter-Entitäten durch deine eigenen Home-Assistant-Entities.
+
+# Beispiel 1: Temperatur kompakt
+type: custom:neo-sensor-card
+entity: sensor.example_temperature # Ersetzen, z. B. sensor.wohnzimmer_temperatur
+name: Wohnzimmer
+icon: mdi:thermometer
+unit: °C
+decimals: 1
+secondary_info: last_changed
+layout: compact
+tap_action:
+  action: more-info
+
+---
+
+# Beispiel 2: Luftfeuchtigkeit kompakt
+type: custom:neo-sensor-card
+entity: sensor.example_humidity # Ersetzen, z. B. sensor.wohnzimmer_luftfeuchtigkeit
+name: Luftfeuchtigkeit
+icon: mdi:water-percent
+unit: "%"
+decimals: 0
+secondary_info: entity_id
+layout: compact
+tap_action:
+  action: more-info
+
+---
+
+# Beispiel 3: Großer Sensor für wichtige Werte
+type: custom:neo-sensor-card
+entity: sensor.example_power # Ersetzen, z. B. sensor.haus_verbrauch
+name: Aktueller Verbrauch
+icon: mdi:flash
+unit: W
+decimals: 0
+secondary_info: last_changed
+layout: large
+tap_action:
+  action: more-info
