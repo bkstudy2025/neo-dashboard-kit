@@ -6,7 +6,7 @@ import {
   unitOf,
   friendlyName,
   stateIcon,
-  lastChanged,
+  resolveSecondaryInfo,
   domainOf,
   handleAction,
   safe,
@@ -79,38 +79,6 @@ export function formatSensorValue(rawState, decimals) {
   }
 
   return String(rawState);
-}
-
-export function resolveSecondaryInfo(hass, config) {
-  const mode = config.secondary_info || "none";
-
-  if (mode === "none") return "";
-  if (mode === "entity_id") return safe(config.entity, "");
-  if (mode === "last_changed") {
-    const date = lastChanged(hass, config.entity);
-    if (!date) return "";
-    return formatRelativeTime(date, new Date());
-  }
-
-  return "";
-}
-
-export function formatRelativeTime(date, now = new Date()) {
-  const diffMs = now.getTime() - date.getTime();
-  const diffSec = Math.round(diffMs / 1000);
-
-  if (diffSec < 30) return "gerade eben";
-  if (diffSec < 90) return "vor 1 Min.";
-
-  const diffMin = Math.round(diffSec / 60);
-  if (diffMin < 60) return `vor ${diffMin} Min.`;
-
-  const diffHour = Math.round(diffMin / 60);
-  if (diffHour < 24) return `vor ${diffHour} Std.`;
-
-  const diffDay = Math.round(diffHour / 24);
-  if (diffDay === 1) return "vor 1 Tag";
-  return `vor ${diffDay} Tagen`;
 }
 
 export function resolveSensorViewModel(hass, config) {

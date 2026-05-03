@@ -2,8 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   validateSensorConfig,
   formatSensorValue,
-  resolveSecondaryInfo,
-  formatRelativeTime,
   resolveSensorViewModel,
   VALID_LAYOUTS,
   VALID_SECONDARY_INFO,
@@ -154,79 +152,6 @@ describe("formatSensorValue", () => {
     expect(formatSensorValue("", 1)).toBe("");
     expect(formatSensorValue(undefined, 1)).toBe("");
     expect(formatSensorValue(null, 1)).toBe("");
-  });
-});
-
-// ============================================================================
-// resolveSecondaryInfo
-// ============================================================================
-
-describe("resolveSecondaryInfo", () => {
-  it("liefert leeren String bei none", () => {
-    expect(resolveSecondaryInfo(fakeHass, { entity: "sensor.temperatur", secondary_info: "none" })).toBe("");
-  });
-
-  it("liefert die Entity-ID bei entity_id", () => {
-    expect(resolveSecondaryInfo(fakeHass, { entity: "sensor.temperatur", secondary_info: "entity_id" }))
-      .toBe("sensor.temperatur");
-  });
-
-  it("liefert eine relative Zeit bei last_changed", () => {
-    const result = resolveSecondaryInfo(fakeHass, {
-      entity: "sensor.temperatur",
-      secondary_info: "last_changed",
-    });
-    // Da das Test-Datum fix ist und 'now' aus jetzt kommt, prüfen wir nur,
-    // dass irgendetwas plausibles zurückkommt.
-    expect(result).toMatch(/vor|gerade eben/);
-  });
-
-  it("liefert leeren String bei last_changed ohne Datum", () => {
-    expect(
-      resolveSecondaryInfo(fakeHass, { entity: "sensor.kaputt", secondary_info: "last_changed" })
-    ).toBe("");
-  });
-
-  it("liefert leeren String, wenn kein secondary_info gesetzt ist", () => {
-    expect(resolveSecondaryInfo(fakeHass, { entity: "sensor.x" })).toBe("");
-  });
-});
-
-// ============================================================================
-// formatRelativeTime
-// ============================================================================
-
-describe("formatRelativeTime", () => {
-  const now = new Date("2025-05-03T12:00:00.000Z");
-
-  it("liefert 'gerade eben' für sehr kurze Differenzen", () => {
-    const date = new Date(now.getTime() - 10 * 1000);
-    expect(formatRelativeTime(date, now)).toBe("gerade eben");
-  });
-
-  it("liefert 'vor 1 Min.' für 1 Minute", () => {
-    const date = new Date(now.getTime() - 60 * 1000);
-    expect(formatRelativeTime(date, now)).toBe("vor 1 Min.");
-  });
-
-  it("liefert Minuten für unter 1 Stunde", () => {
-    const date = new Date(now.getTime() - 30 * 60 * 1000);
-    expect(formatRelativeTime(date, now)).toBe("vor 30 Min.");
-  });
-
-  it("liefert Stunden für unter 1 Tag", () => {
-    const date = new Date(now.getTime() - 3 * 60 * 60 * 1000);
-    expect(formatRelativeTime(date, now)).toBe("vor 3 Std.");
-  });
-
-  it("liefert 'vor 1 Tag' für genau 1 Tag", () => {
-    const date = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    expect(formatRelativeTime(date, now)).toBe("vor 1 Tag");
-  });
-
-  it("liefert Tage für mehrere Tage", () => {
-    const date = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
-    expect(formatRelativeTime(date, now)).toBe("vor 5 Tagen");
   });
 });
 
