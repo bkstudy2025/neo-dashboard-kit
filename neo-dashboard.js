@@ -571,8 +571,8 @@ class NeoHeroCard extends NeoBaseCard {
     const greeting = this._config?.greeting_text || this._greeting();
 
     return `
-      <div style="font-family:var(--neo-font,system-ui);color:var(--neo-text1,#F4F6FB);padding:8px 0 12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:var(--neo-font,system-ui);color:var(--neo-text1,#F4F6FB);padding:8px 6px 12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
           <div style="min-width:0;">
             <div style="font-size:13px;color:var(--neo-text2);font-weight:500;letter-spacing:0.2px;">${greeting}</div>
             <div style="font-size:28px;font-weight:600;letter-spacing:-0.6px;margin-top:1px;">${name}</div>
@@ -699,7 +699,7 @@ class NeoWeatherCard extends NeoBaseCard {
     ].filter(Boolean).join(" · ");
 
     return `
-      <div style="font-family:var(--neo-font,system-ui);color:var(--neo-text1,#F4F6FB);">
+      <div style="font-family:var(--neo-font,system-ui);color:var(--neo-text1,#F4F6FB);padding:0 6px;">
         <div id="weather-banner" style="
           display:flex;align-items:center;justify-content:space-between;
           padding:14px 16px;border-radius:20px;cursor:pointer;
