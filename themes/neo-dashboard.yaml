@@ -28,7 +28,7 @@ Neo Dashboard:
       sidebar-text-color: "var(--text-color)"
 
       # ── Cards ─────────────────────────────────────────────────
-      ha-card-background: "rgba(255,255,255,0.055)"
+      ha-card-background: "#111827"
       card-background-color: "var(--ha-card-background)"
       ha-card-border-color: "rgba(255,255,255,0.08)"
       ha-card-border-width: "1px"
@@ -99,6 +99,13 @@ Neo Dashboard:
       # ── Popups / dialogs ──────────────────────────────────────
       more-info-header-background: "var(--background-color-2)"
       paper-dialog-background-color: "var(--background-color)"
+      mdc-dialog-scrim-color: "rgba(0,0,0,0.7)"
+      mdc-dialog-box-shadow: "0 24px 48px rgba(0,0,0,0.8)"
+      dialog-backdrop-filter: "blur(16px)"
+
+      # ── Dashboard picker cards (transparent fix) ──────────────
+      ha-card-background-dashboard-picker: "#0d1020"
+      masonry-view-card-margin: "4px 4px"
 
       # ── Tables ───────────────────────────────────────────────
       table-row-background-color: "var(--background-color)"
