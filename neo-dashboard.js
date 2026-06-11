@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.9
+// Neo Dashboard Kit v0.1.3-beta.10
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -882,6 +882,23 @@ const NEO_WEATHER_CSS = `
     0%{transform:translateY(-24px) rotate(14deg)} 100%{transform:translateY(140px) rotate(14deg)}
   }
 
+  /* Hail — small hard pellets dropping fast */
+  .neo-wx-hail { position:absolute; top:-12px; border-radius:50%;
+    background:radial-gradient(circle, #fff 0%, #dde7f5 70%, rgba(221,231,245,.6) 100%);
+    box-shadow:0 0 3px rgba(255,255,255,.7);
+    animation:neo-wx-hailfall linear infinite; will-change:transform; }
+  @keyframes neo-wx-hailfall { 0%{transform:translate(0,-12px)} 100%{transform:translate(var(--drift,4px),140px)} }
+
+  /* Embers — glowing sparks rising (exceptional weather) */
+  .neo-wx-ember { position:absolute; bottom:-10px; border-radius:50%;
+    background:radial-gradient(circle, #ffe0b0 0%, #ff8a3d 70%, rgba(255,138,61,0) 100%);
+    box-shadow:0 0 6px rgba(255,140,60,.85);
+    animation:neo-wx-ember linear infinite; will-change:transform, opacity; }
+  @keyframes neo-wx-ember {
+    0%{transform:translate(0,0) scale(1); opacity:0} 12%{opacity:1}
+    100%{transform:translate(var(--drift,10px),-150px) scale(.4); opacity:0}
+  }
+
   /* Snow — soft glowing flakes with horizontal drift */
   .neo-wx-snow { position:absolute; top:-12px; border-radius:50%;
     background:radial-gradient(circle, #fff 0%, #fff 55%, rgba(255,255,255,.4) 100%);
@@ -928,8 +945,9 @@ const NEO_WEATHER_CSS = `
   @keyframes neo-wx-pulse { 0%,100%{opacity:.7; transform:scale(1)} 50%{opacity:1; transform:scale(1.08)} }
 
   @media (prefers-reduced-motion: reduce) {
-    .neo-wx-rain, .neo-wx-snow, .neo-wx-star, .neo-wx-cloud, .neo-wx-flash, .neo-wx-fog, .neo-wx-sun { animation: none; }
-    .neo-wx-flash { display:none; }
+    .neo-wx-rain, .neo-wx-snow, .neo-wx-star, .neo-wx-cloud, .neo-wx-flash, .neo-wx-fog,
+    .neo-wx-sun, .neo-wx-hail, .neo-wx-ember { animation: none; }
+    .neo-wx-flash, .neo-wx-ember { display:none; }
   }
 `;
 
@@ -988,6 +1006,8 @@ class NeoWeatherCard extends NeoBaseCard {
     else if (cond === "pouring") particles = { kind: "rain", count: 30 };
     else if (cond === "snowy") particles = { kind: "snow", count: 18 };
     else if (cond === "snowy-rainy") particles = { kind: "snow", count: 14 };
+    else if (cond === "hail") particles = { kind: "hail", count: 22 };
+    else if (cond === "exceptional") particles = { kind: "ember", count: 16 };
     else if (night && (cond === "clear" || cond === "sunny")) particles = { kind: "star", count: 14 };
 
     let clouds = null;
@@ -1041,6 +1061,19 @@ class NeoWeatherCard extends NeoBaseCard {
         const delay = (-Math.random() * 6).toFixed(2);
         const op = (front ? 1 : 0.7).toFixed(2);
         html += `<span class="neo-wx-snow" style="left:${left}%;width:${size}px;height:${size}px;opacity:${op};--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+      } else if (kind === "hail") {
+        const size = (front ? 4 + Math.random() * 2 : 2.5 + Math.random() * 1.5).toFixed(1);
+        const drift = (Math.random() * 10 - 5).toFixed(0);
+        const dur = (0.55 + Math.random() * 0.4).toFixed(2);
+        const delay = (-Math.random() * 1.2).toFixed(2);
+        html += `<span class="neo-wx-hail" style="left:${left}%;width:${size}px;height:${size}px;--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+      } else if (kind === "ember") {
+        const top = (Math.random() * 60).toFixed(1);
+        const size = (2 + Math.random() * 2.4).toFixed(1);
+        const drift = (Math.random() * 34 - 17).toFixed(0);
+        const dur = (3 + Math.random() * 2.5).toFixed(2);
+        const delay = (-Math.random() * 4).toFixed(2);
+        html += `<span class="neo-wx-ember" style="left:${left}%;bottom:${top}%;width:${size}px;height:${size}px;--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
       } else {
         const w = (front ? 2.4 : 1.6).toFixed(1);
         const h = (front ? 22 : 15).toFixed(0);
@@ -1385,7 +1418,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.9 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.10 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
