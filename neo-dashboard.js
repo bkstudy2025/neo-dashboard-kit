@@ -154,25 +154,31 @@ const NEO_CSS = `
 `;
 
 // ── Registry ──────────────────────────────────────────────────
+// Cards register here (core + community). They appear in the
+// neo-card dropdown automatically — only the single "neo-card"
+// wrapper is exposed in HA's native card picker.
 const _registry = new Map();
 const NeoDashboardRegistry = {
   registerCard(type, cls, meta = {}) {
     if (_registry.has(type)) return;
-    _registry.set(type, cls);
+    _registry.set(type, { cls, meta });
     if (!customElements.get(type)) customElements.define(type, cls);
-
-    // Register in HA's card picker so it shows up in "Karte hinzufügen"
-    window.customCards = window.customCards || [];
-    if (!window.customCards.find((c) => c.type === type)) {
-      window.customCards.push({
-        type,
-        name: meta.name || type,
-        description: meta.description || "Neo Dashboard Kit card",
-        preview: meta.preview !== false,
-        documentationURL: "https://github.com/bkstudy2025/neo-dashboard-kit",
-      });
-    }
     console.info(`[Neo Dashboard] Registered: ${type}`);
+  },
+  getCard(type) {
+    return _registry.get(type)?.cls;
+  },
+  getMeta(type) {
+    return _registry.get(type)?.meta || {};
+  },
+  // [{ type, name, description, icon }] for the dropdown
+  list() {
+    return Array.from(_registry.entries()).map(([type, { meta }]) => ({
+      type,
+      name: meta.name || type,
+      description: meta.description || "",
+      icon: meta.icon || "✨",
+    }));
   },
 };
 window.NeoDashboard = NeoDashboardRegistry;
@@ -689,6 +695,160 @@ NeoDashboardRegistry.registerCard("neo-weather-card", NeoWeatherCard, {
   name: "Neo Wetter",
   description: "Wetter-Banner mit Temperatur und Sonnenuntergang",
 });
+
+// ══════════════════════════════════════════════════════════════
+// NEO CARD — single wrapper card with a type dropdown.
+// This is the ONLY card shown in HA's picker. The dropdown lists
+// every registered Neo card (core + community plugins).
+// ══════════════════════════════════════════════════════════════
+class NeoCard extends HTMLElement {
+  setConfig(config) {
+    this._config = config || {};
+    const type = this._config.card_type;
+
+    if (!type) {
+      this.innerHTML = `
+        <ha-card style="padding:24px;text-align:center;color:var(--secondary-text-color);">
+          Bitte im Editor einen Kartentyp wählen.
+        </ha-card>`;
+      this._child = null;
+      this._childType = null;
+      return;
+    }
+
+    if (!NeoDashboardRegistry.getCard(type)) {
+      this.innerHTML = `
+        <ha-card style="padding:24px;text-align:center;color:var(--error-color,#F87171);">
+          Unbekannter Neo-Kartentyp: ${type}
+        </ha-card>`;
+      return;
+    }
+
+    // (Re)create child element only when the type changes
+    if (!this._child || this._childType !== type) {
+      this.innerHTML = "";
+      this._child = document.createElement(type);
+      this._childType = type;
+      this.appendChild(this._child);
+    }
+
+    const childConfig = { ...this._config };
+    delete childConfig.card_type;
+    this._child.setConfig(childConfig);
+    if (this._hass) this._child.hass = this._hass;
+  }
+
+  set hass(h) {
+    this._hass = h;
+    if (this._child) this._child.hass = h;
+  }
+  get hass() { return this._hass; }
+
+  getCardSize() {
+    return this._child?.getCardSize?.() ?? 2;
+  }
+
+  static getConfigElement() {
+    return document.createElement("neo-card-editor");
+  }
+
+  static getStubConfig() {
+    return { card_type: "neo-light-card", entity: "light.living_room", accent: "amber" };
+  }
+}
+customElements.define("neo-card", NeoCard);
+
+// Expose ONLY neo-card in HA's native picker
+window.customCards = window.customCards || [];
+if (!window.customCards.find((c) => c.type === "neo-card")) {
+  window.customCards.push({
+    type: "neo-card",
+    name: "Neo Card",
+    description: "Glassmorphism-Karten — Typ im Editor wählen",
+    preview: true,
+    documentationURL: "https://github.com/bkstudy2025/neo-dashboard-kit",
+  });
+}
+
+// ── Neo Card Editor — type dropdown + selected card's own editor ─
+class NeoCardEditor extends HTMLElement {
+  setConfig(config) {
+    this._config = { ...config };
+    if (!this._built) this._build();
+    else this._syncTypeForm();
+  }
+  set hass(h) {
+    this._hass = h;
+    if (this._typeForm) this._typeForm.hass = h;
+    if (this._sub) this._sub.hass = h;
+  }
+
+  _build() {
+    this._built = true;
+    this.innerHTML = "";
+
+    // Type dropdown (ha-form select, populated from the registry)
+    const options = NeoDashboardRegistry.list()
+      .filter((c) => c.type !== "neo-card")
+      .map((c) => ({ value: c.type, label: c.name }));
+
+    this._typeForm = document.createElement("ha-form");
+    this._typeForm.schema = [
+      { name: "card_type", label: "Kartentyp", selector: { select: { mode: "dropdown", options } } },
+    ];
+    this._typeForm.data = { card_type: this._config.card_type };
+    if (this._hass) this._typeForm.hass = this._hass;
+    this._typeForm.computeLabel = (s) => s.label || s.name;
+    this._typeForm.addEventListener("value-changed", (e) => {
+      const newType = e.detail.value.card_type;
+      if (newType === this._config.card_type) return;
+      const cls = NeoDashboardRegistry.getCard(newType);
+      const stub = cls?.getStubConfig?.() || {};
+      this._config = { card_type: newType, ...stub };
+      this._mountSub();
+      this._fire();
+    });
+    this.appendChild(this._typeForm);
+
+    this._subContainer = document.createElement("div");
+    this._subContainer.style.marginTop = "8px";
+    this.appendChild(this._subContainer);
+
+    this._mountSub();
+  }
+
+  _syncTypeForm() {
+    if (this._typeForm) this._typeForm.data = { card_type: this._config.card_type };
+  }
+
+  _mountSub() {
+    this._subContainer.innerHTML = "";
+    this._sub = null;
+    const type = this._config.card_type;
+    if (!type) return;
+    const cls = NeoDashboardRegistry.getCard(type);
+    if (!cls?.getConfigElement) return;
+
+    this._sub = cls.getConfigElement();
+    const subConfig = { ...this._config };
+    delete subConfig.card_type;
+    if (this._hass) this._sub.hass = this._hass;
+    this._sub.setConfig(subConfig);
+    this._sub.addEventListener("config-changed", (e) => {
+      this._config = { card_type: type, ...e.detail.config };
+      this._fire();
+    });
+    this._subContainer.appendChild(this._sub);
+  }
+
+  _fire() {
+    this.dispatchEvent(new CustomEvent("config-changed", {
+      detail: { config: this._config },
+      bubbles: true, composed: true,
+    }));
+  }
+}
+customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
   "%c NEO DASHBOARD KIT %c v0.1.0 ",
