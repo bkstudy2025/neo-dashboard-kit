@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.2-beta.4
+// Neo Dashboard Kit v0.1.2-beta.5
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -772,14 +772,19 @@ class NeoHeroCard extends NeoBaseCard {
     window.dispatchEvent(new CustomEvent("location-changed"));
   }
 
-  // Opens HA's built-in Quick Bar (entity search / command palette)
+  // Opens HA's built-in Quick Bar (entity search / command palette).
+  // HA's keydown listener lives on the <home-assistant> element, so the
+  // synthetic event must be dispatched there (events bubble up, not down).
   _openQuickBar(commands) {
+    const key = commands ? "c" : "e";
+    const code = commands ? "KeyC" : "KeyE";
+    const keyCode = commands ? 67 : 69;
     const ev = new KeyboardEvent("keydown", {
-      key: commands ? "c" : "e",
-      code: commands ? "KeyC" : "KeyE",
+      key, code, keyCode, which: keyCode,
       bubbles: true, cancelable: true, composed: true,
     });
-    document.dispatchEvent(ev);
+    const target = document.querySelector("home-assistant") || document.body;
+    target.dispatchEvent(ev);
   }
 
   _moreInfo(entityId) {
@@ -1154,7 +1159,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.2-beta.4 ",
+  "%c NEO DASHBOARD KIT %c v0.1.2-beta.5 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
