@@ -9,11 +9,15 @@ Neo Dashboard Dark:
   primary-color: "#7C9CFF"
   accent-color: "#7C9CFF"
 
+  # ── Page backgrounds (Settings, Profile, etc.) ───────────────
+  primary-background-color: "#06080F"
+  secondary-background-color: "#0d1020"
+
   # ── Card / surface ───────────────────────────────────────────
-  card-background-color: "rgba(255,255,255,0.04)"
-  secondary-background-color: "rgba(255,255,255,0.02)"
+  card-background-color: "rgba(255,255,255,0.055)"
   divider-color: "rgba(255,255,255,0.08)"
   border-color: "rgba(255,255,255,0.08)"
+  color-background-primary: "#06080F"
 
   # ── Text ─────────────────────────────────────────────────────
   primary-text-color: "#F4F6FB"
