@@ -361,6 +361,119 @@ class NeoQuickActionCard extends NeoBaseCard {
 }
 NeoDashboardRegistry.registerCard("neo-quick-action-card", NeoQuickActionCard);
 
+// ── Weather Card ──────────────────────────────────────────────
+class NeoWeatherCard extends NeoBaseCard {
+  getCardSize() { return 2; }
+
+  _weatherIcon(condition) {
+    const map = {
+      "sunny": "☀️", "clear-night": "🌙", "partlycloudy": "⛅",
+      "cloudy": "☁️", "rainy": "🌧️", "pouring": "🌧️", "snowy": "❄️",
+      "snowy-rainy": "🌨️", "windy": "💨", "windy-variant": "💨",
+      "fog": "🌫️", "hail": "🌨️", "lightning": "⚡", "lightning-rainy": "⛈️",
+      "exceptional": "🌡️",
+    };
+    return map[condition] || "🌤️";
+  }
+
+  _conditionLabel(condition) {
+    const map = {
+      "sunny": "Sonnig", "clear-night": "Klar", "partlycloudy": "Teilweise bewölkt",
+      "cloudy": "Bewölkt", "rainy": "Regen", "pouring": "Starkregen",
+      "snowy": "Schnee", "snowy-rainy": "Schneeregen", "windy": "Windig",
+      "windy-variant": "Stürmisch", "fog": "Nebel", "hail": "Hagel",
+      "lightning": "Gewitter", "lightning-rainy": "Gewitterregen",
+    };
+    return map[condition] || condition || "—";
+  }
+
+  _formatTime(isoString) {
+    if (!isoString) return "—";
+    const d = new Date(isoString);
+    return d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  _greeting() {
+    const h = new Date().getHours();
+    if (h < 5)  return "Gute Nacht";
+    if (h < 12) return "Guten Morgen";
+    if (h < 18) return "Guten Tag";
+    return "Guten Abend";
+  }
+
+  render() {
+    const entityId = this._config?.entity || "weather.forecast_home";
+    const sunsetId = this._config?.sunset_entity || "sensor.sun_next_setting";
+    const s = this._state(entityId);
+    const condition = s?.state;
+    const temp = s?.attributes?.temperature ?? "—";
+    const feelsLike = s?.attributes?.apparent_temperature ?? s?.attributes?.feels_like ?? null;
+    const humidity = s?.attributes?.humidity ?? null;
+    const sunset = this._formatTime(this._state(sunsetId)?.state);
+    const icon = this._weatherIcon(condition);
+    const label = this._conditionLabel(condition);
+    const name = this._config?.name || "";
+    const greeting = this._config?.greeting !== false;
+    const acc = NEO_ACCENTS.blue;
+
+    return `
+      <div style="font-family:var(--neo-font,system-ui);color:var(--neo-text1,#F4F6FB);">
+
+        ${greeting ? `
+        <div style="padding:0 0 16px;">
+          <div style="font-size:13px;color:var(--neo-text2);font-weight:500;letter-spacing:0.2px;">${this._greeting()}</div>
+          <div style="font-size:28px;font-weight:600;letter-spacing:-0.6px;margin-top:2px;">${name || "Home"}</div>
+        </div>` : ""}
+
+        <div id="weather-banner" style="
+          display:flex;align-items:center;justify-content:space-between;
+          padding:14px 16px;border-radius:20px;cursor:pointer;
+          background:linear-gradient(120deg,${acc.glow} 0%,var(--neo-fill1,rgba(255,255,255,0.04)) 70%);
+          border:1px solid var(--neo-line2,rgba(255,255,255,0.08));
+          backdrop-filter:var(--neo-blur,blur(24px));-webkit-backdrop-filter:var(--neo-blur,blur(24px));
+        ">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:30px;line-height:1;">${icon}</span>
+            <div>
+              <div style="font-size:15px;font-weight:600;color:var(--neo-text1);">
+                ${label} · ${temp}°
+              </div>
+              <div style="font-size:11px;color:var(--neo-text3);margin-top:2px;">
+                ${feelsLike !== null ? `Gefühlt ${feelsLike}°` : ""}
+                ${feelsLike !== null && sunset !== "—" ? " · " : ""}
+                ${sunset !== "—" ? `Sonnenuntergang ${sunset}` : ""}
+                ${humidity !== null ? ` · Luftfeuchtigkeit ${humidity}%` : ""}
+              </div>
+            </div>
+          </div>
+          <span style="font-size:18px;color:var(--neo-text3);">›</span>
+        </div>
+      </div>
+    `;
+  }
+
+  _bindEvents() {
+    const entityId = this._config?.entity || "weather.forecast_home";
+    this.shadowRoot.getElementById("weather-banner")?.addEventListener("click", () => {
+      const event = new CustomEvent("hass-more-info", {
+        bubbles: true, composed: true,
+        detail: { entityId },
+      });
+      this.dispatchEvent(event);
+    });
+  }
+
+  static getStubConfig() {
+    return {
+      entity: "weather.forecast_home",
+      sunset_entity: "sensor.sun_next_setting",
+      name: "Home",
+      greeting: true,
+    };
+  }
+}
+NeoDashboardRegistry.registerCard("neo-weather-card", NeoWeatherCard);
+
 console.info(
   "%c NEO DASHBOARD KIT %c v0.1.0 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
