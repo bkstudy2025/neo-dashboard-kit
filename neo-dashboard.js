@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.4-beta.2
+// Neo Dashboard Kit v0.1.4-beta.3
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -979,13 +979,7 @@ class NeoStatusCard extends NeoBaseCard {
 
   static getConfigElement() { return document.createElement("neo-status-card-editor"); }
   static getStubConfig() {
-    return {
-      pills: [
-        { icon: "shieldOk", name: "Armed", accent: "mint" },
-        { icon: "leaf", entity: "sensor.power", accent: "mint" },
-        { icon: "rooms", name: "2 home", accent: "blue" },
-      ],
-    };
+    return { pills: [{ icon: "shieldOk", name: "Armed", accent: "mint" }] };
   }
 }
 
@@ -1029,11 +1023,9 @@ class NeoStatusCardEditor extends HTMLElement {
           border:1px solid rgba(124,156,255,0.25); }
         .neo-ed-ic { width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;
           font-size:24px;background:linear-gradient(160deg,#7C9CFF,#7C9CFFcc);box-shadow:0 4px 14px rgba(124,156,255,.35); }
-        .neo-ed-row { position:relative; border:1px solid var(--divider-color,rgba(255,255,255,.1));
-          border-radius:14px; padding:10px 12px 4px; margin-bottom:10px; }
-        .neo-ed-del { position:absolute; top:8px; right:8px; width:30px;height:30px;border-radius:8px;cursor:pointer;
-          border:1px solid var(--divider-color,rgba(255,255,255,.12)); background:transparent;
-          color:var(--error-color,#F87171); display:flex;align-items:center;justify-content:center; }
+        .neo-ed-del { width:30px;height:30px;border-radius:8px;cursor:pointer;
+          border:none; background:transparent; color:var(--error-color,#F87171);
+          display:flex;align-items:center;justify-content:center; }
         .neo-ed-add { width:100%; padding:11px; border-radius:12px; cursor:pointer; margin-top:4px;
           border:1px dashed var(--primary-color,#7C9CFF); background:transparent;
           color:var(--primary-color,#7C9CFF); font-size:14px; font-weight:600; }
@@ -1064,26 +1056,31 @@ class NeoStatusCardEditor extends HTMLElement {
     this._renderRows();
   }
 
+  _pillLabel(pill, i) {
+    return pill.name || pill.entity || `Pill ${i + 1}`;
+  }
+
   _renderRows() {
     this._list.innerHTML = "";
     this._rows = [];
     this._pills.forEach((pill, i) => {
-      const row = document.createElement("div");
-      row.className = "neo-ed-row";
-      const num = document.createElement("div");
-      num.className = "neo-ed-num";
-      num.textContent = `Pill ${i + 1}`;
-      row.appendChild(num);
+      const panel = document.createElement("ha-expansion-panel");
+      panel.outlined = true;
+      panel.header = `${i + 1}. ${this._pillLabel(pill, i)}`;
+      panel.style.marginBottom = "8px";
+      panel.style.setProperty("--expansion-panel-content-padding", "0 12px 8px");
 
       const del = document.createElement("button");
       del.className = "neo-ed-del";
+      del.slot = "icons";
       del.innerHTML = neoIcon("trash", { size: 16, color: "currentColor" });
-      del.addEventListener("click", () => {
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
         this._pills.splice(i, 1);
         this._renderRows();
         this._fire();
       });
-      row.appendChild(del);
+      panel.appendChild(del);
 
       const form = document.createElement("ha-form");
       form.schema = NEO_PILL_SCHEMA;
@@ -1093,11 +1090,13 @@ class NeoStatusCardEditor extends HTMLElement {
       form.addEventListener("value-changed", (e) => {
         e.stopPropagation();
         this._pills[i] = e.detail.value;
+        // keep header label in sync without collapsing the panel
+        panel.header = `${i + 1}. ${this._pillLabel(e.detail.value, i)}`;
         this._fire();
       });
-      row.appendChild(form);
+      panel.appendChild(form);
       this._rows.push(form);
-      this._list.appendChild(row);
+      this._list.appendChild(panel);
     });
   }
 
@@ -1668,7 +1667,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.4-beta.2 ",
+  "%c NEO DASHBOARD KIT %c v0.1.4-beta.3 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
