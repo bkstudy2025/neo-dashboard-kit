@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.4
+// Neo Dashboard Kit v0.1.3-beta.5
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -894,14 +894,19 @@ const NEO_WEATHER_CSS = `
     animation:neo-wx-twinkle ease-in-out infinite; will-change:opacity, transform; }
   @keyframes neo-wx-twinkle { 0%,100%{opacity:.15; transform:scale(.7)} 50%{opacity:1; transform:scale(1)} }
 
-  /* Clouds — soft feathery vapor from overlapping radial puffs */
+  /* Clouds — realistic volume: many soft white puffs (lit top) over a
+     greyish shaded underside, feathered with blur */
   .neo-wx-cloud { position:absolute; left:0; display:block;
     background:
-      radial-gradient(42% 62% at 26% 64%, rgba(255,255,255,.95), rgba(255,255,255,0) 72%),
-      radial-gradient(48% 80% at 50% 44%, rgba(255,255,255,1),  rgba(255,255,255,0) 74%),
-      radial-gradient(40% 60% at 74% 60%, rgba(255,255,255,.9),  rgba(255,255,255,0) 72%),
-      radial-gradient(64% 46% at 50% 80%, rgba(255,255,255,.85), rgba(255,255,255,0) 78%);
-    filter:blur(5px);
+      radial-gradient(46% 38% at 52% 92%, rgba(120,132,156,.40), rgba(120,132,156,0) 72%),
+      radial-gradient(40% 34% at 30% 84%, rgba(120,132,156,.28), rgba(120,132,156,0) 72%),
+      radial-gradient(28% 52% at 18% 62%, rgba(255,255,255,.98), rgba(255,255,255,0) 72%),
+      radial-gradient(32% 62% at 36% 48%, rgba(255,255,255,1),   rgba(255,255,255,0) 73%),
+      radial-gradient(40% 78% at 55% 40%, rgba(255,255,255,1),   rgba(255,255,255,0) 74%),
+      radial-gradient(30% 58% at 73% 50%, rgba(255,255,255,.98), rgba(255,255,255,0) 72%),
+      radial-gradient(24% 46% at 87% 64%, rgba(255,255,255,.92), rgba(255,255,255,0) 70%),
+      radial-gradient(72% 42% at 50% 72%, rgba(255,255,255,.96), rgba(255,255,255,0) 80%);
+    filter:blur(3.5px);
     animation:neo-wx-drift linear infinite; will-change:transform; }
   @keyframes neo-wx-drift { 0%{transform:translateX(-180px)} 100%{transform:translateX(780px)} }
 
@@ -1013,8 +1018,8 @@ class NeoWeatherCard extends NeoBaseCard {
       const top = (-14 + Math.random() * 46).toFixed(0);
       const dur = (26 + Math.random() * 26).toFixed(1);
       const delay = (-Math.random() * dur).toFixed(1);
-      const dayOp = intensity === "heavy" ? 0.7 : 0.55;
-      const op = ((night ? 0.24 : dayOp) * (0.75 + Math.random() * 0.25)).toFixed(2);
+      const dayOp = intensity === "heavy" ? 0.95 : 0.8;
+      const op = ((night ? 0.34 : dayOp) * (0.8 + Math.random() * 0.2)).toFixed(2);
       html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
     }
     return html;
@@ -1383,7 +1388,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.4 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.5 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
