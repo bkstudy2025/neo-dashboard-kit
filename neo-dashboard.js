@@ -512,24 +512,63 @@ class NeoHeroCard extends NeoBaseCard {
     return "Guten Abend";
   }
 
-  render() {
-    const name = this._config?.name || "Home";
-    const greeting = this._config?.greeting_text || this._greeting();
-    const showSearch = this._config?.show_search !== false;
-    const showScenes = this._config?.show_scenes !== false;
-    const showNotifications = this._config?.show_notifications !== false;
-    const notifEntity = this._config?.notifications_entity;
-    const notifCount = notifEntity ? (parseInt(this._state(notifEntity)?.state) || 0) : 0;
+  // Default per-button config (slot 1 = Suche, 2 = Kalender, 3 = Benachrichtigungen)
+  _buttonDefaults(slot) {
+    return {
+      1: { show: true, icon: "🔍", path: "", badge_entity: "" },
+      2: { show: true, icon: "📅", path: "", badge_entity: "" },
+      3: { show: true, icon: "🔔", path: "", badge_entity: "" },
+    }[slot];
+  }
 
-    const btn = (content, id) => `
-      <button id="${id}" style="
+  _button(slot) {
+    return { ...this._buttonDefaults(slot), ...(this._config?.[`button${slot}`] || {}) };
+  }
+
+  // Returns { kind: "count"|"dot"|null, value }
+  _badge(entityId) {
+    if (!entityId) return { kind: null };
+    const st = this._state(entityId)?.state;
+    if (st == null) return { kind: null };
+    const num = parseInt(st);
+    if (!isNaN(num)) return num > 0 ? { kind: "count", value: num } : { kind: null };
+    if (st === "on") return { kind: "dot" };
+    return { kind: null };
+  }
+
+  _renderButton(slot) {
+    const b = this._button(slot);
+    if (!b.show) return "";
+    const badge = this._badge(b.badge_entity);
+    let badgeHtml = "";
+    if (badge.kind === "count") {
+      badgeHtml = `<span style="
+        position:absolute;top:6px;right:6px;min-width:16px;height:16px;padding:0 4px;
+        border-radius:8px;background:#F87171;color:#fff;font-size:10px;font-weight:700;
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 0 0 2px var(--ha-card-background,#111827);
+      ">${badge.value}</span>`;
+    } else if (badge.kind === "dot") {
+      badgeHtml = `<span style="
+        position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:4px;
+        background:#C084FC;box-shadow:0 0 0 2px var(--ha-card-background,#111827),0 0 6px #C084FC;
+      "></span>`;
+    }
+    return `
+      <button class="neo-hero-btn" data-slot="${slot}" style="
         width:40px;height:40px;border-radius:20px;
         border:1px solid var(--neo-line2,rgba(255,255,255,0.08));
         background:var(--neo-fill2,rgba(255,255,255,0.055));
         display:flex;align-items:center;justify-content:center;
         cursor:pointer;flex-shrink:0;color:var(--neo-text1);
         font-size:16px;position:relative;
-      ">${content}</button>`;
+      ">${b.icon}${badgeHtml}</button>`;
+  }
+
+  render() {
+    const userName = this._hass?.user?.name;
+    const name = this._config?.name || userName || "Home";
+    const greeting = this._config?.greeting_text || this._greeting();
 
     return `
       <div style="font-family:var(--neo-font,system-ui);color:var(--neo-text1,#F4F6FB);padding:8px 0 12px;">
@@ -539,29 +578,28 @@ class NeoHeroCard extends NeoBaseCard {
             <div style="font-size:28px;font-weight:600;letter-spacing:-0.6px;margin-top:1px;">${name}</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
-            ${showSearch ? btn("🔍", "btn-search") : ""}
-            ${showScenes ? btn("✨", "btn-scenes") : ""}
-            ${showNotifications ? `
-              <button id="btn-notif" style="
-                width:40px;height:40px;border-radius:20px;
-                border:1px solid var(--neo-line2,rgba(255,255,255,0.08));
-                background:var(--neo-fill2,rgba(255,255,255,0.055));
-                display:flex;align-items:center;justify-content:center;
-                cursor:pointer;flex-shrink:0;font-size:16px;position:relative;
-              ">
-                🔔
-                ${notifCount > 0 ? `<span style="
-                  position:absolute;top:7px;right:7px;
-                  min-width:16px;height:16px;padding:0 4px;
-                  border-radius:8px;background:#F87171;color:#fff;
-                  font-size:10px;font-weight:700;
-                  display:flex;align-items:center;justify-content:center;
-                  box-shadow:0 0 0 2px var(--ha-card-background,#111827);
-                ">${notifCount}</span>` : ""}
-              </button>` : ""}
+            ${this._renderButton(1)}
+            ${this._renderButton(2)}
+            ${this._renderButton(3)}
           </div>
         </div>
       </div>`;
+  }
+
+  _navigate(path) {
+    if (!path) return;
+    history.pushState(null, "", path);
+    window.dispatchEvent(new CustomEvent("location-changed"));
+  }
+
+  _bindEvents() {
+    this.shadowRoot.querySelectorAll(".neo-hero-btn").forEach((el) => {
+      el.addEventListener("click", () => {
+        const slot = el.getAttribute("data-slot");
+        const b = this._button(slot);
+        this._navigate(b.path);
+      });
+    });
   }
 
   static getConfigElement() {
@@ -569,18 +607,32 @@ class NeoHeroCard extends NeoBaseCard {
   }
 
   static getStubConfig() {
-    return { name: "Home", show_search: true, show_scenes: true, show_notifications: true };
+    return {
+      button1: { show: true, icon: "🔍", path: "" },
+      button2: { show: true, icon: "📅", path: "" },
+      button3: { show: true, icon: "🔔", path: "" },
+    };
   }
 }
 
-// Hero Card Visual Editor
+// Hero Card Visual Editor — expandable section per button
+const _heroButtonSchema = (slot, title) => ({
+  type: "expandable",
+  name: `button${slot}`,
+  title,
+  schema: [
+    { name: "show", label: "Anzeigen", selector: { boolean: {} } },
+    { name: "icon", label: "Emoji-Icon", selector: { text: {} } },
+    { name: "path", label: "Navigations-Pfad (z.B. /lovelace/kalender)", selector: { text: {} } },
+    { name: "badge_entity", label: "Badge-Entity (Zahl = Zähler, on = Punkt)", selector: { entity: {} } },
+  ],
+});
 customElements.define("neo-hero-card-editor", makeNeoEditor([
-  { name: "name", label: "Name", selector: { text: {} } },
-  { name: "greeting_text", label: "Begrüßungstext (leer = automatisch)", selector: { text: {} } },
-  { name: "show_search", label: "Suche-Button anzeigen", selector: { boolean: {} } },
-  { name: "show_scenes", label: "Szenen-Button anzeigen", selector: { boolean: {} } },
-  { name: "show_notifications", label: "Benachrichtigungs-Button anzeigen", selector: { boolean: {} } },
-  { name: "notifications_entity", label: "Entity für Benachrichtigungs-Zähler (optional)", selector: { entity: {} } },
+  { name: "name", label: "Name (leer = angemeldeter Benutzer)", selector: { text: {} } },
+  { name: "greeting_text", label: "Begrüßungstext (leer = automatisch nach Uhrzeit)", selector: { text: {} } },
+  _heroButtonSchema(1, "Button 1 – Suche"),
+  _heroButtonSchema(2, "Button 2 – Kalender"),
+  _heroButtonSchema(3, "Button 3 – Benachrichtigungen"),
 ], { name: "Neo Hero / Begrüßung", description: "Begrüßung mit Name und Action-Buttons", icon: "👋" }));
 NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
   name: "Neo Hero / Begrüßung",
