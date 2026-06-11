@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.2
+// Neo Dashboard Kit v0.1.3-beta.1
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -865,8 +865,109 @@ NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
 });
 
 // ── Weather Card ──────────────────────────────────────────────
+// CSS for the animated background (rain / snow / stars). Pure CSS =
+// no requestAnimationFrame loop, GPU-friendly transforms only.
+const NEO_WEATHER_CSS = `
+  .neo-wx-fx { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  .neo-wx-rain { position:absolute; top:-20px; width:1.4px; height:13px;
+    background:linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.45));
+    animation:neo-wx-drop linear infinite; will-change:transform; }
+  @keyframes neo-wx-drop { 0%{transform:translateY(-20px)} 100%{transform:translateY(130px)} }
+  .neo-wx-snow { position:absolute; top:-10px; border-radius:50%;
+    background:rgba(255,255,255,.92); animation:neo-wx-snowfall linear infinite; will-change:transform; }
+  @keyframes neo-wx-snowfall { 0%{transform:translate(0,-12px)} 100%{transform:translate(var(--drift,0),130px)} }
+  .neo-wx-star { position:absolute; border-radius:50%; background:#fff;
+    animation:neo-wx-twinkle ease-in-out infinite; will-change:opacity; }
+  @keyframes neo-wx-twinkle { 0%,100%{opacity:.2} 50%{opacity:1} }
+  @media (prefers-reduced-motion: reduce) {
+    .neo-wx-rain, .neo-wx-snow, .neo-wx-star { animation: none; }
+  }
+`;
+
 class NeoWeatherCard extends NeoBaseCard {
   getCardSize() { return 2; }
+
+  // Re-render also when the sun crosses the horizon (day/night gradient)
+  _trackedEntities() {
+    const base = super._trackedEntities();
+    return base.includes("sun.sun") ? base : [...base, "sun.sun"];
+  }
+
+  _isNight() {
+    const sun = this._hass?.states?.["sun.sun"]?.state;
+    if (sun === "below_horizon") return true;
+    if (sun === "above_horizon") return false;
+    const h = new Date().getHours();
+    return h < 6 || h >= 20;
+  }
+
+  // condition + night → { gradient, particles }
+  _fx(cond, night) {
+    const G = {
+      sunny: "linear-gradient(120deg, hsl(207,70%,52%), hsl(205,75%,62%))",
+      "clear-night": "linear-gradient(120deg, hsl(235,40%,20%), hsl(255,35%,24%))",
+      partlycloudy: "linear-gradient(120deg, hsl(209,42%,60%), hsl(207,46%,52%))",
+      "partlycloudy-night": "linear-gradient(120deg, hsl(235,30%,20%), hsl(245,28%,22%))",
+      cloudy: "linear-gradient(120deg, hsl(210,14%,58%), hsl(210,12%,50%))",
+      "cloudy-night": "linear-gradient(120deg, hsl(230,14%,24%), hsl(240,12%,20%))",
+      rainy: "linear-gradient(120deg, hsl(208,32%,46%), hsl(210,30%,56%))",
+      pouring: "linear-gradient(120deg, hsl(210,22%,32%), hsl(210,22%,44%))",
+      snowy: "linear-gradient(120deg, hsl(208,42%,64%), hsl(210,42%,80%))",
+      "snowy-rainy": "linear-gradient(120deg, hsl(212,20%,50%), hsl(210,30%,70%))",
+      fog: "linear-gradient(120deg, hsl(210,16%,62%), hsl(210,16%,72%))",
+      lightning: "linear-gradient(120deg, hsl(220,18%,22%), hsl(220,16%,34%))",
+      "lightning-rainy": "linear-gradient(120deg, hsl(220,18%,22%), hsl(220,16%,34%))",
+      windy: "linear-gradient(120deg, hsl(205,36%,60%), hsl(205,36%,68%))",
+      "windy-variant": "linear-gradient(120deg, hsl(205,36%,58%), hsl(205,36%,66%))",
+      hail: "linear-gradient(120deg, hsl(208,28%,58%), hsl(210,28%,52%))",
+      exceptional: "linear-gradient(120deg, hsl(12,60%,44%), hsl(12,56%,52%))",
+      default: "linear-gradient(120deg, hsl(205,55%,58%), hsl(210,58%,66%))",
+      "default-night": "linear-gradient(120deg, hsl(235,28%,18%), hsl(250,24%,18%))",
+    };
+    let key;
+    if (night) {
+      if (cond === "sunny" || cond === "clear") key = "clear-night";
+      else if (G[cond + "-night"]) key = cond + "-night";
+      else key = "default-night";
+    } else {
+      key = G[cond] ? cond : "default";
+    }
+    const gradient = G[key] || G.default;
+
+    let particles = null;
+    if (cond === "rainy" || cond === "lightning-rainy") particles = { kind: "rain", count: 18 };
+    else if (cond === "pouring") particles = { kind: "rain", count: 30 };
+    else if (cond === "snowy") particles = { kind: "snow", count: 18 };
+    else if (cond === "snowy-rainy") particles = { kind: "snow", count: 14 };
+    else if (night && (cond === "clear" || cond === "sunny")) particles = { kind: "star", count: 14 };
+
+    return { gradient, particles };
+  }
+
+  _particles({ kind, count }) {
+    let html = "";
+    for (let i = 0; i < count; i++) {
+      const left = (Math.random() * 100).toFixed(1);
+      if (kind === "star") {
+        const top = (Math.random() * 70).toFixed(1);
+        const size = (1 + Math.random() * 1.4).toFixed(1);
+        const dur = (2 + Math.random() * 3).toFixed(2);
+        const delay = (-Math.random() * 3).toFixed(2);
+        html += `<span class="neo-wx-star" style="left:${left}%;top:${top}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+      } else if (kind === "snow") {
+        const size = (2 + Math.random() * 2).toFixed(1);
+        const drift = (Math.random() * 16 - 8).toFixed(0);
+        const dur = (3 + Math.random() * 3).toFixed(2);
+        const delay = (-Math.random() * 4).toFixed(2);
+        html += `<span class="neo-wx-snow" style="left:${left}%;width:${size}px;height:${size}px;--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+      } else {
+        const dur = (0.8 + Math.random() * 0.5).toFixed(2);
+        const delay = (-Math.random() * 1.3).toFixed(2);
+        html += `<span class="neo-wx-rain" style="left:${left}%;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+      }
+    }
+    return html;
+  }
 
   // condition → { icon name, accent color }
   _weatherIcon(condition) {
@@ -909,17 +1010,18 @@ class NeoWeatherCard extends NeoBaseCard {
   }
 
   render() {
-    const entityId = this._config?.entity || "weather.forecast_home";
-    const sunsetId = this._config?.sunset_entity || "sensor.sun_next_setting";
+    const cfg = this._config || {};
+    const entityId = cfg.entity || "weather.forecast_home";
+    const sunsetId = cfg.sunset_entity || "sensor.sun_next_setting";
     const s = this._state(entityId);
-    const condition = s?.state;
+    const raw = (s?.state || "").toLowerCase();
+    const cond = raw.replace(/-night$/, "").replace(/-day$/, "");
     const temp = s?.attributes?.temperature ?? "—";
     const feelsLike = s?.attributes?.apparent_temperature ?? s?.attributes?.feels_like ?? null;
     const humidity = s?.attributes?.humidity ?? null;
     const sunset = this._formatTime(this._state(sunsetId)?.state);
-    const [iconName, iconColor] = this._weatherIcon(condition);
-    const label = this._conditionLabel(condition);
-    const acc = NEO_ACCENTS.blue;
+    const [iconName, iconColor] = this._weatherIcon(raw || cond);
+    const label = this._conditionLabel(cond);
 
     const subParts = [
       feelsLike !== null ? `Gefühlt ${feelsLike}°` : null,
@@ -927,23 +1029,43 @@ class NeoWeatherCard extends NeoBaseCard {
       humidity !== null ? `Luftfeuchtigkeit ${humidity}%` : null,
     ].filter(Boolean).join(" · ");
 
+    const animatedBg = cfg.animated_background !== false;
+    const animations = cfg.animations !== false;
+    const night = raw.endsWith("-night") || this._isNight();
+    const fx = animatedBg ? this._fx(cond, night) : null;
+
+    // On a colored gradient → light text; otherwise theme text
+    const onDark = !!fx;
+    const t1 = onDark ? "#fff" : "var(--neo-text1)";
+    const t3 = onDark ? "rgba(255,255,255,0.82)" : "var(--neo-text3)";
+    const chev = onDark ? "rgba(255,255,255,0.7)" : "var(--neo-text3)";
+    const iconC = onDark ? "#fff" : iconColor;
+    const bg = fx
+      ? fx.gradient
+      : `linear-gradient(120deg, ${NEO_ACCENTS.blue.glow} 0%, var(--neo-fill1,rgba(255,255,255,0.04)) 70%)`;
+    const particles = (animations && fx?.particles) ? this._particles(fx.particles) : "";
+    const border = onDark ? "rgba(255,255,255,0.12)" : "var(--neo-line2,rgba(255,255,255,0.08))";
+
     return `
-      <div style="font-family:var(--neo-font,system-ui);color:var(--neo-text1,#F4F6FB);padding:0 6px;">
+      <style>${NEO_WEATHER_CSS}</style>
+      <div style="font-family:var(--neo-font,system-ui);padding:0 6px;">
         <div id="weather-banner" style="
+          position:relative;overflow:hidden;
           display:flex;align-items:center;justify-content:space-between;
           padding:14px 16px;border-radius:20px;cursor:pointer;
-          background:linear-gradient(120deg,${acc.glow} 0%,var(--neo-fill1,rgba(255,255,255,0.04)) 70%);
-          border:1px solid var(--neo-line2,rgba(255,255,255,0.08));
-          backdrop-filter:var(--neo-blur,blur(24px));-webkit-backdrop-filter:var(--neo-blur,blur(24px));
+          background:${bg};
+          border:1px solid ${border};
+          ${onDark ? "box-shadow:0 18px 40px -16px rgba(0,0,0,0.45);" : "backdrop-filter:var(--neo-blur,blur(24px));-webkit-backdrop-filter:var(--neo-blur,blur(24px));"}
         ">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span style="display:flex;">${neoIcon(iconName, { size: 30, color: iconColor })}</span>
+          ${particles ? `<div class="neo-wx-fx">${particles}</div>` : ""}
+          <div style="position:relative;z-index:1;display:flex;align-items:center;gap:12px;">
+            <span style="display:flex;">${neoIcon(iconName, { size: 30, color: iconC })}</span>
             <div>
-              <div style="font-size:15px;font-weight:600;color:var(--neo-text1);">${label} · ${temp}°</div>
-              ${subParts ? `<div style="font-size:11px;color:var(--neo-text3);margin-top:2px;">${subParts}</div>` : ""}
+              <div style="font-size:15px;font-weight:600;color:${t1};">${label} · ${temp}°</div>
+              ${subParts ? `<div style="font-size:11px;color:${t3};margin-top:2px;">${subParts}</div>` : ""}
             </div>
           </div>
-          <span style="font-size:18px;color:var(--neo-text3);">›</span>
+          <span style="position:relative;z-index:1;font-size:18px;color:${chev};">›</span>
         </div>
       </div>`;
   }
@@ -971,7 +1093,9 @@ class NeoWeatherCard extends NeoBaseCard {
 customElements.define("neo-weather-card-editor", makeNeoEditor([
   { name: "entity", label: "Wetter-Entity", selector: { entity: { domain: "weather" } } },
   { name: "sunset_entity", label: "Sonnenuntergang-Entity (optional)", selector: { entity: { domain: "sensor" } } },
-], { name: "Neo Wetter", description: "Wetter-Banner mit Temperatur und Sonnenuntergang", icon: "🌤️" }));
+  { name: "animated_background", label: "Wetter-Hintergrund (Verlauf je Zustand)", selector: { boolean: {} } },
+  { name: "animations", label: "Animationen (Regen/Schnee/Sterne)", selector: { boolean: {} } },
+], { name: "Neo Wetter", description: "Wetter-Banner mit animiertem Hintergrund", icon: "🌤️" }));
 NeoDashboardRegistry.registerCard("neo-weather-card", NeoWeatherCard, {
   name: "Neo Wetter",
   description: "Wetter-Banner mit Temperatur und Sonnenuntergang",
@@ -1159,7 +1283,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.2 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.1 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
