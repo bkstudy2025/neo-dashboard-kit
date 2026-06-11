@@ -1,129 +1,133 @@
 Neo Dashboard:
   modes:
     dark:
-      # ── Base background variables ─────────────────────────────
-      background-color: "#06080F"
-      background-color-2: "#0d1020"
-      primary-background-color: "var(--background-color)"
-      secondary-background-color: "var(--background-color-2)"
-      markdown-code-background-color: "var(--background-color-2)"
+      # Fonts
+      primary-font-family: "-apple-system, SF Pro Display, Inter, system-ui, sans-serif"
+      paper-font-common-base_-_font-family: "var(--primary-font-family)"
+      paper-font-common-code_-_font-family: "var(--primary-font-family)"
+      paper-font-body1_-_font-family: "var(--primary-font-family)"
+      paper-font-subhead_-_font-family: "var(--primary-font-family)"
+      paper-font-headline_-_font-family: "var(--primary-font-family)"
+      paper-font-caption_-_font-family: "var(--primary-font-family)"
+      paper-font-title_-_font-family: "var(--primary-font-family)"
+      ha-card-header-font-family: "var(--primary-font-family)"
 
-      # ── Lovelace background (Aurora gradient) ─────────────────
+      # Text
+      text-color: "#F4F6FB"
+      primary-text-color: "var(--text-color)"
+      text-primary-color: "var(--text-color)"
+      sidebar-text-color: "var(--text-color)"
+      secondary-text-color: "rgba(244,246,251,0.72)"
+      text-medium-light-color: "rgba(244,246,251,0.50)"
+      text-medium-color: "rgba(244,246,251,0.40)"
+      disabled-text-color: "rgba(244,246,251,0.30)"
+      primary-color: "var(--accent-color)"
+
+      # Text Fields & Dropdown
+      mdc-text-field-fill-color: "var(--background-color)"
+      mdc-text-field-ink-color: "var(--text-color)"
+      mdc-select-fill-color: "var(--background-color)"
+      mdc-text-field-label-ink-color: "var(--secondary-text-color)"
+      input-fill-color: "var(--background-color)"
+      input-ink-color: "var(--text-color)"
+      input-label-ink-color: "var(--text-color)"
+      input-disabled-fill-color: "var(--background-color)"
+      input-disabled-ink-color: "var(--disabled-text-color)"
+      input-disabled-label-ink-color: "var(--disabled-text-color)"
+      input-idle-line-color: "var(--background-color)"
+      input-dropdown-icon-color: "var(--secondary-text-color)"
+      input-hover-line-color: "var(--primary-color)"
+      code-editor-background-color: "#0d1020"
+      codemirror-property: "var(--accent-color)"
+
+      # Main Colors
+      app-header-background-color: "var(--background-color)"
+      accent-color: "#7C9CFF"
+
+      # Background
+      background-color: "#06080F"
+      primary-background-color: "var(--background-color)"
+      background-color-2: "#0d1020"
+      secondary-background-color: "var(--background-color-2)"
+      markdown-code-background-color: "var(--background-color)"
+
+      # Lovelace background (Aurora gradient)
       lovelace-background: >-
         radial-gradient(80% 60% at 20% 0%, #161d33 0%, rgba(7,9,15,0) 55%),
         radial-gradient(70% 50% at 100% 100%, #1a1426 0%, rgba(7,9,15,0) 55%),
         #06080F
 
-      # ── Primary / accent colors ───────────────────────────────
-      primary-color: "#7C9CFF"
-      accent-color: "#7C9CFF"
-
-      # ── Text ─────────────────────────────────────────────────
-      text-color: "#F4F6FB"
-      primary-text-color: "var(--text-color)"
-      text-primary-color: "var(--text-color)"
-      secondary-text-color: "rgba(244,246,251,0.72)"
-      disabled-text-color: "rgba(244,246,251,0.30)"
-      text-medium-color: "rgba(244,246,251,0.50)"
-      sidebar-text-color: "var(--text-color)"
-
-      # ── Cards ─────────────────────────────────────────────────
-      ha-card-background: "#111827"
+      # Card
       card-background-color: "var(--ha-card-background)"
-      ha-card-border-color: "rgba(255,255,255,0.08)"
-      ha-card-border-width: "1px"
+      ha-card-background: "#111827"
+      ha-card-box-shadow: "none"
       ha-card-border-radius: "24px"
-      ha-card-box-shadow: "0 18px 40px -16px rgba(0,0,0,0.55)"
-      divider-color: "rgba(255,255,255,0.08)"
+      ha-card-border-style: "solid"
+      ha-card-border-width: "1px"
+      ha-card-border-color: "rgba(255,255,255,0.08)"
       border-color: "rgba(255,255,255,0.08)"
       grid-card-gap: "16px"
+      horizontal-stack-card-margin: "0 8px"
+      divider-color: "rgba(255,255,255,0.08)"
+      control-button-border-radius: "50px"
+      control-button-background-color: "var(--ha-card-background)"
 
-      # ── Sidebar ───────────────────────────────────────────────
-      sidebar-background-color: "#0a0d18"
+      # Icons
+      paper-item-icon-color: "var(--text-color)"
+      paper-item-icon-active-color: "var(--accent-color)"
+
+      # Sidebar
+      sidebar-background-color: "var(--background-color)"
       sidebar-icon-color: "rgba(244,246,251,0.50)"
-      sidebar-selected-icon-color: "#7C9CFF"
+      sidebar-selected-icon-color: "var(--accent-color)"
       sidebar-selected-text-color: "var(--text-color)"
       paper-listbox-background-color: "var(--sidebar-background-color)"
+      divider-color: "var(--background-color)"
       light-primary-color: "var(--ha-card-background)"
 
-      # ── Header ───────────────────────────────────────────────
-      app-header-background-color: "rgba(6,8,15,0.85)"
-      app-header-text-color: "var(--text-color)"
-      app-header-selection-bar-color: "#7C9CFF"
-
-      # ── State / icons ─────────────────────────────────────────
+      # State
       state-icon-color: "rgba(244,246,251,0.50)"
-      state-icon-active-color: "#7C9CFF"
-      paper-item-icon-color: "rgba(244,246,251,0.50)"
-      paper-item-icon-active-color: "#7C9CFF"
+      state-icon-active-color: "var(--accent-color)"
 
-      # ── Switches ─────────────────────────────────────────────
-      switch-checked-color: "#7C9CFF"
-      switch-unchecked-color: "rgba(255,255,255,0.14)"
-      switch-checked-button-color: "#ffffff"
-      switch-unchecked-button-color: "#ffffff"
-      switch-checked-track-color: "rgba(124,156,255,0.4)"
-      switch-unchecked-track-color: "rgba(255,255,255,0.10)"
-      paper-toggle-button-checked-bar-color: "#7C9CFF"
-
-      # ── Sliders ──────────────────────────────────────────────
-      slider-color: "#7C9CFF"
-      paper-slider-knob-color: "#7C9CFF"
-      paper-slider-active-color: "#7C9CFF"
+      # Sliders
+      paper-slider-knob-color: "var(--accent-color)"
       paper-slider-pin-color: "var(--background-color-2)"
-      paper-slider-container-color: "rgba(255,255,255,0.10)"
+      paper-slider-active-color: "var(--accent-color)"
+      paper-slider-container-color: "var(--background-color-2)"
 
-      # ── Inputs / text fields ──────────────────────────────────
-      input-fill-color: "var(--background-color-2)"
-      input-ink-color: "var(--text-color)"
-      input-label-ink-color: "rgba(244,246,251,0.50)"
-      input-idle-line-color: "rgba(255,255,255,0.12)"
-      input-hover-line-color: "rgba(255,255,255,0.20)"
-      input-disabled-fill-color: "var(--background-color)"
-      input-disabled-ink-color: "rgba(244,246,251,0.30)"
-      input-disabled-label-ink-color: "rgba(244,246,251,0.30)"
-      input-disabled-line-color: "rgba(255,255,255,0.06)"
-      input-outlined-idle-border-color: "rgba(255,255,255,0.12)"
-      input-outlined-hover-border-color: "rgba(255,255,255,0.20)"
-      input-outlined-disabled-border-color: "rgba(255,255,255,0.06)"
-      input-dropdown-icon-color: "rgba(244,246,251,0.50)"
-      mdc-text-field-fill-color: "var(--background-color-2)"
-      mdc-text-field-ink-color: "var(--text-color)"
-      mdc-text-field-label-ink-color: "rgba(244,246,251,0.50)"
-      mdc-select-fill-color: "var(--background-color-2)"
-      mdc-theme-primary: "#7C9CFF"
+      # Toggle
+      paper-toggle-button-checked-bar-color: "var(--accent-color)"
+      mdc-theme-primary: "var(--accent-color)"
       mdc-theme-on-primary: "#ffffff"
-      paper-input-container-focus-color: "#7C9CFF"
-      code-editor-background-color: "#0d1020"
 
-      # ── Popups / dialogs ──────────────────────────────────────
-      more-info-header-background: "var(--background-color-2)"
+      # Switch
+      switch-unchecked-color: "rgba(255,255,255,0.14)"
+      switch-checked-button-color: "var(--accent-color)"
+      switch-unchecked-track-color: "var(--background-color-2)"
+      switch-checked-track-color: "var(--background-color-2)"
+
+      # Radio Button
+      paper-radio-button-checked-color: "var(--accent-color)"
+
+      # Popups
+      more-info-header-background: "var(--secondary-background-color)"
       paper-dialog-background-color: "var(--background-color)"
-      mdc-dialog-scrim-color: "rgba(0,0,0,0.7)"
-      mdc-dialog-box-shadow: "0 24px 48px rgba(0,0,0,0.8)"
-      dialog-backdrop-filter: "blur(16px)"
 
-      # ── Dashboard picker cards (transparent fix) ──────────────
-      ha-card-background-dashboard-picker: "#0d1020"
-      masonry-view-card-margin: "4px 4px"
-
-      # ── Tables ───────────────────────────────────────────────
+      # Tables
       table-row-background-color: "var(--background-color)"
-      table-row-alternative-background-color: "var(--background-color-2)"
+      table-row-alternative-background-color: "var(--ha-card-background)"
 
-      # ── Badges ───────────────────────────────────────────────
-      label-badge-background-color: "var(--background-color-2)"
-      label-badge-text-color: "var(--text-color)"
+      # Badges
+      label-badge-background-color: "var(--background-color)"
+      label-badge-text-color: "var(--text-primary-color)"
       label-badge-red: "#F87171"
+      label-badge-blue: "#7C9CFF"
       label-badge-green: "#5EDCB8"
       label-badge-yellow: "#FFB26B"
-      label-badge-blue: "#7C9CFF"
-      label-badge-grey: "rgba(244,246,251,0.30)"
 
-      # ── Radio buttons ─────────────────────────────────────────
-      paper-radio-button-checked-color: "#7C9CFF"
+      paper-input-container-focus-color: "var(--accent-color)"
 
-      # ── Energy dashboard ──────────────────────────────────────
+      # Energy
       energy-grid-consumption-color: "#7C9CFF"
       energy-grid-return-color: "#5EDCB8"
       energy-solar-color: "#FFB26B"
@@ -131,10 +135,7 @@ Neo Dashboard:
       energy-battery-out-color: "#5EDCB8"
       energy-home-color: "#7C9CFF"
 
-      # ── Scrollbar ─────────────────────────────────────────────
-      scrollbar-thumb-color: "rgba(255,255,255,0.12)"
-
-      # ── Neo custom tokens ─────────────────────────────────────
+      # Neo custom tokens (used by all Neo cards)
       neo-fill0: "rgba(255,255,255,0.02)"
       neo-fill1: "rgba(255,255,255,0.04)"
       neo-fill2: "rgba(255,255,255,0.055)"
@@ -152,7 +153,6 @@ Neo Dashboard:
       neo-shadow2: "rgba(0,0,0,0.5)"
       neo-blur: "blur(24px) saturate(140%)"
       neo-radius: "24px"
-      neo-font: "-apple-system, SF Pro Display, Inter, system-ui, sans-serif"
       neo-accent-blue: "#7C9CFF"
       neo-accent-amber: "#FFB26B"
       neo-accent-mint: "#5EDCB8"
@@ -160,85 +160,129 @@ Neo Dashboard:
       neo-accent-rose: "#F87171"
 
     light:
-      # ── Base background variables ─────────────────────────────
-      background-color: "#CBD4E4"
-      background-color-2: "#DCE3EF"
-      primary-background-color: "var(--background-color)"
-      secondary-background-color: "var(--background-color-2)"
+      # Fonts
+      primary-font-family: "-apple-system, SF Pro Display, Inter, system-ui, sans-serif"
+      paper-font-common-base_-_font-family: "var(--primary-font-family)"
+      paper-font-common-code_-_font-family: "var(--primary-font-family)"
+      paper-font-body1_-_font-family: "var(--primary-font-family)"
+      paper-font-subhead_-_font-family: "var(--primary-font-family)"
+      paper-font-headline_-_font-family: "var(--primary-font-family)"
+      paper-font-caption_-_font-family: "var(--primary-font-family)"
+      paper-font-title_-_font-family: "var(--primary-font-family)"
+      ha-card-header-font-family: "var(--primary-font-family)"
 
-      # ── Lovelace background ───────────────────────────────────
+      # Text
+      text-color: "#0F1626"
+      primary-text-color: "var(--text-color)"
+      text-primary-color: "var(--text-color)"
+      sidebar-text-color: "var(--text-color)"
+      secondary-text-color: "rgba(15,22,38,0.62)"
+      text-medium-light-color: "rgba(15,22,38,0.42)"
+      text-medium-color: "rgba(15,22,38,0.42)"
+      disabled-text-color: "rgba(15,22,38,0.26)"
+      primary-color: "var(--accent-color)"
+
+      # Text Fields & Dropdown
+      mdc-text-field-fill-color: "var(--background-color)"
+      mdc-text-field-ink-color: "var(--text-color)"
+      mdc-select-fill-color: "var(--background-color)"
+      mdc-text-field-label-ink-color: "var(--secondary-text-color)"
+      input-fill-color: "var(--background-color)"
+      input-ink-color: "var(--text-color)"
+      input-label-ink-color: "var(--text-color)"
+      input-idle-line-color: "var(--background-color)"
+      input-dropdown-icon-color: "var(--secondary-text-color)"
+      input-hover-line-color: "var(--primary-color)"
+      code-editor-background-color: "#ccd0da"
+      codemirror-property: "var(--accent-color)"
+
+      # Main Colors
+      app-header-background-color: "var(--background-color)"
+      accent-color: "#5B7FE8"
+
+      # Background
+      background-color: "#CBD4E4"
+      primary-background-color: "var(--background-color)"
+      background-color-2: "#DCE3EF"
+      secondary-background-color: "var(--background-color-2)"
+      markdown-code-background-color: "var(--background-color)"
+
+      # Lovelace background
       lovelace-background: >-
         radial-gradient(90% 70% at 15% 0%, rgba(110,140,255,0.16) 0%, rgba(214,221,235,0) 55%),
         radial-gradient(70% 55% at 100% 100%, rgba(255,170,120,0.12) 0%, rgba(214,221,235,0) 60%),
         linear-gradient(180deg, #DCE3EF 0%, #CBD4E4 100%)
 
-      # ── Primary / accent ──────────────────────────────────────
-      primary-color: "#5B7FE8"
-      accent-color: "#5B7FE8"
-
-      # ── Text ─────────────────────────────────────────────────
-      text-color: "#0F1626"
-      primary-text-color: "var(--text-color)"
-      text-primary-color: "var(--text-color)"
-      secondary-text-color: "rgba(15,22,38,0.62)"
-      disabled-text-color: "rgba(15,22,38,0.26)"
-      sidebar-text-color: "var(--text-color)"
-
-      # ── Cards ─────────────────────────────────────────────────
-      ha-card-background: "rgba(255,255,255,0.92)"
+      # Card
       card-background-color: "var(--ha-card-background)"
-      ha-card-border-color: "rgba(28,40,72,0.11)"
-      ha-card-border-width: "1px"
+      ha-card-background: "#dce0e8"
+      ha-card-box-shadow: "none"
       ha-card-border-radius: "24px"
-      ha-card-box-shadow: "0 18px 40px -16px rgba(40,55,95,0.22)"
-      divider-color: "rgba(28,40,72,0.11)"
+      ha-card-border-style: "solid"
+      ha-card-border-width: "1px"
+      ha-card-border-color: "rgba(28,40,72,0.11)"
+      border-color: "none"
       grid-card-gap: "16px"
+      horizontal-stack-card-margin: "0 8px"
+      divider-color: "var(--background-color)"
+      control-button-border-radius: "50px"
+      control-button-background-color: "var(--ha-card-background)"
 
-      # ── Sidebar ───────────────────────────────────────────────
-      sidebar-background-color: "#e2e8f4"
+      # Icons
+      paper-item-icon-color: "var(--text-color)"
+      paper-item-icon-active-color: "var(--accent-color)"
+
+      # Sidebar
+      sidebar-background-color: "var(--background-color)"
       sidebar-icon-color: "rgba(15,22,38,0.42)"
-      sidebar-selected-icon-color: "#5B7FE8"
+      sidebar-selected-icon-color: "var(--accent-color)"
       sidebar-selected-text-color: "var(--text-color)"
       paper-listbox-background-color: "var(--sidebar-background-color)"
 
-      # ── Header ───────────────────────────────────────────────
-      app-header-background-color: "rgba(203,212,228,0.92)"
-      app-header-text-color: "var(--text-color)"
-      app-header-selection-bar-color: "#5B7FE8"
+      # Sliders
+      paper-slider-knob-color: "var(--accent-color)"
+      paper-slider-pin-color: "var(--background-color-2)"
+      paper-slider-active-color: "var(--accent-color)"
+      paper-slider-container-color: "var(--background-color-2)"
 
-      # ── Switches ─────────────────────────────────────────────
-      switch-checked-color: "#5B7FE8"
+      # Toggle
+      paper-toggle-button-checked-bar-color: "var(--accent-color)"
+      mdc-theme-primary: "var(--accent-color)"
+      mdc-theme-on-primary: "#ffffff"
+
+      # Switch
       switch-unchecked-color: "rgba(28,40,72,0.18)"
-      switch-checked-button-color: "#ffffff"
-      mdc-theme-primary: "#5B7FE8"
+      switch-checked-button-color: "var(--accent-color)"
+      switch-unchecked-track-color: "var(--background-color-2)"
+      switch-checked-track-color: "var(--background-color-2)"
 
-      # ── Sliders ──────────────────────────────────────────────
-      slider-color: "#5B7FE8"
-      paper-slider-knob-color: "#5B7FE8"
-      paper-slider-active-color: "#5B7FE8"
-      paper-slider-container-color: "rgba(28,40,72,0.13)"
+      # Radio Button
+      paper-radio-button-checked-color: "var(--accent-color)"
 
-      # ── Inputs ───────────────────────────────────────────────
-      input-fill-color: "var(--background-color-2)"
-      input-ink-color: "var(--text-color)"
-      input-idle-line-color: "rgba(28,40,72,0.15)"
-      input-hover-line-color: "#5B7FE8"
-      mdc-text-field-fill-color: "var(--background-color-2)"
-
-      # ── Popups ───────────────────────────────────────────────
-      more-info-header-background: "var(--background-color-2)"
+      # Popups
+      more-info-header-background: "var(--secondary-background-color)"
       paper-dialog-background-color: "var(--background-color)"
 
-      # ── Tables ───────────────────────────────────────────────
+      # Tables
       table-row-background-color: "var(--background-color)"
-      table-row-alternative-background-color: "var(--background-color-2)"
+      table-row-alternative-background-color: "var(--ha-card-background)"
 
-      # ── Energy ───────────────────────────────────────────────
+      # Badges
+      label-badge-background-color: "var(--background-color)"
+      label-badge-text-color: "var(--text-primary-color)"
+      label-badge-red: "#E05555"
+      label-badge-blue: "#5B7FE8"
+      label-badge-green: "#2BAF8A"
+      label-badge-yellow: "#E8943A"
+
+      paper-input-container-focus-color: "var(--accent-color)"
+
+      # Energy
       energy-grid-consumption-color: "#5B7FE8"
       energy-grid-return-color: "#2BAF8A"
       energy-solar-color: "#E8943A"
 
-      # ── Neo tokens ────────────────────────────────────────────
+      # Neo custom tokens
       neo-fill0: "rgba(255,255,255,0.97)"
       neo-fill1: "rgba(255,255,255,0.99)"
       neo-fill2: "rgba(255,255,255,1)"
@@ -261,3 +305,40 @@ Neo Dashboard:
       neo-accent-mint: "#2BAF8A"
       neo-accent-violet: "#9B59D9"
       neo-accent-rose: "#E05555"
+
+  # Header auf Mobile ausblenden (wie Bubble)
+  card-mod-root-yaml: |
+    .: |
+      @media only screen and (max-width: 768px) {
+          .header {
+            display: none;
+            opacity: 0;
+          }
+          #view {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+            height: calc(100vh - env(safe-area-inset-top)) !important;
+          }
+      }
+
+  # Dialoge: Backdrop-Blur + abgerundete Ecken
+  card-mod-more-info-yaml: |
+    $: |
+      .mdc-dialog .mdc-dialog__scrim {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        background: rgba(0,0,0,0.55);
+      }
+      .mdc-dialog .mdc-dialog__container .mdc-dialog__surface {
+        box-shadow: none !important;
+        border-radius: var(--ha-card-border-radius);
+      }
+    .: |
+      :host {
+        --ha-card-box-shadow: none;
+      }
+
+  card-mod-card: |
+    ha-card {
+      transition: none;
+    }
