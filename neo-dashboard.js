@@ -183,6 +183,77 @@ const NeoDashboardRegistry = {
 };
 window.NeoDashboard = NeoDashboardRegistry;
 
+// ── Icon set (SF-symbol style SVG, ported from prototype) ──────
+// Returned as strings so cards can inline them via innerHTML.
+const NEO_ICON_FILLED = new Set(["play", "pause", "next", "prev", "more", "starF", "dot"]);
+const NEO_ICON_PATHS = {
+  home: `<path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2v-9z"/>`,
+  rooms: `<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>`,
+  devices: `<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>`,
+  energy: `<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>`,
+  scenes: `<path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3l-1.4-1.4M19.1 19.1l-1.4-1.4M17.7 6.3l1.4-1.4M4.9 19.1l1.4-1.4"/><circle cx="12" cy="12" r="4"/>`,
+  settings: `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>`,
+  lightbulb: `<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/>`,
+  thermo: `<path d="M14 14.8V4a2 2 0 1 0-4 0v10.8a4 4 0 1 0 4 0z"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/>`,
+  camera: `<path d="M3 7h3l2-3h8l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/>`,
+  lock: `<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>`,
+  unlock: `<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>`,
+  speaker: `<rect x="6" y="3" width="12" height="18" rx="2"/><circle cx="12" cy="14" r="3"/><circle cx="12" cy="7" r="1" fill="currentColor"/>`,
+  play: `<path d="M8 5v14l11-7z"/>`,
+  pause: `<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>`,
+  next: `<path d="M5 4l10 8-10 8V4zM17 4h2v16h-2z"/>`,
+  prev: `<path d="M19 4L9 12l10 8V4zM5 4h2v16H5z"/>`,
+  blinds: `<rect x="3" y="3" width="18" height="3"/><rect x="3" y="8" width="18" height="2"/><rect x="3" y="12" width="18" height="2"/><path d="M12 16v5M10 21h4"/>`,
+  vacuum: `<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>`,
+  wind: `<path d="M3 8h11a3 3 0 1 0-3-3M3 16h15a3 3 0 1 1-3 3M3 12h17"/>`,
+  plug: `<path d="M9 2v6M15 2v6M7 8h10v3a5 5 0 0 1-10 0V8zM12 16v6"/>`,
+  wifi: `<path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/>`,
+  bell: `<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/>`,
+  plus: `<path d="M12 5v14M5 12h14"/>`,
+  minus: `<path d="M5 12h14"/>`,
+  chevR: `<path d="M9 6l6 6-6 6"/>`,
+  chevL: `<path d="M15 6l-6 6 6 6"/>`,
+  chevD: `<path d="M6 9l6 6 6-6"/>`,
+  chevU: `<path d="M6 15l6-6 6 6"/>`,
+  sun: `<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M5 12H2M22 12h-3M6.3 6.3L4.2 4.2M19.8 19.8l-2.1-2.1M17.7 6.3l2.1-2.1M4.2 19.8l2.1-2.1"/>`,
+  moon: `<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>`,
+  leaf: `<path d="M5 21c0-9 7-16 16-16 0 9-7 16-16 16zM5 21c4-4 8-6 12-7"/>`,
+  shield: `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/>`,
+  shieldOk: `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/>`,
+  water: `<path d="M12 3s-7 8-7 13a7 7 0 0 0 14 0c0-5-7-13-7-13z"/>`,
+  eye: `<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>`,
+  mic: `<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/>`,
+  search: `<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>`,
+  more: `<circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/>`,
+  check: `<path d="M5 12l5 5L20 7"/>`,
+  x: `<path d="M6 6l12 12M18 6L6 18"/>`,
+  star: `<path d="M12 2l3 7 7 .5-5.5 4.5L18 21l-6-4-6 4 1.5-7L2 9.5 9 9l3-7z"/>`,
+  starF: `<path d="M12 2l3 7 7 .5-5.5 4.5L18 21l-6-4-6 4 1.5-7L2 9.5 9 9l3-7z"/>`,
+  sparkle: `<path d="M12 3v6M12 15v6M3 12h6M15 12h6M5.5 5.5l3 3M15.5 15.5l3 3M18.5 5.5l-3 3M8.5 15.5l-3 3"/>`,
+  kettle: `<path d="M5 9h12l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9zM17 11l3-2-3-2M9 5h4"/>`,
+  tv: `<rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 21h8"/>`,
+  fridge: `<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M5 10h14M8 6v1M8 14v3"/>`,
+  dot: `<circle cx="12" cy="12" r="4"/>`,
+  arrUp: `<path d="M12 19V5M5 12l7-7 7 7"/>`,
+  arrDown: `<path d="M12 5v14M5 12l7 7 7-7"/>`,
+  // Weather (added — not in original prototype set)
+  cloud: `<path d="M7 18a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 18z"/>`,
+  rain: `<path d="M7 15a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 19l-1 2M12 19l-1 2M16 19l-1 2"/>`,
+  snow: `<path d="M7 15a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 19v.01M12 20v.01M16 19v.01"/>`,
+  storm: `<path d="M7 15a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M12 16l-2 3h3l-2 3"/>`,
+  fog: `<path d="M4 9h16M4 13h16M6 17h12"/>`,
+  partly: `<circle cx="8" cy="8" r="3"/><path d="M8 2v1.5M3 8H1.5M13 3l-1 1M3 13l1-1"/><path d="M10 18a3.5 3.5 0 0 1 .4-6.98 4.8 4.8 0 0 1 9.2 1.3A3 3 0 0 1 19 18z"/>`,
+};
+function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 } = {}) {
+  const inner = NEO_ICON_PATHS[name] || `<circle cx="12" cy="12" r="9"/>`;
+  const paint = NEO_ICON_FILLED.has(name)
+    ? `fill="currentColor"`
+    : `fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color};display:block" ${paint}>${inner}</svg>`;
+}
+// Icon dropdown options for editors
+const NEO_ICON_OPTIONS = Object.keys(NEO_ICON_PATHS).map((k) => ({ value: k, label: k }));
+
 // Accent dropdown options shared by all card editors
 const NEO_ACCENT_OPTIONS = [
   { value: "blue", label: "Blau" },
@@ -265,16 +336,53 @@ function makeNeoEditor(schema, meta = {}) {
 // ── Base Card ─────────────────────────────────────────────────
 class NeoBaseCard extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: "open" }); }
-  setConfig(config) { this._config = config; this._render(); }
-  set hass(h) { this._hass = h; this._render(); }
+
+  setConfig(config) {
+    this._config = config;
+    this._trackedCache = null; // config changed → recompute tracked entities
+    this._render();
+  }
+
+  // Performance: only re-render when a tracked entity actually changed.
+  // HA pushes a fresh hass object on EVERY state change in the system;
+  // a naive re-render would rebuild the DOM dozens of times per second.
+  set hass(h) {
+    const prev = this._hass;
+    this._hass = h;
+    if (!prev) { this._render(); return; }
+    const ids = this._trackedEntities();
+    // No entities tracked → nothing state-driven to update (skip churn)
+    if (ids.length === 0) return;
+    const changed = ids.some((id) => prev.states?.[id] !== h.states?.[id]);
+    if (changed) this._render();
+  }
   get hass() { return this._hass; }
+
   getCardSize() { return 2; }
   render() { return `<div style="padding:16px">Override render()</div>`; }
+
   _render() {
     this.shadowRoot.innerHTML = `<style>${NEO_CSS}</style>${this.render()}`;
     this._bindEvents();
   }
   _bindEvents() {}
+
+  // Collect entity ids referenced anywhere in the config (cached).
+  // Cards with special needs can override.
+  _trackedEntities() {
+    if (this._trackedCache) return this._trackedCache;
+    const ids = new Set();
+    const ENTITY_RE = /^[a-z_]+\.[a-z0-9_]+$/;
+    const scan = (v) => {
+      if (typeof v === "string") { if (ENTITY_RE.test(v)) ids.add(v); }
+      else if (Array.isArray(v)) v.forEach(scan);
+      else if (v && typeof v === "object") Object.values(v).forEach(scan);
+    };
+    scan(this._config || {});
+    this._trackedCache = [...ids];
+    return this._trackedCache;
+  }
+
   _state(id) { return this._hass?.states?.[id]; }
   _attr(id, a) { return this._state(id)?.attributes?.[a]; }
   _callService(domain, service, data = {}) { this._hass?.callService(domain, service, data); }
@@ -304,7 +412,7 @@ class NeoLightCard extends NeoBaseCard {
           <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
             background:${on ? `linear-gradient(160deg,${c} 0%,${c}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
             border:1px solid ${on ? "rgba(255,255,255,0.25)" : acc.c + "33"};
-            box-shadow:${on ? `0 4px 14px ${glow}` : "none"};font-size:18px;">💡</div>
+            box-shadow:${on ? `0 4px 14px ${glow}` : "none"};">${neoIcon("lightbulb", { size: 19, color: on ? "#fff" : acc.c })}</div>
           <div id="toggle" style="width:36px;height:22px;border-radius:11px;padding:2px;
             background:${on ? acc.c : "var(--neo-line5)"};transition:background 200ms;cursor:pointer;">
             <div style="width:18px;height:18px;border-radius:9px;background:#fff;
@@ -360,7 +468,7 @@ class NeoSensorCard extends NeoBaseCard {
     const value = s?.state ?? "—";
     const unit = this._config?.unit || s?.attributes?.unit_of_measurement || "";
     const name = this._config?.name || s?.attributes?.friendly_name || id || "Sensor";
-    const icon = this._config?.icon || "📊";
+    const icon = this._config?.icon || "thermo";
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.mint;
     return `
       <div class="neo-card" style="padding:16px;min-height:160px;display:flex;flex-direction:column;
@@ -369,7 +477,7 @@ class NeoSensorCard extends NeoBaseCard {
         border:1px solid var(--neo-line2);box-shadow:0 18px 40px -16px var(--neo-shadow1);">
         <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
-          border:1px solid ${acc.c}33;font-size:18px;">${icon}</div>
+          border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
         <div style="margin-top:auto;">
           <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
           <div style="display:flex;align-items:baseline;gap:3px;margin-top:4px;">
@@ -380,12 +488,12 @@ class NeoSensorCard extends NeoBaseCard {
       </div>`;
   }
   static getConfigElement() { return document.createElement("neo-sensor-card-editor"); }
-  static getStubConfig() { return { entity: "sensor.temperature", icon: "🌡️", accent: "mint" }; }
+  static getStubConfig() { return { entity: "sensor.temperature", icon: "thermo", accent: "mint" }; }
 }
 customElements.define("neo-sensor-card-editor", makeNeoEditor([
   { name: "entity", label: "Sensor-Entity", selector: { entity: { domain: "sensor" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
-  { name: "icon", label: "Emoji-Icon", selector: { text: {} } },
+  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
   { name: "unit", label: "Einheit (optional)", selector: { text: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
 ], { name: "Neo Sensor", description: "Sensorwert mit Icon", icon: "📊" }));
@@ -403,7 +511,7 @@ class NeoSceneCard extends NeoBaseCard {
     const active = s?.state === "on";
     const name = this._config?.name || s?.attributes?.friendly_name || id || "Scene";
     const sub = this._config?.sub || "";
-    const icon = this._config?.icon || "✨";
+    const icon = this._config?.icon || "sparkle";
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.violet;
     return `
       <div class="neo-card" id="card" role="button" style="padding:16px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;
@@ -414,7 +522,7 @@ class NeoSceneCard extends NeoBaseCard {
       ">
         <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
           background:${active ? `linear-gradient(160deg,${acc.c} 0%,${acc.c}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
-          border:1px solid ${active ? "rgba(255,255,255,0.25)" : acc.c + "33"};font-size:18px;">${icon}</div>
+          border:1px solid ${active ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: active ? "#fff" : acc.c })}</div>
         <div style="margin-top:auto;">
           <div style="font-size:16px;font-weight:600;">${name}</div>
           ${sub ? `<div style="font-size:12px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
@@ -428,13 +536,13 @@ class NeoSceneCard extends NeoBaseCard {
     });
   }
   static getConfigElement() { return document.createElement("neo-scene-card-editor"); }
-  static getStubConfig() { return { entity: "scene.movie_night", name: "Movie Night", icon: "🎬", accent: "violet" }; }
+  static getStubConfig() { return { entity: "scene.movie_night", name: "Movie Night", icon: "sparkle", accent: "violet" }; }
 }
 customElements.define("neo-scene-card-editor", makeNeoEditor([
   { name: "entity", label: "Szenen-Entity", selector: { entity: { domain: "scene" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-  { name: "icon", label: "Emoji-Icon", selector: { text: {} } },
+  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
 ], { name: "Neo Szene", description: "Szene per Tap aktivieren", icon: "🎬" }));
 NeoDashboardRegistry.registerCard("neo-scene-card", NeoSceneCard, {
@@ -450,8 +558,8 @@ class NeoQuickActionCard extends NeoBaseCard {
     const s = this._state(id);
     const on = s?.state === "on";
     const name = this._config?.name || s?.attributes?.friendly_name || id || "Device";
-    const sub = this._config?.sub || (on ? "On" : "Off");
-    const icon = this._config?.icon || "⚡";
+    const sub = this._config?.sub || (on ? "An" : "Aus");
+    const icon = this._config?.icon || "plug";
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
     return `
       <div class="neo-card" id="card" role="button" style="padding:16px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;
@@ -463,7 +571,7 @@ class NeoQuickActionCard extends NeoBaseCard {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
             background:${on ? `linear-gradient(160deg,${acc.c} 0%,${acc.c}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
-            border:1px solid ${on ? "rgba(255,255,255,0.25)" : acc.c + "33"};font-size:18px;">${icon}</div>
+            border:1px solid ${on ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: on ? "#fff" : acc.c })}</div>
           <div style="width:36px;height:22px;border-radius:11px;padding:2px;
             background:${on ? acc.c : "var(--neo-line5)"};transition:background 200ms;">
             <div style="width:18px;height:18px;border-radius:9px;background:#fff;
@@ -486,13 +594,13 @@ class NeoQuickActionCard extends NeoBaseCard {
     });
   }
   static getConfigElement() { return document.createElement("neo-quick-action-card-editor"); }
-  static getStubConfig() { return { entity: "switch.living_room", icon: "💡", accent: "blue" }; }
+  static getStubConfig() { return { entity: "switch.living_room", icon: "plug", accent: "blue" }; }
 }
 customElements.define("neo-quick-action-card-editor", makeNeoEditor([
   { name: "entity", label: "Entity (switch, light, etc.)", selector: { entity: {} } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-  { name: "icon", label: "Emoji-Icon", selector: { text: {} } },
+  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
 ], { name: "Neo Schnellaktion", description: "Schalter-Kachel mit Toggle", icon: "⚡" }));
 NeoDashboardRegistry.registerCard("neo-quick-action-card", NeoQuickActionCard, {
@@ -515,9 +623,9 @@ class NeoHeroCard extends NeoBaseCard {
   // Default per-button config (slot 1 = Suche, 2 = Kalender, 3 = Benachrichtigungen)
   _buttonDefaults(slot) {
     return {
-      1: { show: true, icon: "🔍", path: "", badge_entity: "" },
-      2: { show: true, icon: "📅", path: "", badge_entity: "" },
-      3: { show: true, icon: "🔔", path: "", badge_entity: "" },
+      1: { show: true, icon: "search", path: "", badge_entity: "" },
+      2: { show: true, icon: "scenes", path: "", badge_entity: "" },
+      3: { show: true, icon: "bell", path: "", badge_entity: "" },
     }[slot];
   }
 
@@ -562,7 +670,7 @@ class NeoHeroCard extends NeoBaseCard {
         display:flex;align-items:center;justify-content:center;
         cursor:pointer;flex-shrink:0;color:var(--neo-text1);
         font-size:16px;position:relative;
-      ">${b.icon}${badgeHtml}</button>`;
+      ">${neoIcon(b.icon, { size: 18, color: "var(--neo-text1)" })}${badgeHtml}</button>`;
   }
 
   render() {
@@ -608,9 +716,9 @@ class NeoHeroCard extends NeoBaseCard {
 
   static getStubConfig() {
     return {
-      button1: { show: true, icon: "🔍", path: "" },
-      button2: { show: true, icon: "📅", path: "" },
-      button3: { show: true, icon: "🔔", path: "" },
+      button1: { show: true, icon: "search", path: "" },
+      button2: { show: true, icon: "scenes", path: "" },
+      button3: { show: true, icon: "bell", path: "" },
     };
   }
 }
@@ -622,7 +730,7 @@ const _heroButtonSchema = (slot, title) => ({
   title,
   schema: [
     { name: "show", label: "Anzeigen", selector: { boolean: {} } },
-    { name: "icon", label: "Emoji-Icon", selector: { text: {} } },
+    { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
     { name: "path", label: "Navigations-Pfad (z.B. /lovelace/kalender)", selector: { text: {} } },
     { name: "badge_entity", label: "Badge-Entity (Zahl = Zähler, on = Punkt)", selector: { entity: {} } },
   ],
@@ -643,15 +751,19 @@ NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
 class NeoWeatherCard extends NeoBaseCard {
   getCardSize() { return 2; }
 
+  // condition → { icon name, accent color }
   _weatherIcon(condition) {
     const map = {
-      "sunny": "☀️", "clear-night": "🌙", "partlycloudy": "⛅",
-      "cloudy": "☁️", "rainy": "🌧️", "pouring": "🌧️", "snowy": "❄️",
-      "snowy-rainy": "🌨️", "windy": "💨", "windy-variant": "💨",
-      "fog": "🌫️", "hail": "🌨️", "lightning": "⚡", "lightning-rainy": "⛈️",
-      "exceptional": "🌡️",
+      "sunny": ["sun", "#FFB26B"], "clear-night": ["moon", "#7C9CFF"],
+      "partlycloudy": ["partly", "#FFB26B"], "cloudy": ["cloud", "#7C9CFF"],
+      "rainy": ["rain", "#7C9CFF"], "pouring": ["rain", "#7C9CFF"],
+      "snowy": ["snow", "#7C9CFF"], "snowy-rainy": ["snow", "#7C9CFF"],
+      "windy": ["wind", "#5EDCB8"], "windy-variant": ["wind", "#5EDCB8"],
+      "fog": ["fog", "#7C9CFF"], "hail": ["snow", "#7C9CFF"],
+      "lightning": ["storm", "#FFB26B"], "lightning-rainy": ["storm", "#FFB26B"],
+      "exceptional": ["sun", "#FFB26B"],
     };
-    return map[condition] || "🌤️";
+    return map[condition] || ["partly", "#7C9CFF"];
   }
 
   _conditionLabel(condition) {
@@ -688,7 +800,7 @@ class NeoWeatherCard extends NeoBaseCard {
     const feelsLike = s?.attributes?.apparent_temperature ?? s?.attributes?.feels_like ?? null;
     const humidity = s?.attributes?.humidity ?? null;
     const sunset = this._formatTime(this._state(sunsetId)?.state);
-    const icon = this._weatherIcon(condition);
+    const [iconName, iconColor] = this._weatherIcon(condition);
     const label = this._conditionLabel(condition);
     const acc = NEO_ACCENTS.blue;
 
@@ -708,7 +820,7 @@ class NeoWeatherCard extends NeoBaseCard {
           backdrop-filter:var(--neo-blur,blur(24px));-webkit-backdrop-filter:var(--neo-blur,blur(24px));
         ">
           <div style="display:flex;align-items:center;gap:12px;">
-            <span style="font-size:30px;line-height:1;">${icon}</span>
+            <span style="display:flex;">${neoIcon(iconName, { size: 30, color: iconColor })}</span>
             <div>
               <div style="font-size:15px;font-weight:600;color:var(--neo-text1);">${label} · ${temp}°</div>
               ${subParts ? `<div style="font-size:11px;color:var(--neo-text3);margin-top:2px;">${subParts}</div>` : ""}
