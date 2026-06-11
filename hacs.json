@@ -1,8 +1,7 @@
 {
   "name": "Neo Dashboard Kit",
-  "content_in_root": false,
-  "filename": "dist/neo-dashboard.js",
+  "content_in_root": true,
+  "filename": "neo-dashboard.js",
   "render_readme": true,
-  "hide_default_branch": false,
   "homeassistant": "2023.9.0"
 }
