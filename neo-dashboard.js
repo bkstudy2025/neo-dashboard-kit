@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.5
+// Neo Dashboard Kit v0.1.3-beta.6
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -894,21 +894,12 @@ const NEO_WEATHER_CSS = `
     animation:neo-wx-twinkle ease-in-out infinite; will-change:opacity, transform; }
   @keyframes neo-wx-twinkle { 0%,100%{opacity:.15; transform:scale(.7)} 50%{opacity:1; transform:scale(1)} }
 
-  /* Clouds — realistic volume: many soft white puffs (lit top) over a
-     greyish shaded underside, feathered with blur */
+  /* Clouds — photoreal texture via SVG fractal-noise (feTurbulence) */
   .neo-wx-cloud { position:absolute; left:0; display:block;
-    background:
-      radial-gradient(46% 38% at 52% 92%, rgba(120,132,156,.40), rgba(120,132,156,0) 72%),
-      radial-gradient(40% 34% at 30% 84%, rgba(120,132,156,.28), rgba(120,132,156,0) 72%),
-      radial-gradient(28% 52% at 18% 62%, rgba(255,255,255,.98), rgba(255,255,255,0) 72%),
-      radial-gradient(32% 62% at 36% 48%, rgba(255,255,255,1),   rgba(255,255,255,0) 73%),
-      radial-gradient(40% 78% at 55% 40%, rgba(255,255,255,1),   rgba(255,255,255,0) 74%),
-      radial-gradient(30% 58% at 73% 50%, rgba(255,255,255,.98), rgba(255,255,255,0) 72%),
-      radial-gradient(24% 46% at 87% 64%, rgba(255,255,255,.92), rgba(255,255,255,0) 70%),
-      radial-gradient(72% 42% at 50% 72%, rgba(255,255,255,.96), rgba(255,255,255,0) 80%);
-    filter:blur(3.5px);
+    filter:drop-shadow(0 4px 5px rgba(35,45,65,.20));
     animation:neo-wx-drift linear infinite; will-change:transform; }
-  @keyframes neo-wx-drift { 0%{transform:translateX(-180px)} 100%{transform:translateX(780px)} }
+  .neo-wx-cloud svg { display:block; width:100%; height:100%; }
+  @keyframes neo-wx-drift { 0%{transform:translateX(-200px)} 100%{transform:translateX(800px)} }
 
   /* Lightning flash */
   .neo-wx-flash { position:absolute; inset:0;
@@ -1008,19 +999,47 @@ class NeoWeatherCard extends NeoBaseCard {
     return { gradient, particles, clouds, flash, fog, sun };
   }
 
+  // One realistic cloud as an SVG: fractal-noise texture masked into a
+  // soft blob, with a lit top and a slightly darker underside.
+  _cloudSVG(uid, night) {
+    const tint = night ? "#cdd6e8" : "#ffffff";
+    // alpha amplify controls puffiness/density of the noise
+    return `<svg viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="ncf${uid}" x="-15%" y="-15%" width="130%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.013 0.028" numOctaves="4" seed="${uid}" stitchTiles="stitch" result="n"/>
+          <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 11 -4.6"/>
+        </filter>
+        <radialGradient id="ncm${uid}" cx="50%" cy="60%" r="62%">
+          <stop offset="46%" stop-color="#fff" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="ncs${uid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${tint}" stop-opacity="1"/>
+          <stop offset="62%" stop-color="${tint}" stop-opacity="1"/>
+          <stop offset="100%" stop-color="${night ? "#8893ad" : "#b9c2d6"}" stop-opacity="1"/>
+        </linearGradient>
+        <mask id="nck${uid}">
+          <rect width="200" height="110" fill="url(#ncm${uid})" filter="url(#ncf${uid})"/>
+        </mask>
+      </defs>
+      <rect width="200" height="110" fill="url(#ncs${uid})" mask="url(#nck${uid})"/>
+    </svg>`;
+  }
+
   _clouds({ intensity }, night) {
     const count = intensity === "heavy" ? 5 : intensity === "light" ? 2 : 3;
     let html = "";
-    // Layered: bigger/dimmer in back, smaller/brighter in front
     for (let i = 0; i < count; i++) {
-      const w = 64 + Math.random() * 86;
-      const h = w * 0.58;
-      const top = (-14 + Math.random() * 46).toFixed(0);
-      const dur = (26 + Math.random() * 26).toFixed(1);
+      const w = 80 + Math.random() * 90;
+      const h = w * 0.55;
+      const top = (-16 + Math.random() * 48).toFixed(0);
+      const dur = (28 + Math.random() * 26).toFixed(1);
       const delay = (-Math.random() * dur).toFixed(1);
-      const dayOp = intensity === "heavy" ? 0.95 : 0.8;
-      const op = ((night ? 0.34 : dayOp) * (0.8 + Math.random() * 0.2)).toFixed(2);
-      html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+      const dayOp = intensity === "heavy" ? 0.95 : 0.82;
+      const op = ((night ? 0.4 : dayOp) * (0.82 + Math.random() * 0.18)).toFixed(2);
+      const uid = `${Date.now().toString(36).slice(-3)}${i}${Math.floor(Math.random() * 900 + 100)}`;
+      html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s">${this._cloudSVG(uid, night)}</span>`;
     }
     return html;
   }
@@ -1388,7 +1407,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.5 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.6 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
