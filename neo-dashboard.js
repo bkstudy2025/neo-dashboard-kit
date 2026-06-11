@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.3
+// Neo Dashboard Kit v0.1.3-beta.4
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -894,12 +894,16 @@ const NEO_WEATHER_CSS = `
     animation:neo-wx-twinkle ease-in-out infinite; will-change:opacity, transform; }
   @keyframes neo-wx-twinkle { 0%,100%{opacity:.15; transform:scale(.7)} 50%{opacity:1; transform:scale(1)} }
 
-  /* Clouds — real fluffy SVG silhouettes drifting across */
+  /* Clouds — soft feathery vapor from overlapping radial puffs */
   .neo-wx-cloud { position:absolute; left:0; display:block;
+    background:
+      radial-gradient(42% 62% at 26% 64%, rgba(255,255,255,.95), rgba(255,255,255,0) 72%),
+      radial-gradient(48% 80% at 50% 44%, rgba(255,255,255,1),  rgba(255,255,255,0) 74%),
+      radial-gradient(40% 60% at 74% 60%, rgba(255,255,255,.9),  rgba(255,255,255,0) 72%),
+      radial-gradient(64% 46% at 50% 80%, rgba(255,255,255,.85), rgba(255,255,255,0) 78%);
+    filter:blur(5px);
     animation:neo-wx-drift linear infinite; will-change:transform; }
-  .neo-wx-cloud svg { display:block; width:100%; height:100%;
-    filter:drop-shadow(0 2px 4px rgba(0,0,0,.12)); }
-  @keyframes neo-wx-drift { 0%{transform:translateX(-160px)} 100%{transform:translateX(760px)} }
+  @keyframes neo-wx-drift { 0%{transform:translateX(-180px)} 100%{transform:translateX(780px)} }
 
   /* Lightning flash */
   .neo-wx-flash { position:absolute; inset:0;
@@ -929,9 +933,6 @@ const NEO_WEATHER_CSS = `
     .neo-wx-flash { display:none; }
   }
 `;
-
-// Fluffy filled cloud silhouette (viewBox 120x70)
-const NEO_CLOUD_SVG = `<svg viewBox="0 0 120 70" preserveAspectRatio="xMidYMid meet"><g fill="#fff"><ellipse cx="60" cy="52" rx="52" ry="15"/><circle cx="40" cy="40" r="20"/><circle cx="66" cy="31" r="26"/><circle cx="90" cy="44" r="18"/></g></svg>`;
 
 class NeoWeatherCard extends NeoBaseCard {
   getCardSize() { return 2; }
@@ -1012,9 +1013,9 @@ class NeoWeatherCard extends NeoBaseCard {
       const top = (-14 + Math.random() * 46).toFixed(0);
       const dur = (26 + Math.random() * 26).toFixed(1);
       const delay = (-Math.random() * dur).toFixed(1);
-      const dayOp = intensity === "heavy" ? 0.92 : 0.78;
-      const op = ((night ? 0.32 : dayOp) * (0.7 + Math.random() * 0.3)).toFixed(2);
-      html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s">${NEO_CLOUD_SVG}</span>`;
+      const dayOp = intensity === "heavy" ? 0.7 : 0.55;
+      const op = ((night ? 0.24 : dayOp) * (0.75 + Math.random() * 0.25)).toFixed(2);
+      html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
     }
     return html;
   }
@@ -1382,7 +1383,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.3 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.4 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
