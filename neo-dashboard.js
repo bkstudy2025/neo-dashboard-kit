@@ -149,6 +149,11 @@ const NEO_CSS = `
     transition: all 240ms cubic-bezier(.2,.8,.2,1);
   }
   .neo-card[role="button"]:active { transform: scale(0.975); }
+  /* Tactile press feedback (ported from prototype) */
+  button { transition: transform .12s cubic-bezier(.2,.8,.2,1), background .2s, filter .2s; }
+  button:hover { filter: brightness(1.12); }
+  button:active { transform: scale(0.9); }
+  [role="button"]:active { transform: scale(0.97); }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
   @keyframes spin { from{transform:rotate(0)}to{transform:rotate(360deg)} }
 `;
@@ -708,11 +713,21 @@ class NeoHeroCard extends NeoBaseCard {
     return { label: st.charAt(0).toUpperCase() + st.slice(1), color: "#7C9CFF" };
   }
 
+  _rgb(v) { return Array.isArray(v) && v.length === 3 ? `rgb(${v[0]},${v[1]},${v[2]})` : null; }
+
   render() {
     const userName = this._hass?.user?.name;
     const name = this._config?.name || userName || "Home";
     const greeting = this._config?.greeting_text || this._greeting();
-    const greetLine = name && name !== "Home" ? `${greeting}, ${name}` : greeting;
+
+    // Optional name color / gradient
+    const c1 = this._rgb(this._config?.name_color);
+    const c2 = this._rgb(this._config?.name_color2);
+    let nameStyle = "font-weight:600;";
+    if (c1 && c2) nameStyle += `background:linear-gradient(90deg,${c1},${c2});-webkit-background-clip:text;background-clip:text;color:transparent;`;
+    else if (c1) nameStyle += `color:${c1};`;
+    const nameHtml = `<span style="${nameStyle}">${name}</span>`;
+    const greetLine = name && name !== "Home" ? `${greeting}, ${nameHtml}` : greeting;
 
     const presence = this._presence();
     const bigLine = presence ? presence.label : name;
@@ -724,8 +739,8 @@ class NeoHeroCard extends NeoBaseCard {
       <div style="font-family:var(--neo-font,system-ui);color:var(--neo-text1,#F4F6FB);padding:8px 6px 12px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
           <div style="min-width:0;">
-            <div style="font-size:13px;color:var(--neo-text2);font-weight:500;letter-spacing:0.2px;">${greetLine}</div>
-            <div style="font-size:28px;font-weight:600;letter-spacing:-0.6px;margin-top:1px;">${dot}${bigLine}</div>
+            <div style="font-size:13px;color:var(--neo-text2);font-weight:500;letter-spacing:0.2px;line-height:1.2;">${greetLine}</div>
+            <div style="font-size:28px;font-weight:600;letter-spacing:-0.6px;line-height:1.1;margin-top:1px;">${dot}${bigLine}</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
             ${this._renderButton(1)}
@@ -781,6 +796,8 @@ customElements.define("neo-hero-card-editor", makeNeoEditor([
   { name: "name", label: "Name (leer = angemeldeter Benutzer)", selector: { text: {} } },
   { name: "greeting_text", label: "Begrüßungstext (leer = automatisch nach Uhrzeit)", selector: { text: {} } },
   { name: "person_entity", label: "Person für Status (Zuhause/Unterwegs)", selector: { entity: { domain: "person" } } },
+  { name: "name_color", label: "Namensfarbe (optional)", selector: { color_rgb: {} } },
+  { name: "name_color2", label: "Verlauf-Endfarbe (optional, für Gradient)", selector: { color_rgb: {} } },
   _heroButtonSchema(1, "Button 1 – Suche"),
   _heroButtonSchema(2, "Button 2 – Kalender"),
   _heroButtonSchema(3, "Button 3 – Benachrichtigungen"),
