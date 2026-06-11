@@ -950,7 +950,12 @@ if (!window.customCards.find((c) => c.type === "neo-card")) {
 // ── Neo Card Editor — type dropdown + selected card's own editor ─
 class NeoCardEditor extends HTMLElement {
   setConfig(config) {
-    this._config = { ...config };
+    const incoming = { ...config };
+    // Defensive: if a partial config arrives without card_type, keep ours.
+    if (!incoming.card_type && this._config?.card_type) {
+      incoming.card_type = this._config.card_type;
+    }
+    this._config = incoming;
     if (!this._built) this._build();
     else this._syncTypeForm();
   }
@@ -977,6 +982,7 @@ class NeoCardEditor extends HTMLElement {
     if (this._hass) this._typeForm.hass = this._hass;
     this._typeForm.computeLabel = (s) => s.label || s.name;
     this._typeForm.addEventListener("value-changed", (e) => {
+      e.stopPropagation();
       const newType = e.detail.value.card_type;
       if (newType === this._config.card_type) return;
       const cls = NeoDashboardRegistry.getCard(newType);
@@ -995,7 +1001,12 @@ class NeoCardEditor extends HTMLElement {
   }
 
   _syncTypeForm() {
-    if (this._typeForm) this._typeForm.data = { card_type: this._config.card_type };
+    if (!this._typeForm) return;
+    // Only update when the value actually changed — avoids re-rendering
+    // the dropdown (which would close it mid-interaction).
+    if (this._typeForm.data?.card_type !== this._config.card_type) {
+      this._typeForm.data = { card_type: this._config.card_type };
+    }
   }
 
   _mountSub() {
