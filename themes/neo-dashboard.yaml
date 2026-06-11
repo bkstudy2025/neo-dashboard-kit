@@ -306,6 +306,8 @@ Neo Dashboard:
       neo-accent-violet: "#9B59D9"
       neo-accent-rose: "#E05555"
 
+  card-mod-theme: Neo Dashboard
+
   # Header auf Mobile ausblenden (wie Bubble)
   card-mod-root-yaml: |
     .: |
