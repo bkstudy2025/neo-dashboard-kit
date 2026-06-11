@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.8
+// Neo Dashboard Kit v0.1.3-beta.9
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -864,9 +864,9 @@ NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
   description: "Begrüßung mit Name und Action-Buttons",
 });
 
-// Default cloud texture (served by HACS at /hacsfiles/<repo>/img/...).
-// Override per card via the `cloud_image` option.
-const NEO_CLOUD_IMG = "/hacsfiles/neo-dashboard-kit/img/cloud.png";
+// Default cloud texture. Served from GitHub raw so it works regardless
+// of how HACS lays out files locally. Override via `cloud_image`.
+const NEO_CLOUD_IMG = "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/img/cloud.png";
 
 // ── Weather Card ──────────────────────────────────────────────
 // CSS for the animated background (rain / snow / stars). Pure CSS =
@@ -1385,7 +1385,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.8 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.9 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
