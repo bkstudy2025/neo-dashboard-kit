@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.2
+// Neo Dashboard Kit v0.1.3-beta.3
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -869,30 +869,69 @@ NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
 // no requestAnimationFrame loop, GPU-friendly transforms only.
 const NEO_WEATHER_CSS = `
   .neo-wx-fx { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
-  .neo-wx-rain { position:absolute; top:-20px; width:1.4px; height:13px;
-    background:linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.45));
+
+  /* Rain — slanted streaks with a bright head, falling tail */
+  .neo-wx-rain { position:absolute; top:-24px; width:2px; height:18px; border-radius:2px;
+    background:linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(210,228,255,.7) 100%);
     animation:neo-wx-drop linear infinite; will-change:transform; }
-  @keyframes neo-wx-drop { 0%{transform:translateY(-20px)} 100%{transform:translateY(130px)} }
-  .neo-wx-snow { position:absolute; top:-10px; border-radius:50%;
-    background:rgba(255,255,255,.92); animation:neo-wx-snowfall linear infinite; will-change:transform; }
-  @keyframes neo-wx-snowfall { 0%{transform:translate(0,-12px)} 100%{transform:translate(var(--drift,0),130px)} }
-  .neo-wx-star { position:absolute; border-radius:50%; background:#fff;
-    animation:neo-wx-twinkle ease-in-out infinite; will-change:opacity; }
-  @keyframes neo-wx-twinkle { 0%,100%{opacity:.2} 50%{opacity:1} }
-  .neo-wx-cloud { position:absolute; left:0; border-radius:50%;
-    background:radial-gradient(ellipse at center, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 70%);
-    filter:blur(3px); animation:neo-wx-drift linear infinite; will-change:transform; }
-  @keyframes neo-wx-drift { 0%{transform:translateX(-140px)} 100%{transform:translateX(720px)} }
-  .neo-wx-flash { position:absolute; inset:0; background:#fff; opacity:0;
-    animation:neo-wx-flash 5.2s linear infinite; }
-  @keyframes neo-wx-flash {
-    0%,92%,100%{opacity:0} 93%{opacity:.28} 94%{opacity:0} 96%{opacity:.5} 97%{opacity:0}
+  @keyframes neo-wx-drop {
+    0%{transform:translateY(-24px) rotate(14deg)} 100%{transform:translateY(140px) rotate(14deg)}
   }
+
+  /* Snow — soft glowing flakes with horizontal drift */
+  .neo-wx-snow { position:absolute; top:-12px; border-radius:50%;
+    background:radial-gradient(circle, #fff 0%, #fff 55%, rgba(255,255,255,.4) 100%);
+    box-shadow:0 0 4px rgba(255,255,255,.7);
+    animation:neo-wx-snowfall linear infinite; will-change:transform; }
+  @keyframes neo-wx-snowfall {
+    0%{transform:translate(0,-12px)} 50%{transform:translate(var(--drift,8px),65px)}
+    100%{transform:translate(0,140px)}
+  }
+
+  /* Stars — twinkle with a subtle glow */
+  .neo-wx-star { position:absolute; border-radius:50%; background:#fff;
+    box-shadow:0 0 4px rgba(255,255,255,.85);
+    animation:neo-wx-twinkle ease-in-out infinite; will-change:opacity, transform; }
+  @keyframes neo-wx-twinkle { 0%,100%{opacity:.15; transform:scale(.7)} 50%{opacity:1; transform:scale(1)} }
+
+  /* Clouds — real fluffy SVG silhouettes drifting across */
+  .neo-wx-cloud { position:absolute; left:0; display:block;
+    animation:neo-wx-drift linear infinite; will-change:transform; }
+  .neo-wx-cloud svg { display:block; width:100%; height:100%;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.12)); }
+  @keyframes neo-wx-drift { 0%{transform:translateX(-160px)} 100%{transform:translateX(760px)} }
+
+  /* Lightning flash */
+  .neo-wx-flash { position:absolute; inset:0;
+    background:radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.9) 0%, rgba(255,255,255,0) 70%);
+    opacity:0; animation:neo-wx-flash 5.5s linear infinite; }
+  @keyframes neo-wx-flash {
+    0%,90%,100%{opacity:0} 91%{opacity:.5} 92%{opacity:.1} 93%{opacity:.7}
+    94%{opacity:0} 96%{opacity:.55} 97%{opacity:0}
+  }
+
+  /* Fog — soft drifting haze bands */
+  .neo-wx-fog { position:absolute; left:-20%; width:140%; height:18px; border-radius:50%;
+    background:linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.35), rgba(255,255,255,0));
+    filter:blur(4px); animation:neo-wx-fog linear infinite; will-change:transform, opacity; }
+  @keyframes neo-wx-fog {
+    0%{transform:translateX(-12%)} 50%{transform:translateX(12%)} 100%{transform:translateX(-12%)}
+  }
+
+  /* Sun rays for sunny */
+  .neo-wx-sun { position:absolute; top:-30px; right:-10px; width:90px; height:90px; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,236,170,.9) 0%, rgba(255,214,120,.35) 40%, rgba(255,214,120,0) 70%);
+    animation:neo-wx-pulse 6s ease-in-out infinite; }
+  @keyframes neo-wx-pulse { 0%,100%{opacity:.7; transform:scale(1)} 50%{opacity:1; transform:scale(1.08)} }
+
   @media (prefers-reduced-motion: reduce) {
-    .neo-wx-rain, .neo-wx-snow, .neo-wx-star, .neo-wx-cloud, .neo-wx-flash { animation: none; }
+    .neo-wx-rain, .neo-wx-snow, .neo-wx-star, .neo-wx-cloud, .neo-wx-flash, .neo-wx-fog, .neo-wx-sun { animation: none; }
     .neo-wx-flash { display:none; }
   }
 `;
+
+// Fluffy filled cloud silhouette (viewBox 120x70)
+const NEO_CLOUD_SVG = `<svg viewBox="0 0 120 70" preserveAspectRatio="xMidYMid meet"><g fill="#fff"><ellipse cx="60" cy="52" rx="52" ry="15"/><circle cx="40" cy="40" r="20"/><circle cx="66" cy="31" r="26"/><circle cx="90" cy="44" r="18"/></g></svg>`;
 
 class NeoWeatherCard extends NeoBaseCard {
   getCardSize() { return 2; }
@@ -954,24 +993,28 @@ class NeoWeatherCard extends NeoBaseCard {
     let clouds = null;
     if (cond === "cloudy" || cond === "windy-variant") clouds = { intensity: "heavy" };
     else if (cond === "partlycloudy") clouds = { intensity: "light" };
-    else if (cond === "lightning" || cond === "lightning-rainy" || cond === "pouring") clouds = { intensity: "normal" };
+    else if (cond === "lightning" || cond === "lightning-rainy" || cond === "pouring" || cond === "rainy") clouds = { intensity: "normal" };
 
     const flash = cond === "lightning" || cond === "lightning-rainy";
+    const fog = cond === "fog";
+    const sun = !night && (cond === "sunny" || cond === "clear");
 
-    return { gradient, particles, clouds, flash };
+    return { gradient, particles, clouds, flash, fog, sun };
   }
 
   _clouds({ intensity }, night) {
-    const count = intensity === "heavy" ? 4 : intensity === "light" ? 2 : 3;
+    const count = intensity === "heavy" ? 5 : intensity === "light" ? 2 : 3;
     let html = "";
+    // Layered: bigger/dimmer in back, smaller/brighter in front
     for (let i = 0; i < count; i++) {
-      const w = 70 + Math.random() * 90;
-      const h = w * 0.55;
-      const top = (-10 + Math.random() * 42).toFixed(0);
-      const dur = (20 + Math.random() * 22).toFixed(1);
+      const w = 64 + Math.random() * 86;
+      const h = w * 0.58;
+      const top = (-14 + Math.random() * 46).toFixed(0);
+      const dur = (26 + Math.random() * 26).toFixed(1);
       const delay = (-Math.random() * dur).toFixed(1);
-      const op = ((night ? 0.18 : 0.5) * (0.6 + Math.random() * 0.4)).toFixed(2);
-      html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+      const dayOp = intensity === "heavy" ? 0.92 : 0.78;
+      const op = ((night ? 0.32 : dayOp) * (0.7 + Math.random() * 0.3)).toFixed(2);
+      html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s">${NEO_CLOUD_SVG}</span>`;
     }
     return html;
   }
@@ -980,23 +1023,41 @@ class NeoWeatherCard extends NeoBaseCard {
     let html = "";
     for (let i = 0; i < count; i++) {
       const left = (Math.random() * 100).toFixed(1);
+      // Depth: ~⅓ of particles sit "in front" (bigger, faster, brighter)
+      const front = i % 3 === 0;
       if (kind === "star") {
-        const top = (Math.random() * 70).toFixed(1);
-        const size = (1 + Math.random() * 1.4).toFixed(1);
-        const dur = (2 + Math.random() * 3).toFixed(2);
-        const delay = (-Math.random() * 3).toFixed(2);
+        const top = (Math.random() * 72).toFixed(1);
+        const big = Math.random() > 0.8;
+        const size = (big ? 1.8 + Math.random() * 1.2 : 0.8 + Math.random() * 1.1).toFixed(1);
+        const dur = (2 + Math.random() * 3.5).toFixed(2);
+        const delay = (-Math.random() * 4).toFixed(2);
         html += `<span class="neo-wx-star" style="left:${left}%;top:${top}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
       } else if (kind === "snow") {
-        const size = (2 + Math.random() * 2).toFixed(1);
-        const drift = (Math.random() * 16 - 8).toFixed(0);
-        const dur = (3 + Math.random() * 3).toFixed(2);
-        const delay = (-Math.random() * 4).toFixed(2);
-        html += `<span class="neo-wx-snow" style="left:${left}%;width:${size}px;height:${size}px;--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+        const size = (front ? 3 + Math.random() * 2 : 1.6 + Math.random() * 1.6).toFixed(1);
+        const drift = (Math.random() * 22 - 11).toFixed(0);
+        const dur = (front ? 3 + Math.random() * 2 : 4.5 + Math.random() * 3).toFixed(2);
+        const delay = (-Math.random() * 6).toFixed(2);
+        const op = (front ? 1 : 0.7).toFixed(2);
+        html += `<span class="neo-wx-snow" style="left:${left}%;width:${size}px;height:${size}px;opacity:${op};--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
       } else {
-        const dur = (0.8 + Math.random() * 0.5).toFixed(2);
+        const w = (front ? 2.4 : 1.6).toFixed(1);
+        const h = (front ? 22 : 15).toFixed(0);
+        const dur = (front ? 0.6 + Math.random() * 0.3 : 0.85 + Math.random() * 0.45).toFixed(2);
         const delay = (-Math.random() * 1.3).toFixed(2);
-        html += `<span class="neo-wx-rain" style="left:${left}%;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+        const op = (front ? 0.85 : 0.5).toFixed(2);
+        html += `<span class="neo-wx-rain" style="left:${left}%;width:${w}px;height:${h}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
       }
+    }
+    return html;
+  }
+
+  _fog() {
+    let html = "";
+    for (let i = 0; i < 3; i++) {
+      const top = 15 + i * 28;
+      const dur = (8 + Math.random() * 6).toFixed(1);
+      const delay = (-Math.random() * dur).toFixed(1);
+      html += `<span class="neo-wx-fog" style="top:${top}%;animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
     }
     return html;
   }
@@ -1078,7 +1139,10 @@ class NeoWeatherCard extends NeoBaseCard {
     const particles = (animations && fx?.particles) ? this._particles(fx.particles) : "";
     const clouds = (animations && fx?.clouds) ? this._clouds(fx.clouds, night) : "";
     const flash = (animations && fx?.flash) ? `<div class="neo-wx-flash"></div>` : "";
-    const fxLayer = (clouds || particles || flash) ? `<div class="neo-wx-fx">${clouds}${particles}${flash}</div>` : "";
+    const fog = (animations && fx?.fog) ? this._fog() : "";
+    const sun = (animations && fx?.sun) ? `<div class="neo-wx-sun"></div>` : "";
+    const inner = `${sun}${clouds}${fog}${particles}${flash}`;
+    const fxLayer = inner ? `<div class="neo-wx-fx">${inner}</div>` : "";
     const border = onDark ? "rgba(255,255,255,0.12)" : "var(--neo-line2,rgba(255,255,255,0.08))";
 
     return `
@@ -1318,7 +1382,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.2 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.3 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
