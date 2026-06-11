@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.2-beta.3
+// Neo Dashboard Kit v0.1.2-beta.4
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -651,9 +651,9 @@ class NeoHeroCard extends NeoBaseCard {
   // Default per-button config (slot 1 = Suche, 2 = Kalender, 3 = Benachrichtigungen)
   _buttonDefaults(slot) {
     return {
-      1: { show: true, icon: "search", path: "", badge_entity: "" },
-      2: { show: true, icon: "scenes", path: "", badge_entity: "" },
-      3: { show: true, icon: "bell", path: "", badge_entity: "" },
+      1: { show: true, icon: "search", action: "quickbar", path: "", badge_entity: "" },
+      2: { show: true, icon: "calendar", action: "navigate", path: "", badge_entity: "" },
+      3: { show: true, icon: "bell", action: "navigate", path: "", badge_entity: "" },
     }[slot];
   }
 
@@ -772,12 +772,39 @@ class NeoHeroCard extends NeoBaseCard {
     window.dispatchEvent(new CustomEvent("location-changed"));
   }
 
+  // Opens HA's built-in Quick Bar (entity search / command palette)
+  _openQuickBar(commands) {
+    const ev = new KeyboardEvent("keydown", {
+      key: commands ? "c" : "e",
+      code: commands ? "KeyC" : "KeyE",
+      bubbles: true, cancelable: true, composed: true,
+    });
+    document.dispatchEvent(ev);
+  }
+
+  _moreInfo(entityId) {
+    if (!entityId) return;
+    this.dispatchEvent(new CustomEvent("hass-more-info", {
+      bubbles: true, composed: true, detail: { entityId },
+    }));
+  }
+
+  _runAction(b) {
+    const action = b.action || (b.path ? "navigate" : "none");
+    switch (action) {
+      case "quickbar": this._openQuickBar(false); break;
+      case "quickbar_commands": this._openQuickBar(true); break;
+      case "more_info": this._moreInfo(b.badge_entity); break;
+      case "navigate": this._navigate(b.path); break;
+      default: if (b.path) this._navigate(b.path);
+    }
+  }
+
   _bindEvents() {
     this.shadowRoot.querySelectorAll(".neo-hero-btn").forEach((el) => {
       el.addEventListener("click", () => {
         const slot = el.getAttribute("data-slot");
-        const b = this._button(slot);
-        this._navigate(b.path);
+        this._runAction(this._button(slot));
       });
     });
   }
@@ -803,6 +830,13 @@ const _heroButtonSchema = (slot, title) => ({
   schema: [
     { name: "show", label: "Anzeigen", selector: { boolean: {} } },
     { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
+    { name: "action", label: "Aktion beim Klick", selector: { select: { mode: "dropdown", options: [
+      { value: "navigate", label: "Navigation (Pfad)" },
+      { value: "quickbar", label: "Schnellsuche (Entitäten)" },
+      { value: "quickbar_commands", label: "Befehle (Command Palette)" },
+      { value: "more_info", label: "Info-Dialog (Badge-Entity)" },
+      { value: "none", label: "Keine" },
+    ] } } },
     { name: "path", label: "Navigations-Pfad (z.B. /lovelace/kalender)", selector: { text: {} } },
     { name: "badge_entity", label: "Badge-Entity (Zahl = Zähler, on = Punkt)", selector: { entity: {} } },
     { name: "accent", label: "Akzentfarbe bei Meldung", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
@@ -1120,7 +1154,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.2-beta.3 ",
+  "%c NEO DASHBOARD KIT %c v0.1.2-beta.4 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
