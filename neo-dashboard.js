@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.2-beta.1
+// Neo Dashboard Kit v0.1.2-beta.2
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -676,29 +676,43 @@ class NeoHeroCard extends NeoBaseCard {
     const b = this._button(slot);
     if (!b.show) return "";
     const badge = this._badge(b.badge_entity);
+    const active = badge.kind !== null;
+    // Accent: configured, else rose for counts / violet for dot
+    const acc = NEO_ACCENTS[b.accent] || (badge.kind === "count" ? NEO_ACCENTS.rose : NEO_ACCENTS.violet);
+    // Tint the button itself when a badge is active (unless disabled)
+    const highlight = active && b.highlight !== false;
+
     let badgeHtml = "";
     if (badge.kind === "count") {
       badgeHtml = `<span style="
         position:absolute;top:6px;right:6px;min-width:16px;height:16px;padding:0 4px;
-        border-radius:8px;background:#F87171;color:#fff;font-size:10px;font-weight:700;
+        border-radius:8px;background:${acc.c};color:#fff;font-size:10px;font-weight:700;
         display:flex;align-items:center;justify-content:center;
         box-shadow:0 0 0 2px var(--ha-card-background,#111827);
       ">${badge.value}</span>`;
     } else if (badge.kind === "dot") {
       badgeHtml = `<span style="
         position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:4px;
-        background:#C084FC;box-shadow:0 0 0 2px var(--ha-card-background,#111827),0 0 6px #C084FC;
+        background:${acc.c};box-shadow:0 0 0 2px var(--ha-card-background,#111827),0 0 6px ${acc.c};
       "></span>`;
     }
+
+    const bg = highlight
+      ? `linear-gradient(160deg, ${acc.glow} 0%, var(--neo-fill2,rgba(255,255,255,0.055)) 100%)`
+      : "var(--neo-fill2,rgba(255,255,255,0.055))";
+    const border = highlight ? `${acc.c}66` : "var(--neo-line2,rgba(255,255,255,0.08))";
+    const iconColor = highlight ? acc.c : "var(--neo-text1)";
+
     return `
       <button class="neo-hero-btn" data-slot="${slot}" style="
         width:40px;height:40px;border-radius:20px;
-        border:1px solid var(--neo-line2,rgba(255,255,255,0.08));
-        background:var(--neo-fill2,rgba(255,255,255,0.055));
+        border:1px solid ${border};
+        background:${bg};
+        ${highlight ? `box-shadow:0 4px 14px ${acc.glow};` : ""}
         display:flex;align-items:center;justify-content:center;
-        cursor:pointer;flex-shrink:0;color:var(--neo-text1);
+        cursor:pointer;flex-shrink:0;
         font-size:16px;position:relative;
-      ">${neoIcon(b.icon, { size: 18, color: "var(--neo-text1)" })}${badgeHtml}</button>`;
+      ">${neoIcon(b.icon, { size: 18, color: iconColor })}${badgeHtml}</button>`;
   }
 
   // Presence → { label, color } for the big status line
@@ -731,8 +745,9 @@ class NeoHeroCard extends NeoBaseCard {
 
     const presence = this._presence();
     const bigLine = presence ? presence.label : name;
-    const dot = presence
-      ? `<span style="display:inline-block;width:9px;height:9px;border-radius:5px;background:${presence.color};box-shadow:0 0 8px ${presence.color};margin-right:8px;vertical-align:middle;"></span>`
+    const showDot = presence && this._config?.show_status_dot !== false;
+    const dot = showDot
+      ? `<span style="flex-shrink:0;width:9px;height:9px;border-radius:5px;background:${presence.color};box-shadow:0 0 8px ${presence.color};"></span>`
       : "";
 
     return `
@@ -740,7 +755,7 @@ class NeoHeroCard extends NeoBaseCard {
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
           <div style="min-width:0;">
             <div style="font-size:13px;color:var(--neo-text2);font-weight:500;letter-spacing:0.2px;line-height:1.2;">${greetLine}</div>
-            <div style="font-size:28px;font-weight:600;letter-spacing:-0.6px;line-height:1.1;margin-top:1px;">${dot}${bigLine}</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:28px;font-weight:600;letter-spacing:-0.6px;line-height:1.1;margin-top:1px;">${dot}<span>${bigLine}</span></div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
             ${this._renderButton(1)}
@@ -790,12 +805,15 @@ const _heroButtonSchema = (slot, title) => ({
     { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
     { name: "path", label: "Navigations-Pfad (z.B. /lovelace/kalender)", selector: { text: {} } },
     { name: "badge_entity", label: "Badge-Entity (Zahl = Zähler, on = Punkt)", selector: { entity: {} } },
+    { name: "accent", label: "Akzentfarbe bei Meldung", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+    { name: "highlight", label: "Button bei Meldung einfärben", selector: { boolean: {} } },
   ],
 });
 customElements.define("neo-hero-card-editor", makeNeoEditor([
   { name: "name", label: "Name (leer = angemeldeter Benutzer)", selector: { text: {} } },
   { name: "greeting_text", label: "Begrüßungstext (leer = automatisch nach Uhrzeit)", selector: { text: {} } },
   { name: "person_entity", label: "Person für Status (Zuhause/Unterwegs)", selector: { entity: { domain: "person" } } },
+  { name: "show_status_dot", label: "Status-Punkt anzeigen", selector: { boolean: {} } },
   { name: "name_color", label: "Namensfarbe (optional)", selector: { color_rgb: {} } },
   { name: "name_color2", label: "Verlauf-Endfarbe (optional, für Gradient)", selector: { color_rgb: {} } },
   _heroButtonSchema(1, "Button 1 – Suche"),
@@ -1102,7 +1120,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.2-beta.1 ",
+  "%c NEO DASHBOARD KIT %c v0.1.2-beta.2 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
