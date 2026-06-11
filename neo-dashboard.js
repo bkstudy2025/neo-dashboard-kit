@@ -1012,6 +1012,9 @@ class NeoCardEditor extends HTMLElement {
     if (this._hass) this._sub.hass = this._hass;
     this._sub.setConfig(subConfig);
     this._sub.addEventListener("config-changed", (e) => {
+      // Stop the sub-editor's event from bubbling to HA directly —
+      // otherwise HA would receive a config without type/card_type.
+      e.stopPropagation();
       this._config = { type: this._config.type, card_type: type, ...e.detail.config };
       this._fire();
     });
