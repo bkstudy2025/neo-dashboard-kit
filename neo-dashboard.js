@@ -156,14 +156,68 @@ const NEO_CSS = `
 // ── Registry ──────────────────────────────────────────────────
 const _registry = new Map();
 const NeoDashboardRegistry = {
-  registerCard(type, cls) {
+  registerCard(type, cls, meta = {}) {
     if (_registry.has(type)) return;
     _registry.set(type, cls);
     if (!customElements.get(type)) customElements.define(type, cls);
+
+    // Register in HA's card picker so it shows up in "Karte hinzufügen"
+    window.customCards = window.customCards || [];
+    if (!window.customCards.find((c) => c.type === type)) {
+      window.customCards.push({
+        type,
+        name: meta.name || type,
+        description: meta.description || "Neo Dashboard Kit card",
+        preview: meta.preview !== false,
+        documentationURL: "https://github.com/bkstudy2025/neo-dashboard-kit",
+      });
+    }
     console.info(`[Neo Dashboard] Registered: ${type}`);
   },
 };
 window.NeoDashboard = NeoDashboardRegistry;
+
+// Accent dropdown options shared by all card editors
+const NEO_ACCENT_OPTIONS = [
+  { value: "blue", label: "Blau" },
+  { value: "amber", label: "Amber" },
+  { value: "mint", label: "Mint" },
+  { value: "violet", label: "Violett" },
+  { value: "rose", label: "Rosé" },
+];
+
+// ── Shared ha-form editor factory ─────────────────────────────
+// HA's <ha-form> needs real JS properties (.schema/.data) — they
+// cannot be passed as stringified HTML attributes. This helper
+// creates the element and binds properties correctly.
+function makeNeoEditor(schema) {
+  return class extends HTMLElement {
+    setConfig(config) {
+      this._config = { ...config };
+      if (this._form) this._form.data = this._config;
+      else this._build();
+    }
+    set hass(hass) {
+      this._hass = hass;
+      if (this._form) this._form.hass = hass;
+    }
+    _build() {
+      this._form = document.createElement("ha-form");
+      this._form.schema = schema;
+      this._form.data = this._config || {};
+      if (this._hass) this._form.hass = this._hass;
+      this._form.computeLabel = (s) => s.label || s.name;
+      this._form.addEventListener("value-changed", (e) => {
+        this._config = e.detail.value;
+        this.dispatchEvent(new CustomEvent("config-changed", {
+          detail: { config: this._config },
+          bubbles: true, composed: true,
+        }));
+      });
+      this.appendChild(this._form);
+    }
+  };
+}
 
 // ── Base Card ─────────────────────────────────────────────────
 class NeoBaseCard extends HTMLElement {
@@ -241,9 +295,18 @@ class NeoLightCard extends NeoBaseCard {
       this._callService("light", on ? "turn_off" : "turn_on", { entity_id: id });
     });
   }
+  static getConfigElement() { return document.createElement("neo-light-card-editor"); }
   static getStubConfig() { return { entity: "light.living_room", accent: "amber" }; }
 }
-NeoDashboardRegistry.registerCard("neo-light-card", NeoLightCard);
+customElements.define("neo-light-card-editor", makeNeoEditor([
+  { name: "entity", label: "Licht-Entity", selector: { entity: { domain: "light" } } },
+  { name: "name", label: "Name (optional)", selector: { text: {} } },
+  { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+]));
+NeoDashboardRegistry.registerCard("neo-light-card", NeoLightCard, {
+  name: "Neo Licht",
+  description: "Licht mit Helligkeits-Slider",
+});
 
 // ── Sensor Card ───────────────────────────────────────────────
 class NeoSensorCard extends NeoBaseCard {
@@ -273,9 +336,20 @@ class NeoSensorCard extends NeoBaseCard {
         </div>
       </div>`;
   }
+  static getConfigElement() { return document.createElement("neo-sensor-card-editor"); }
   static getStubConfig() { return { entity: "sensor.temperature", icon: "🌡️", accent: "mint" }; }
 }
-NeoDashboardRegistry.registerCard("neo-sensor-card", NeoSensorCard);
+customElements.define("neo-sensor-card-editor", makeNeoEditor([
+  { name: "entity", label: "Sensor-Entity", selector: { entity: { domain: "sensor" } } },
+  { name: "name", label: "Name (optional)", selector: { text: {} } },
+  { name: "icon", label: "Emoji-Icon", selector: { text: {} } },
+  { name: "unit", label: "Einheit (optional)", selector: { text: {} } },
+  { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+]));
+NeoDashboardRegistry.registerCard("neo-sensor-card", NeoSensorCard, {
+  name: "Neo Sensor",
+  description: "Sensorwert mit Icon",
+});
 
 // ── Scene Card ────────────────────────────────────────────────
 class NeoSceneCard extends NeoBaseCard {
@@ -310,9 +384,20 @@ class NeoSceneCard extends NeoBaseCard {
       this._callService("scene", "turn_on", { entity_id: id });
     });
   }
+  static getConfigElement() { return document.createElement("neo-scene-card-editor"); }
   static getStubConfig() { return { entity: "scene.movie_night", name: "Movie Night", icon: "🎬", accent: "violet" }; }
 }
-NeoDashboardRegistry.registerCard("neo-scene-card", NeoSceneCard);
+customElements.define("neo-scene-card-editor", makeNeoEditor([
+  { name: "entity", label: "Szenen-Entity", selector: { entity: { domain: "scene" } } },
+  { name: "name", label: "Name (optional)", selector: { text: {} } },
+  { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
+  { name: "icon", label: "Emoji-Icon", selector: { text: {} } },
+  { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+]));
+NeoDashboardRegistry.registerCard("neo-scene-card", NeoSceneCard, {
+  name: "Neo Szene",
+  description: "Szene per Tap aktivieren",
+});
 
 // ── Quick Action Card ─────────────────────────────────────────
 class NeoQuickActionCard extends NeoBaseCard {
@@ -357,9 +442,20 @@ class NeoQuickActionCard extends NeoBaseCard {
       this._callService(domain, on ? "turn_off" : "turn_on", { entity_id: id });
     });
   }
+  static getConfigElement() { return document.createElement("neo-quick-action-card-editor"); }
   static getStubConfig() { return { entity: "switch.living_room", icon: "💡", accent: "blue" }; }
 }
-NeoDashboardRegistry.registerCard("neo-quick-action-card", NeoQuickActionCard);
+customElements.define("neo-quick-action-card-editor", makeNeoEditor([
+  { name: "entity", label: "Entity (switch, light, etc.)", selector: { entity: {} } },
+  { name: "name", label: "Name (optional)", selector: { text: {} } },
+  { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
+  { name: "icon", label: "Emoji-Icon", selector: { text: {} } },
+  { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+]));
+NeoDashboardRegistry.registerCard("neo-quick-action-card", NeoQuickActionCard, {
+  name: "Neo Schnellaktion",
+  description: "Schalter-Kachel mit Toggle",
+});
 
 // ── Hero Card ─────────────────────────────────────────────────
 class NeoHeroCard extends NeoBaseCard {
@@ -435,33 +531,18 @@ class NeoHeroCard extends NeoBaseCard {
 }
 
 // Hero Card Visual Editor
-class NeoHeroCardEditor extends HTMLElement {
-  setConfig(config) { this._config = { ...config }; this._render(); }
-  get _schema() {
-    return [
-      { name: "name", label: "Name", selector: { text: {} } },
-      { name: "greeting_text", label: "Begrüßungstext (leer = automatisch)", selector: { text: {} } },
-      { name: "show_search", label: "Suche-Button anzeigen", selector: { boolean: {} } },
-      { name: "show_scenes", label: "Szenen-Button anzeigen", selector: { boolean: {} } },
-      { name: "show_notifications", label: "Benachrichtigungs-Button anzeigen", selector: { boolean: {} } },
-      { name: "notifications_entity", label: "Entity für Benachrichtigungs-Zähler (optional)", selector: { entity: {} } },
-    ];
-  }
-  _render() {
-    if (!this._config) return;
-    this.innerHTML = `<ha-form
-      .schema=${JSON.stringify(this._schema)}
-      .data=${JSON.stringify(this._config)}
-      .computeLabel=${`(s) => s.label`}
-    ></ha-form>`;
-    this.querySelector("ha-form")?.addEventListener("value-changed", (e) => {
-      this._config = e.detail.value;
-      this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true }));
-    });
-  }
-}
-customElements.define("neo-hero-card-editor", NeoHeroCardEditor);
-NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard);
+customElements.define("neo-hero-card-editor", makeNeoEditor([
+  { name: "name", label: "Name", selector: { text: {} } },
+  { name: "greeting_text", label: "Begrüßungstext (leer = automatisch)", selector: { text: {} } },
+  { name: "show_search", label: "Suche-Button anzeigen", selector: { boolean: {} } },
+  { name: "show_scenes", label: "Szenen-Button anzeigen", selector: { boolean: {} } },
+  { name: "show_notifications", label: "Benachrichtigungs-Button anzeigen", selector: { boolean: {} } },
+  { name: "notifications_entity", label: "Entity für Benachrichtigungs-Zähler (optional)", selector: { entity: {} } },
+]));
+NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
+  name: "Neo Hero / Begrüßung",
+  description: "Begrüßung mit Name und Action-Buttons",
+});
 
 // ── Weather Card ──────────────────────────────────────────────
 class NeoWeatherCard extends NeoBaseCard {
@@ -563,27 +644,14 @@ class NeoWeatherCard extends NeoBaseCard {
   }
 }
 
-class NeoWeatherCardEditor extends HTMLElement {
-  setConfig(config) { this._config = { ...config }; this._render(); }
-  _render() {
-    if (!this._config) return;
-    const schema = [
-      { name: "entity", label: "Wetter-Entity", selector: { entity: { domain: "weather" } } },
-      { name: "sunset_entity", label: "Sonnenuntergang-Entity (optional)", selector: { entity: { domain: "sensor" } } },
-    ];
-    this.innerHTML = `<ha-form
-      .schema=${JSON.stringify(schema)}
-      .data=${JSON.stringify(this._config)}
-      .computeLabel=${`(s) => s.label`}
-    ></ha-form>`;
-    this.querySelector("ha-form")?.addEventListener("value-changed", (e) => {
-      this._config = e.detail.value;
-      this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true }));
-    });
-  }
-}
-customElements.define("neo-weather-card-editor", NeoWeatherCardEditor);
-NeoDashboardRegistry.registerCard("neo-weather-card", NeoWeatherCard);
+customElements.define("neo-weather-card-editor", makeNeoEditor([
+  { name: "entity", label: "Wetter-Entity", selector: { entity: { domain: "weather" } } },
+  { name: "sunset_entity", label: "Sonnenuntergang-Entity (optional)", selector: { entity: { domain: "sensor" } } },
+]));
+NeoDashboardRegistry.registerCard("neo-weather-card", NeoWeatherCard, {
+  name: "Neo Wetter",
+  description: "Wetter-Banner mit Temperatur und Sonnenuntergang",
+});
 
 console.info(
   "%c NEO DASHBOARD KIT %c v0.1.0 ",
