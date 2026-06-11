@@ -708,8 +708,20 @@ class NeoCard extends HTMLElement {
 
     if (!type) {
       this.innerHTML = `
-        <ha-card style="padding:24px;text-align:center;color:var(--secondary-text-color);">
-          Bitte im Editor einen Kartentyp wählen.
+        <ha-card style="
+          padding:28px 24px;border-radius:24px;text-align:center;
+          display:flex;flex-direction:column;align-items:center;gap:10px;
+        ">
+          <div style="
+            width:52px;height:52px;border-radius:15px;
+            display:flex;align-items:center;justify-content:center;font-size:26px;
+            background:linear-gradient(160deg,#7C9CFF 0%,#7C9CFFcc 100%);
+            box-shadow:0 4px 14px rgba(124,156,255,0.35);
+          ">✨</div>
+          <div style="font-size:16px;font-weight:600;color:var(--primary-text-color);">Neo Card</div>
+          <div style="font-size:13px;color:var(--secondary-text-color);max-width:240px;line-height:1.4;">
+            Wähle im Editor unter <b>Kartentyp</b> die gewünschte Karte (Licht, Sensor, Szene …).
+          </div>
         </ha-card>`;
       this._child = null;
       this._childType = null;
@@ -753,7 +765,8 @@ class NeoCard extends HTMLElement {
   }
 
   static getStubConfig() {
-    return { card_type: "neo-light-card", entity: "light.living_room", accent: "amber" };
+    // Empty stub → picker shows the placeholder, not a specific card
+    return {};
   }
 }
 customElements.define("neo-card", NeoCard);
@@ -804,7 +817,7 @@ class NeoCardEditor extends HTMLElement {
       if (newType === this._config.card_type) return;
       const cls = NeoDashboardRegistry.getCard(newType);
       const stub = cls?.getStubConfig?.() || {};
-      this._config = { card_type: newType, ...stub };
+      this._config = { type: this._config.type, card_type: newType, ...stub };
       this._mountSub();
       this._fire();
     });
@@ -835,7 +848,7 @@ class NeoCardEditor extends HTMLElement {
     if (this._hass) this._sub.hass = this._hass;
     this._sub.setConfig(subConfig);
     this._sub.addEventListener("config-changed", (e) => {
-      this._config = { card_type: type, ...e.detail.config };
+      this._config = { type: this._config.type, card_type: type, ...e.detail.config };
       this._fire();
     });
     this._subContainer.appendChild(this._sub);
