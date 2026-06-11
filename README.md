@@ -11,7 +11,7 @@ A glassmorphism-style Home Assistant dashboard with a community plugin system.
 ## Installation via HACS
 
 1. Open HACS → Frontend → Custom Repositories
-2. Add `https://github.com/bkstudy2025/neo-dashboard-kit` with category **Plugin**
+2. Add `https://github.com/bkstudy2025/neo-dashboard-kit` with category **Dashboard**
 3. Install **Neo Dashboard Kit**
 4. Add to your `configuration.yaml` or Lovelace resources:
 
