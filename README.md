@@ -3,7 +3,7 @@
 A glassmorphism-style Home Assistant dashboard with a community plugin system.
 
 ![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)
-![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![Version](https://img.shields.io/github/v/release/bkstudy2025/neo-dashboard-kit?include_prereleases)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ---
@@ -52,44 +52,36 @@ Profil (Avatar unten links) → **Theme** → **Neo Dashboard** auswählen
 
 ---
 
-## Karten / Cards
+## Karten verwenden
 
-### `neo-light-card`
+Alle Karten laufen über **eine** Karte: `custom:neo-card`. Den Kartentyp wählst du
+im **visuellen Editor** über das Dropdown **„Kartentyp"** — oder per YAML mit `card_type`.
+
+> **Karte hinzufügen** → nach **„Neo Card"** suchen → im Editor den Kartentyp wählen.
+
+Beispiel (YAML):
 ```yaml
-type: custom:neo-light-card
+type: custom:neo-card
+card_type: neo-light-card
 entity: light.wohnzimmer
-name: Wohnzimmer        # optional, nutzt friendly_name
-accent: amber           # blue | amber | mint | violet | rose
+accent: amber
 ```
 
-### `neo-sensor-card`
-```yaml
-type: custom:neo-sensor-card
-entity: sensor.temperatur_kueche_temperature
-name: Küche Temperatur
-icon: "🌡️"
-unit: "°C"
-accent: mint
-```
+### Verfügbare Karten
 
-### `neo-scene-card`
-```yaml
-type: custom:neo-scene-card
-entity: scene.film_abend
-name: Film Abend
-sub: "6 Geräte"
-icon: "🎬"
-accent: violet
-```
+| Kartentyp | Beschreibung | Doku |
+|---|---|---|
+| `neo-hero-card` | Begrüßung, Anwesenheitsstatus, Action-Buttons | [Doku](docs/cards/hero.md) |
+| `neo-weather-card` | Wetter-Banner mit Temperatur & Sonnenuntergang | [Doku](docs/cards/weather.md) |
+| `neo-light-card` | Licht mit Helligkeits-Slider | [Doku](docs/cards/light.md) |
+| `neo-sensor-card` | Sensorwert mit Icon | [Doku](docs/cards/sensor.md) |
+| `neo-scene-card` | Szene per Tap aktivieren | [Doku](docs/cards/scene.md) |
+| `neo-quick-action-card` | Schalter-Kachel mit Toggle | [Doku](docs/cards/quick-action.md) |
 
-### `neo-quick-action-card`
-```yaml
-type: custom:neo-quick-action-card
-entity: switch.steckdose_wohnzimmer
-name: Steckdose
-icon: "⚡"
-accent: blue
-```
+→ Vollständige Übersicht: **[docs/cards/](docs/cards/README.md)**
+
+> Fortgeschrittene können die Karten auch direkt verwenden (`type: custom:neo-light-card` …),
+> dann erscheinen sie aber nicht im Karten-Picker.
 
 ---
 
