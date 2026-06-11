@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.4-beta.1
+// Neo Dashboard Kit v0.1.4-beta.2
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -874,11 +874,13 @@ const NEO_STATUS_CSS = `
   .neo-pills-scroll::-webkit-scrollbar { display:none; }
   .neo-pill {
     display:flex; align-items:center; gap:8px; flex-shrink:0;
-    padding:8px 14px; border-radius:999px; cursor:pointer;
+    height:40px; padding:0 16px; border-radius:999px; cursor:pointer;
     background:var(--neo-fill2,rgba(255,255,255,0.055));
     border:1px solid var(--neo-line2,rgba(255,255,255,0.08));
-    font-size:13.5px; font-weight:600; color:var(--neo-text1,#F4F6FB);
-    white-space:nowrap; transition:transform .12s, background .2s; }
+    font-size:14px; font-weight:600; color:var(--neo-text1,#F4F6FB);
+    letter-spacing:-0.1px; white-space:nowrap;
+    transition:transform .12s, background .2s; }
+  .neo-pill svg { flex-shrink:0; }
   .neo-pill:active { transform:scale(0.95); }
   .neo-pills-arrow {
     position:absolute; top:50%; transform:translateY(-50%);
@@ -978,29 +980,135 @@ class NeoStatusCard extends NeoBaseCard {
   static getConfigElement() { return document.createElement("neo-status-card-editor"); }
   static getStubConfig() {
     return {
-      pill1: { show: true, icon: "shieldOk", name: "Armed", accent: "mint" },
-      pill2: { show: true, icon: "leaf", entity: "sensor.power", accent: "mint" },
-      pill3: { show: true, icon: "rooms", name: "2 home", accent: "blue" },
+      pills: [
+        { icon: "shieldOk", name: "Armed", accent: "mint" },
+        { icon: "leaf", entity: "sensor.power", accent: "mint" },
+        { icon: "rooms", name: "2 home", accent: "blue" },
+      ],
     };
   }
 }
 
-const _pillSchema = (n) => ({
-  type: "expandable",
-  name: `pill${n}`,
-  title: `Pill ${n}`,
-  schema: [
-    { name: "show", label: "Anzeigen", selector: { boolean: {} } },
-    { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
-    { name: "name", label: "Text (leer = Entity-Status)", selector: { text: {} } },
-    { name: "entity", label: "Entity (optional)", selector: { entity: {} } },
-    { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-  ],
-});
-customElements.define("neo-status-card-editor", makeNeoEditor([
-  _pillSchema(1), _pillSchema(2), _pillSchema(3),
-  _pillSchema(4), _pillSchema(5), _pillSchema(6),
-], { name: "Neo Status-Leiste", description: "Scrollbare Status-Pills (Karussell)", icon: "🏷️" }));
+// Dynamic editor: add/remove pills via + / trash buttons
+const NEO_PILL_SCHEMA = [
+  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
+  { name: "name", label: "Text (leer = Entity-Status)", selector: { text: {} } },
+  { name: "entity", label: "Entity (optional)", selector: { entity: {} } },
+  { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+];
+class NeoStatusCardEditor extends HTMLElement {
+  setConfig(config) {
+    this._config = { ...config };
+    // Normalise to a pills array (supports legacy pill1..6)
+    if (Array.isArray(config.pills)) {
+      this._pills = config.pills.map((p) => ({ ...p }));
+    } else {
+      this._pills = [];
+      for (let i = 1; i <= 6; i++) {
+        const p = config[`pill${i}`];
+        if (p && (p.icon || p.entity || p.name)) this._pills.push({ ...p });
+        delete this._config[`pill${i}`];
+      }
+    }
+    if (!this._built) this._build();
+  }
+  set hass(h) {
+    this._hass = h;
+    this._rows?.forEach((f) => (f.hass = h));
+  }
+
+  _build() {
+    this._built = true;
+    this.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.innerHTML = `
+      <style>
+        .neo-ed-head { display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:14px;
+          border-radius:16px; background:linear-gradient(135deg, rgba(124,156,255,0.18), rgba(124,156,255,0.04));
+          border:1px solid rgba(124,156,255,0.25); }
+        .neo-ed-ic { width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+          font-size:24px;background:linear-gradient(160deg,#7C9CFF,#7C9CFFcc);box-shadow:0 4px 14px rgba(124,156,255,.35); }
+        .neo-ed-row { position:relative; border:1px solid var(--divider-color,rgba(255,255,255,.1));
+          border-radius:14px; padding:10px 12px 4px; margin-bottom:10px; }
+        .neo-ed-del { position:absolute; top:8px; right:8px; width:30px;height:30px;border-radius:8px;cursor:pointer;
+          border:1px solid var(--divider-color,rgba(255,255,255,.12)); background:transparent;
+          color:var(--error-color,#F87171); display:flex;align-items:center;justify-content:center; }
+        .neo-ed-add { width:100%; padding:11px; border-radius:12px; cursor:pointer; margin-top:4px;
+          border:1px dashed var(--primary-color,#7C9CFF); background:transparent;
+          color:var(--primary-color,#7C9CFF); font-size:14px; font-weight:600; }
+        .neo-ed-num { font-size:12px; font-weight:600; color:var(--secondary-text-color); margin-bottom:6px; }
+      </style>
+      <div class="neo-ed-head">
+        <div class="neo-ed-ic">🏷️</div>
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--primary-text-color)">Neo Status-Leiste</div>
+          <div style="font-size:12.5px;color:var(--secondary-text-color)">Pills hinzufügen, entfernen und anordnen</div>
+        </div>
+      </div>`;
+    this.appendChild(header);
+
+    this._list = document.createElement("div");
+    this.appendChild(this._list);
+
+    this._addBtn = document.createElement("button");
+    this._addBtn.className = "neo-ed-add";
+    this._addBtn.textContent = "+ Pill hinzufügen";
+    this._addBtn.addEventListener("click", () => {
+      this._pills.push({ icon: "dot", accent: "blue" });
+      this._renderRows();
+      this._fire();
+    });
+    this.appendChild(this._addBtn);
+
+    this._renderRows();
+  }
+
+  _renderRows() {
+    this._list.innerHTML = "";
+    this._rows = [];
+    this._pills.forEach((pill, i) => {
+      const row = document.createElement("div");
+      row.className = "neo-ed-row";
+      const num = document.createElement("div");
+      num.className = "neo-ed-num";
+      num.textContent = `Pill ${i + 1}`;
+      row.appendChild(num);
+
+      const del = document.createElement("button");
+      del.className = "neo-ed-del";
+      del.innerHTML = neoIcon("trash", { size: 16, color: "currentColor" });
+      del.addEventListener("click", () => {
+        this._pills.splice(i, 1);
+        this._renderRows();
+        this._fire();
+      });
+      row.appendChild(del);
+
+      const form = document.createElement("ha-form");
+      form.schema = NEO_PILL_SCHEMA;
+      form.data = pill;
+      if (this._hass) form.hass = this._hass;
+      form.computeLabel = (s) => s.label || s.name;
+      form.addEventListener("value-changed", (e) => {
+        e.stopPropagation();
+        this._pills[i] = e.detail.value;
+        this._fire();
+      });
+      row.appendChild(form);
+      this._rows.push(form);
+      this._list.appendChild(row);
+    });
+  }
+
+  _fire() {
+    const out = { ...this._config, pills: this._pills };
+    this.dispatchEvent(new CustomEvent("config-changed", {
+      detail: { config: out }, bubbles: true, composed: true,
+    }));
+  }
+}
+customElements.define("neo-status-card-editor", NeoStatusCardEditor);
 NeoDashboardRegistry.registerCard("neo-status-card", NeoStatusCard, {
   name: "Neo Status-Leiste",
   description: "Scrollbare Status-Pills mit Pfeilen",
@@ -1560,7 +1668,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.4-beta.1 ",
+  "%c NEO DASHBOARD KIT %c v0.1.4-beta.2 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
