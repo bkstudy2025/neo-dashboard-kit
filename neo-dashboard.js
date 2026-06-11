@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.6
+// Neo Dashboard Kit v0.1.3-beta.7
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -999,31 +999,24 @@ class NeoWeatherCard extends NeoBaseCard {
     return { gradient, particles, clouds, flash, fog, sun };
   }
 
-  // One realistic cloud as an SVG: fractal-noise texture masked into a
-  // soft blob, with a lit top and a slightly darker underside.
+  // One realistic cloud as an SVG: fractal-noise texture clipped into a
+  // soft elliptical blob via feComposite (noise alpha × shape alpha).
   _cloudSVG(uid, night) {
-    const tint = night ? "#cdd6e8" : "#ffffff";
-    // alpha amplify controls puffiness/density of the noise
+    const r = night ? 0.80 : 1, g = night ? 0.86 : 1, b = 1;
     return `<svg viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="ncf${uid}" x="-15%" y="-15%" width="130%" height="130%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.013 0.028" numOctaves="4" seed="${uid}" stitchTiles="stitch" result="n"/>
-          <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 11 -4.6"/>
-        </filter>
-        <radialGradient id="ncm${uid}" cx="50%" cy="60%" r="62%">
-          <stop offset="46%" stop-color="#fff" stop-opacity="1"/>
+        <radialGradient id="cg${uid}" cx="50%" cy="54%" r="58%">
+          <stop offset="38%" stop-color="#fff" stop-opacity="1"/>
           <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
         </radialGradient>
-        <linearGradient id="ncs${uid}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${tint}" stop-opacity="1"/>
-          <stop offset="62%" stop-color="${tint}" stop-opacity="1"/>
-          <stop offset="100%" stop-color="${night ? "#8893ad" : "#b9c2d6"}" stop-opacity="1"/>
-        </linearGradient>
-        <mask id="nck${uid}">
-          <rect width="200" height="110" fill="url(#ncm${uid})" filter="url(#ncf${uid})"/>
-        </mask>
+        <filter id="cf${uid}" x="-25%" y="-25%" width="150%" height="150%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.014 0.03" numOctaves="4" seed="${uid}" stitchTiles="stitch" result="n"/>
+          <feColorMatrix in="n" type="matrix"
+            values="0 0 0 0 ${r}  0 0 0 0 ${g}  0 0 0 0 ${b}  0 0 0 9 -3" result="tex"/>
+          <feComposite in="tex" in2="SourceAlpha" operator="in"/>
+        </filter>
       </defs>
-      <rect width="200" height="110" fill="url(#ncs${uid})" mask="url(#nck${uid})"/>
+      <ellipse cx="100" cy="60" rx="94" ry="44" fill="url(#cg${uid})" filter="url(#cf${uid})"/>
     </svg>`;
   }
 
@@ -1407,7 +1400,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.6 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.7 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
