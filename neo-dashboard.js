@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.10
+// Neo Dashboard Kit v0.1.4-beta.1
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -864,6 +864,148 @@ NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
   description: "Begrüßung mit Name und Action-Buttons",
 });
 
+// ── Status Card — horizontal carousel of status pills ─────────
+const NEO_STATUS_CSS = `
+  .neo-pills-wrap { position:relative; }
+  .neo-pills-scroll {
+    display:flex; gap:8px; overflow-x:auto; scroll-behavior:smooth;
+    padding:2px 2px; scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .neo-pills-scroll::-webkit-scrollbar { display:none; }
+  .neo-pill {
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
+    padding:8px 14px; border-radius:999px; cursor:pointer;
+    background:var(--neo-fill2,rgba(255,255,255,0.055));
+    border:1px solid var(--neo-line2,rgba(255,255,255,0.08));
+    font-size:13.5px; font-weight:600; color:var(--neo-text1,#F4F6FB);
+    white-space:nowrap; transition:transform .12s, background .2s; }
+  .neo-pill:active { transform:scale(0.95); }
+  .neo-pills-arrow {
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:28px; height:28px; border-radius:14px; z-index:2; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--neo-fill2,rgba(255,255,255,0.08));
+    border:1px solid var(--neo-line3,rgba(255,255,255,0.10));
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    opacity:0; pointer-events:none; transition:opacity .2s; }
+  .neo-pills-arrow.left { left:-2px; }
+  .neo-pills-arrow.right { right:-2px; }
+`;
+
+class NeoStatusCard extends NeoBaseCard {
+  getCardSize() { return 1; }
+
+  _pills() {
+    if (Array.isArray(this._config?.pills)) return this._config.pills.filter(Boolean);
+    const out = [];
+    for (let i = 1; i <= 6; i++) {
+      const p = this._config?.[`pill${i}`];
+      if (p && p.show !== false && (p.icon || p.entity || p.name)) out.push(p);
+    }
+    return out;
+  }
+
+  _pillText(p) {
+    if (p.name) return p.name;
+    const st = this._state(p.entity);
+    if (!st) return "—";
+    const unit = st.attributes?.unit_of_measurement;
+    return unit ? `${st.state} ${unit}` : st.state;
+  }
+
+  render() {
+    const pills = this._pills();
+    const html = pills.map((p, i) => {
+      const acc = NEO_ACCENTS[p.accent] || NEO_ACCENTS.blue;
+      const text = this._pillText(p);
+      const icon = p.icon ? neoIcon(p.icon, { size: 16, color: acc.c }) : "";
+      return `<div class="neo-pill" data-i="${i}" ${p.entity ? `data-entity="${p.entity}"` : ""}>
+        ${icon}<span>${text}</span>
+      </div>`;
+    }).join("");
+
+    return `
+      <style>${NEO_STATUS_CSS}</style>
+      <div style="font-family:var(--neo-font,system-ui);padding:0 6px;">
+        <div class="neo-pills-wrap">
+          <button id="pills-left" class="neo-pills-arrow left">${neoIcon("chevL", { size: 16, color: "var(--neo-text1)" })}</button>
+          <div id="pills-scroll" class="neo-pills-scroll">${html}</div>
+          <button id="pills-right" class="neo-pills-arrow right">${neoIcon("chevR", { size: 16, color: "var(--neo-text1)" })}</button>
+        </div>
+      </div>`;
+  }
+
+  _moreInfo(entityId) {
+    if (!entityId) return;
+    this.dispatchEvent(new CustomEvent("hass-more-info", {
+      bubbles: true, composed: true, detail: { entityId },
+    }));
+  }
+
+  _bindEvents() {
+    const scroller = this.shadowRoot.getElementById("pills-scroll");
+    const left = this.shadowRoot.getElementById("pills-left");
+    const right = this.shadowRoot.getElementById("pills-right");
+    if (!scroller) return;
+
+    const update = () => {
+      const max = scroller.scrollWidth - scroller.clientWidth;
+      const x = scroller.scrollLeft;
+      this._scroll = x;
+      const show = (btn, on) => {
+        if (!btn) return;
+        btn.style.opacity = on ? "1" : "0";
+        btn.style.pointerEvents = on ? "auto" : "none";
+      };
+      show(left, x > 4);
+      show(right, x < max - 4);
+    };
+
+    scroller.addEventListener("scroll", update);
+    left?.addEventListener("click", () => scroller.scrollBy({ left: -scroller.clientWidth * 0.8, behavior: "smooth" }));
+    right?.addEventListener("click", () => scroller.scrollBy({ left: scroller.clientWidth * 0.8, behavior: "smooth" }));
+
+    // Restore scroll position across re-renders
+    if (this._scroll) scroller.scrollLeft = this._scroll;
+    requestAnimationFrame(update);
+
+    this.shadowRoot.querySelectorAll("[data-entity]").forEach((el) => {
+      el.addEventListener("click", () => this._moreInfo(el.getAttribute("data-entity")));
+    });
+  }
+
+  static getConfigElement() { return document.createElement("neo-status-card-editor"); }
+  static getStubConfig() {
+    return {
+      pill1: { show: true, icon: "shieldOk", name: "Armed", accent: "mint" },
+      pill2: { show: true, icon: "leaf", entity: "sensor.power", accent: "mint" },
+      pill3: { show: true, icon: "rooms", name: "2 home", accent: "blue" },
+    };
+  }
+}
+
+const _pillSchema = (n) => ({
+  type: "expandable",
+  name: `pill${n}`,
+  title: `Pill ${n}`,
+  schema: [
+    { name: "show", label: "Anzeigen", selector: { boolean: {} } },
+    { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
+    { name: "name", label: "Text (leer = Entity-Status)", selector: { text: {} } },
+    { name: "entity", label: "Entity (optional)", selector: { entity: {} } },
+    { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+  ],
+});
+customElements.define("neo-status-card-editor", makeNeoEditor([
+  _pillSchema(1), _pillSchema(2), _pillSchema(3),
+  _pillSchema(4), _pillSchema(5), _pillSchema(6),
+], { name: "Neo Status-Leiste", description: "Scrollbare Status-Pills (Karussell)", icon: "🏷️" }));
+NeoDashboardRegistry.registerCard("neo-status-card", NeoStatusCard, {
+  name: "Neo Status-Leiste",
+  description: "Scrollbare Status-Pills mit Pfeilen",
+});
+
 // Default cloud texture. Served from GitHub raw so it works regardless
 // of how HACS lays out files locally. Override via `cloud_image`.
 const NEO_CLOUD_IMG = "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/img/cloud.png";
@@ -1418,7 +1560,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.10 ",
+  "%c NEO DASHBOARD KIT %c v0.1.4-beta.1 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
