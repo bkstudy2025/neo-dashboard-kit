@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.7
+// Neo Dashboard Kit v0.1.3-beta.8
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -864,6 +864,10 @@ NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
   description: "Begrüßung mit Name und Action-Buttons",
 });
 
+// Default cloud texture (served by HACS at /hacsfiles/<repo>/img/...).
+// Override per card via the `cloud_image` option.
+const NEO_CLOUD_IMG = "/hacsfiles/neo-dashboard-kit/img/cloud.png";
+
 // ── Weather Card ──────────────────────────────────────────────
 // CSS for the animated background (rain / snow / stars). Pure CSS =
 // no requestAnimationFrame loop, GPU-friendly transforms only.
@@ -894,12 +898,11 @@ const NEO_WEATHER_CSS = `
     animation:neo-wx-twinkle ease-in-out infinite; will-change:opacity, transform; }
   @keyframes neo-wx-twinkle { 0%,100%{opacity:.15; transform:scale(.7)} 50%{opacity:1; transform:scale(1)} }
 
-  /* Clouds — photoreal texture via SVG fractal-noise (feTurbulence) */
+  /* Clouds — real cloud PNG texture, drifting */
   .neo-wx-cloud { position:absolute; left:0; display:block;
-    filter:drop-shadow(0 4px 5px rgba(35,45,65,.20));
+    background-repeat:no-repeat; background-size:100% 100%;
     animation:neo-wx-drift linear infinite; will-change:transform; }
-  .neo-wx-cloud svg { display:block; width:100%; height:100%; }
-  @keyframes neo-wx-drift { 0%{transform:translateX(-200px)} 100%{transform:translateX(800px)} }
+  @keyframes neo-wx-drift { 0%{transform:translateX(-220px)} 100%{transform:translateX(820px)} }
 
   /* Lightning flash */
   .neo-wx-flash { position:absolute; inset:0;
@@ -999,40 +1002,21 @@ class NeoWeatherCard extends NeoBaseCard {
     return { gradient, particles, clouds, flash, fog, sun };
   }
 
-  // One realistic cloud as an SVG: fractal-noise texture clipped into a
-  // soft elliptical blob via feComposite (noise alpha × shape alpha).
-  _cloudSVG(uid, night) {
-    const r = night ? 0.80 : 1, g = night ? 0.86 : 1, b = 1;
-    return `<svg viewBox="0 0 200 110" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="cg${uid}" cx="50%" cy="54%" r="58%">
-          <stop offset="38%" stop-color="#fff" stop-opacity="1"/>
-          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-        </radialGradient>
-        <filter id="cf${uid}" x="-25%" y="-25%" width="150%" height="150%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.014 0.03" numOctaves="4" seed="${uid}" stitchTiles="stitch" result="n"/>
-          <feColorMatrix in="n" type="matrix"
-            values="0 0 0 0 ${r}  0 0 0 0 ${g}  0 0 0 0 ${b}  0 0 0 9 -3" result="tex"/>
-          <feComposite in="tex" in2="SourceAlpha" operator="in"/>
-        </filter>
-      </defs>
-      <ellipse cx="100" cy="60" rx="94" ry="44" fill="url(#cg${uid})" filter="url(#cf${uid})"/>
-    </svg>`;
-  }
-
   _clouds({ intensity }, night) {
     const count = intensity === "heavy" ? 5 : intensity === "light" ? 2 : 3;
+    const img = this._config?.cloud_image || NEO_CLOUD_IMG;
+    // Night: darken + shift toward blue (like Clooos)
+    const filter = night ? "brightness(0.5) saturate(1.1) hue-rotate(200deg)" : "none";
     let html = "";
     for (let i = 0; i < count; i++) {
-      const w = 80 + Math.random() * 90;
-      const h = w * 0.55;
-      const top = (-16 + Math.random() * 48).toFixed(0);
-      const dur = (28 + Math.random() * 26).toFixed(1);
+      const w = 110 + Math.random() * 120;
+      const h = w * 0.5625; // PNG aspect 1280x720
+      const top = (-20 + Math.random() * 55).toFixed(0);
+      const dur = (30 + Math.random() * 28).toFixed(1);
       const delay = (-Math.random() * dur).toFixed(1);
-      const dayOp = intensity === "heavy" ? 0.95 : 0.82;
-      const op = ((night ? 0.4 : dayOp) * (0.82 + Math.random() * 0.18)).toFixed(2);
-      const uid = `${Date.now().toString(36).slice(-3)}${i}${Math.floor(Math.random() * 900 + 100)}`;
-      html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s">${this._cloudSVG(uid, night)}</span>`;
+      const dayOp = intensity === "heavy" ? 0.9 : 0.7;
+      const op = ((night ? 0.55 : dayOp) * (0.75 + Math.random() * 0.25)).toFixed(2);
+      html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};filter:${filter};background-image:url('${img}');animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
     }
     return html;
   }
@@ -1211,7 +1195,8 @@ customElements.define("neo-weather-card-editor", makeNeoEditor([
   { name: "entity", label: "Wetter-Entity", selector: { entity: { domain: "weather" } } },
   { name: "sunset_entity", label: "Sonnenuntergang-Entity (optional)", selector: { entity: { domain: "sensor" } } },
   { name: "animated_background", label: "Wetter-Hintergrund (Verlauf je Zustand)", selector: { boolean: {} } },
-  { name: "animations", label: "Animationen (Regen/Schnee/Sterne)", selector: { boolean: {} } },
+  { name: "animations", label: "Animationen (Regen/Schnee/Sterne/Wolken)", selector: { boolean: {} } },
+  { name: "cloud_image", label: "Wolken-Bild URL (optional, eigenes PNG)", selector: { text: {} } },
 ], { name: "Neo Wetter", description: "Wetter-Banner mit animiertem Hintergrund", icon: "🌤️" }));
 NeoDashboardRegistry.registerCard("neo-weather-card", NeoWeatherCard, {
   name: "Neo Wetter",
@@ -1400,7 +1385,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.7 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.8 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
