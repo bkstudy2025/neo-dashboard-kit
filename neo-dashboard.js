@@ -696,17 +696,36 @@ class NeoHeroCard extends NeoBaseCard {
       ">${neoIcon(b.icon, { size: 18, color: "var(--neo-text1)" })}${badgeHtml}</button>`;
   }
 
+  // Presence → { label, color } for the big status line
+  _presence() {
+    const personId = this._config?.person_entity;
+    if (!personId) return null;
+    const st = this._state(personId)?.state;
+    if (st == null) return null;
+    if (st === "home") return { label: "Zuhause", color: "#5EDCB8" };
+    if (st === "not_home") return { label: "Unterwegs", color: "#FFB26B" };
+    // Named zone (e.g. "Arbeit") → show capitalized
+    return { label: st.charAt(0).toUpperCase() + st.slice(1), color: "#7C9CFF" };
+  }
+
   render() {
     const userName = this._hass?.user?.name;
     const name = this._config?.name || userName || "Home";
     const greeting = this._config?.greeting_text || this._greeting();
+    const greetLine = name && name !== "Home" ? `${greeting}, ${name}` : greeting;
+
+    const presence = this._presence();
+    const bigLine = presence ? presence.label : name;
+    const dot = presence
+      ? `<span style="display:inline-block;width:9px;height:9px;border-radius:5px;background:${presence.color};box-shadow:0 0 8px ${presence.color};margin-right:8px;vertical-align:middle;"></span>`
+      : "";
 
     return `
       <div style="font-family:var(--neo-font,system-ui);color:var(--neo-text1,#F4F6FB);padding:8px 6px 12px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
           <div style="min-width:0;">
-            <div style="font-size:13px;color:var(--neo-text2);font-weight:500;letter-spacing:0.2px;">${greeting}</div>
-            <div style="font-size:28px;font-weight:600;letter-spacing:-0.6px;margin-top:1px;">${name}</div>
+            <div style="font-size:13px;color:var(--neo-text2);font-weight:500;letter-spacing:0.2px;">${greetLine}</div>
+            <div style="font-size:28px;font-weight:600;letter-spacing:-0.6px;margin-top:1px;">${dot}${bigLine}</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
             ${this._renderButton(1)}
@@ -761,6 +780,7 @@ const _heroButtonSchema = (slot, title) => ({
 customElements.define("neo-hero-card-editor", makeNeoEditor([
   { name: "name", label: "Name (leer = angemeldeter Benutzer)", selector: { text: {} } },
   { name: "greeting_text", label: "Begrüßungstext (leer = automatisch nach Uhrzeit)", selector: { text: {} } },
+  { name: "person_entity", label: "Person für Status (Zuhause/Unterwegs)", selector: { entity: { domain: "person" } } },
   _heroButtonSchema(1, "Button 1 – Suche"),
   _heroButtonSchema(2, "Button 2 – Kalender"),
   _heroButtonSchema(3, "Button 3 – Benachrichtigungen"),
