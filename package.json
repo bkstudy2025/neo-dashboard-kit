@@ -1,6 +1,6 @@
 {
   "name": "neo-dashboard-kit",
-  "version": "0.1.2-beta.2",
+  "version": "0.1.2-beta.3",
   "description": "A glassmorphism-style Home Assistant dashboard with community plugin support",
   "main": "dist/neo-dashboard.js",
   "scripts": {

@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.2-beta.2
+// Neo Dashboard Kit v0.1.2-beta.3
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -685,14 +685,14 @@ class NeoHeroCard extends NeoBaseCard {
     let badgeHtml = "";
     if (badge.kind === "count") {
       badgeHtml = `<span style="
-        position:absolute;top:6px;right:6px;min-width:16px;height:16px;padding:0 4px;
-        border-radius:8px;background:${acc.c};color:#fff;font-size:10px;font-weight:700;
+        position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;
+        border-radius:9px;background:${acc.c};color:#fff;font-size:10px;font-weight:700;
         display:flex;align-items:center;justify-content:center;
         box-shadow:0 0 0 2px var(--ha-card-background,#111827);
       ">${badge.value}</span>`;
     } else if (badge.kind === "dot") {
       badgeHtml = `<span style="
-        position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:4px;
+        position:absolute;top:-2px;right:-2px;width:10px;height:10px;border-radius:5px;
         background:${acc.c};box-shadow:0 0 0 2px var(--ha-card-background,#111827),0 0 6px ${acc.c};
       "></span>`;
     }
@@ -1120,7 +1120,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.2-beta.2 ",
+  "%c NEO DASHBOARD KIT %c v0.1.2-beta.3 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
