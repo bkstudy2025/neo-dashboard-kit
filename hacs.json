@@ -4,7 +4,5 @@
   "filename": "dist/neo-dashboard.js",
   "render_readme": true,
   "hide_default_branch": false,
-  "homeassistant": "2023.9.0",
-  "categories": ["lovelace"],
-  "iot_class": "local_push"
+  "homeassistant": "2023.9.0"
 }
