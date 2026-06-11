@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.3-beta.1
+// Neo Dashboard Kit v0.1.3-beta.2
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -879,8 +879,18 @@ const NEO_WEATHER_CSS = `
   .neo-wx-star { position:absolute; border-radius:50%; background:#fff;
     animation:neo-wx-twinkle ease-in-out infinite; will-change:opacity; }
   @keyframes neo-wx-twinkle { 0%,100%{opacity:.2} 50%{opacity:1} }
+  .neo-wx-cloud { position:absolute; left:0; border-radius:50%;
+    background:radial-gradient(ellipse at center, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 70%);
+    filter:blur(3px); animation:neo-wx-drift linear infinite; will-change:transform; }
+  @keyframes neo-wx-drift { 0%{transform:translateX(-140px)} 100%{transform:translateX(720px)} }
+  .neo-wx-flash { position:absolute; inset:0; background:#fff; opacity:0;
+    animation:neo-wx-flash 5.2s linear infinite; }
+  @keyframes neo-wx-flash {
+    0%,92%,100%{opacity:0} 93%{opacity:.28} 94%{opacity:0} 96%{opacity:.5} 97%{opacity:0}
+  }
   @media (prefers-reduced-motion: reduce) {
-    .neo-wx-rain, .neo-wx-snow, .neo-wx-star { animation: none; }
+    .neo-wx-rain, .neo-wx-snow, .neo-wx-star, .neo-wx-cloud, .neo-wx-flash { animation: none; }
+    .neo-wx-flash { display:none; }
   }
 `;
 
@@ -941,7 +951,29 @@ class NeoWeatherCard extends NeoBaseCard {
     else if (cond === "snowy-rainy") particles = { kind: "snow", count: 14 };
     else if (night && (cond === "clear" || cond === "sunny")) particles = { kind: "star", count: 14 };
 
-    return { gradient, particles };
+    let clouds = null;
+    if (cond === "cloudy" || cond === "windy-variant") clouds = { intensity: "heavy" };
+    else if (cond === "partlycloudy") clouds = { intensity: "light" };
+    else if (cond === "lightning" || cond === "lightning-rainy" || cond === "pouring") clouds = { intensity: "normal" };
+
+    const flash = cond === "lightning" || cond === "lightning-rainy";
+
+    return { gradient, particles, clouds, flash };
+  }
+
+  _clouds({ intensity }, night) {
+    const count = intensity === "heavy" ? 4 : intensity === "light" ? 2 : 3;
+    let html = "";
+    for (let i = 0; i < count; i++) {
+      const w = 70 + Math.random() * 90;
+      const h = w * 0.55;
+      const top = (-10 + Math.random() * 42).toFixed(0);
+      const dur = (20 + Math.random() * 22).toFixed(1);
+      const delay = (-Math.random() * dur).toFixed(1);
+      const op = ((night ? 0.18 : 0.5) * (0.6 + Math.random() * 0.4)).toFixed(2);
+      html += `<span class="neo-wx-cloud" style="top:${top}%;width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;opacity:${op};animation-duration:${dur}s;animation-delay:${delay}s"></span>`;
+    }
+    return html;
   }
 
   _particles({ kind, count }) {
@@ -1044,6 +1076,9 @@ class NeoWeatherCard extends NeoBaseCard {
       ? fx.gradient
       : `linear-gradient(120deg, ${NEO_ACCENTS.blue.glow} 0%, var(--neo-fill1,rgba(255,255,255,0.04)) 70%)`;
     const particles = (animations && fx?.particles) ? this._particles(fx.particles) : "";
+    const clouds = (animations && fx?.clouds) ? this._clouds(fx.clouds, night) : "";
+    const flash = (animations && fx?.flash) ? `<div class="neo-wx-flash"></div>` : "";
+    const fxLayer = (clouds || particles || flash) ? `<div class="neo-wx-fx">${clouds}${particles}${flash}</div>` : "";
     const border = onDark ? "rgba(255,255,255,0.12)" : "var(--neo-line2,rgba(255,255,255,0.08))";
 
     return `
@@ -1057,7 +1092,7 @@ class NeoWeatherCard extends NeoBaseCard {
           border:1px solid ${border};
           ${onDark ? "box-shadow:0 18px 40px -16px rgba(0,0,0,0.45);" : "backdrop-filter:var(--neo-blur,blur(24px));-webkit-backdrop-filter:var(--neo-blur,blur(24px));"}
         ">
-          ${particles ? `<div class="neo-wx-fx">${particles}</div>` : ""}
+          ${fxLayer}
           <div style="position:relative;z-index:1;display:flex;align-items:center;gap:12px;">
             <span style="display:flex;">${neoIcon(iconName, { size: 30, color: iconC })}</span>
             <div>
@@ -1283,7 +1318,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.3-beta.1 ",
+  "%c NEO DASHBOARD KIT %c v0.1.3-beta.2 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
