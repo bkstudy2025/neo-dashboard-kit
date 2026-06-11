@@ -14,6 +14,7 @@ card_type: <kartentyp>
 | Karte | Kartentyp | Doku |
 |---|---|---|
 | Hero / Begrüßung | `neo-hero-card` | [hero.md](hero.md) |
+| Status-Leiste | `neo-status-card` | [status.md](status.md) |
 | Wetter | `neo-weather-card` | [weather.md](weather.md) |
 | Licht | `neo-light-card` | [light.md](light.md) |
 | Sensor | `neo-sensor-card` | [sensor.md](sensor.md) |

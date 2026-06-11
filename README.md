@@ -72,6 +72,7 @@ accent: amber
 | Kartentyp | Beschreibung | Doku |
 |---|---|---|
 | `neo-hero-card` | Begrüßung, Anwesenheitsstatus, Action-Buttons | [Doku](docs/cards/hero.md) |
+| `neo-status-card` | Scrollbare Status-Pills (Karussell) | [Doku](docs/cards/status.md) |
 | `neo-weather-card` | Wetter-Banner mit Temperatur & Sonnenuntergang | [Doku](docs/cards/weather.md) |
 | `neo-light-card` | Licht mit Helligkeits-Slider | [Doku](docs/cards/light.md) |
 | `neo-sensor-card` | Sensorwert mit Icon | [Doku](docs/cards/sensor.md) |
