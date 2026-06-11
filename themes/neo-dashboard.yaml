@@ -1,0 +1,176 @@
+Neo Dashboard Dark:
+  # ── Page background ──────────────────────────────────────────
+  lovelace-background: >-
+    radial-gradient(80% 60% at 20% 0%, #161d33 0%, rgba(7,9,15,0) 55%),
+    radial-gradient(70% 50% at 100% 100%, #1a1426 0%, rgba(7,9,15,0) 55%),
+    #06080F
+
+  # ── Primary colors ───────────────────────────────────────────
+  primary-color: "#7C9CFF"
+  accent-color: "#7C9CFF"
+
+  # ── Card / surface ───────────────────────────────────────────
+  card-background-color: "rgba(255,255,255,0.04)"
+  secondary-background-color: "rgba(255,255,255,0.02)"
+  divider-color: "rgba(255,255,255,0.08)"
+  border-color: "rgba(255,255,255,0.08)"
+
+  # ── Text ─────────────────────────────────────────────────────
+  primary-text-color: "#F4F6FB"
+  secondary-text-color: "rgba(244,246,251,0.72)"
+  disabled-text-color: "rgba(244,246,251,0.30)"
+  text-primary-color: "#F4F6FB"
+
+  # ── Sidebar ──────────────────────────────────────────────────
+  sidebar-background-color: "#0a0d18"
+  sidebar-text-color: "rgba(244,246,251,0.72)"
+  sidebar-icon-color: "rgba(244,246,251,0.50)"
+  sidebar-selected-text-color: "#F4F6FB"
+  sidebar-selected-icon-color: "#7C9CFF"
+
+  # ── Header ───────────────────────────────────────────────────
+  app-header-background-color: "rgba(10,13,24,0.85)"
+  app-header-text-color: "#F4F6FB"
+  app-header-selection-bar-color: "#7C9CFF"
+
+  # ── State colors ─────────────────────────────────────────────
+  state-icon-color: "rgba(244,246,251,0.50)"
+  state-icon-active-color: "#7C9CFF"
+
+  # ── Switches & toggles ───────────────────────────────────────
+  switch-checked-color: "#7C9CFF"
+  switch-unchecked-color: "rgba(255,255,255,0.14)"
+  switch-checked-button-color: "#ffffff"
+  switch-unchecked-button-color: "#ffffff"
+
+  # ── Sliders ──────────────────────────────────────────────────
+  slider-color: "#7C9CFF"
+  slider-secondary-color: "rgba(255,255,255,0.10)"
+  slider-bar-color: "rgba(255,255,255,0.10)"
+
+  # ── Inputs ───────────────────────────────────────────────────
+  input-fill-color: "rgba(255,255,255,0.04)"
+  input-ink-color: "#F4F6FB"
+  input-label-ink-color: "rgba(244,246,251,0.50)"
+  input-idle-line-color: "rgba(255,255,255,0.12)"
+  input-hover-line-color: "rgba(255,255,255,0.20)"
+  input-disabled-line-color: "rgba(255,255,255,0.06)"
+  input-outlined-idle-border-color: "rgba(255,255,255,0.12)"
+  input-outlined-hover-border-color: "rgba(255,255,255,0.20)"
+  input-outlined-disabled-border-color: "rgba(255,255,255,0.06)"
+  input-dropdown-icon-color: "rgba(244,246,251,0.50)"
+
+  # ── Buttons ──────────────────────────────────────────────────
+  mdc-theme-primary: "#7C9CFF"
+  mdc-theme-on-primary: "#ffffff"
+
+  # ── Badges ───────────────────────────────────────────────────
+  label-badge-background-color: "rgba(255,255,255,0.04)"
+  label-badge-text-color: "#F4F6FB"
+  label-badge-red: "#F87171"
+  label-badge-green: "#5EDCB8"
+  label-badge-yellow: "#FFB26B"
+  label-badge-blue: "#7C9CFF"
+  label-badge-grey: "rgba(244,246,251,0.30)"
+
+  # ── Cards (ha-card) ──────────────────────────────────────────
+  ha-card-background: "rgba(255,255,255,0.04)"
+  ha-card-border-color: "rgba(255,255,255,0.08)"
+  ha-card-border-width: "1px"
+  ha-card-border-radius: "24px"
+  ha-card-box-shadow: "0 18px 40px -16px rgba(0,0,0,0.55)"
+
+  # ── Energy dashboard ─────────────────────────────────────────
+  energy-grid-consumption-color: "#7C9CFF"
+  energy-grid-return-color: "#5EDCB8"
+  energy-solar-color: "#FFB26B"
+  energy-battery-in-color: "#C084FC"
+  energy-battery-out-color: "#5EDCB8"
+  energy-home-color: "#7C9CFF"
+
+  # ── Scrollbar ────────────────────────────────────────────────
+  scrollbar-thumb-color: "rgba(255,255,255,0.12)"
+
+  # ── Neo custom tokens (used by all Neo cards) ─────────────────
+  neo-fill0: "rgba(255,255,255,0.02)"
+  neo-fill1: "rgba(255,255,255,0.04)"
+  neo-fill2: "rgba(255,255,255,0.055)"
+  neo-line1: "rgba(255,255,255,0.06)"
+  neo-line2: "rgba(255,255,255,0.08)"
+  neo-line3: "rgba(255,255,255,0.10)"
+  neo-line4: "rgba(255,255,255,0.12)"
+  neo-line5: "rgba(255,255,255,0.14)"
+  neo-line6: "rgba(255,255,255,0.16)"
+  neo-text1: "#F4F6FB"
+  neo-text2: "rgba(244,246,251,0.72)"
+  neo-text3: "rgba(244,246,251,0.50)"
+  neo-text4: "rgba(244,246,251,0.30)"
+  neo-shadow1: "rgba(0,0,0,0.55)"
+  neo-shadow2: "rgba(0,0,0,0.5)"
+  neo-radius: "24px"
+  neo-accent-blue: "#7C9CFF"
+  neo-accent-amber: "#FFB26B"
+  neo-accent-mint: "#5EDCB8"
+  neo-accent-violet: "#C084FC"
+  neo-accent-rose: "#F87171"
+
+
+Neo Dashboard Light:
+  # ── Page background ──────────────────────────────────────────
+  lovelace-background: >-
+    radial-gradient(90% 70% at 15% 0%, rgba(110,140,255,0.16) 0%, rgba(214,221,235,0) 55%),
+    radial-gradient(70% 55% at 100% 100%, rgba(255,170,120,0.12) 0%, rgba(214,221,235,0) 60%),
+    linear-gradient(180deg, #DCE3EF 0%, #CBD4E4 100%)
+
+  primary-color: "#5B7FE8"
+  accent-color: "#5B7FE8"
+
+  card-background-color: "rgba(255,255,255,0.97)"
+  secondary-background-color: "rgba(255,255,255,0.85)"
+  divider-color: "rgba(28,40,72,0.11)"
+
+  primary-text-color: "#0F1626"
+  secondary-text-color: "rgba(15,22,38,0.62)"
+  disabled-text-color: "rgba(15,22,38,0.26)"
+  text-primary-color: "#0F1626"
+
+  sidebar-background-color: "#e8ecf5"
+  sidebar-text-color: "rgba(15,22,38,0.62)"
+  sidebar-icon-color: "rgba(15,22,38,0.42)"
+  sidebar-selected-text-color: "#0F1626"
+  sidebar-selected-icon-color: "#5B7FE8"
+
+  app-header-background-color: "rgba(220,227,239,0.92)"
+  app-header-text-color: "#0F1626"
+  app-header-selection-bar-color: "#5B7FE8"
+
+  ha-card-background: "rgba(255,255,255,0.97)"
+  ha-card-border-color: "rgba(28,40,72,0.11)"
+  ha-card-border-width: "1px"
+  ha-card-border-radius: "24px"
+  ha-card-box-shadow: "0 18px 40px -16px rgba(40,55,95,0.22)"
+
+  switch-checked-color: "#5B7FE8"
+  switch-unchecked-color: "rgba(28,40,72,0.18)"
+
+  neo-fill0: "rgba(255,255,255,0.97)"
+  neo-fill1: "rgba(255,255,255,0.99)"
+  neo-fill2: "rgba(255,255,255,1)"
+  neo-line1: "rgba(28,40,72,0.08)"
+  neo-line2: "rgba(28,40,72,0.11)"
+  neo-line3: "rgba(28,40,72,0.13)"
+  neo-line4: "rgba(28,40,72,0.15)"
+  neo-line5: "rgba(28,40,72,0.18)"
+  neo-line6: "rgba(28,40,72,0.22)"
+  neo-text1: "#0F1626"
+  neo-text2: "rgba(15,22,38,0.62)"
+  neo-text3: "rgba(15,22,38,0.42)"
+  neo-text4: "rgba(15,22,38,0.26)"
+  neo-shadow1: "rgba(40,55,95,0.22)"
+  neo-shadow2: "rgba(40,55,95,0.16)"
+  neo-radius: "24px"
+  neo-accent-blue: "#5B7FE8"
+  neo-accent-amber: "#E8943A"
+  neo-accent-mint: "#2BAF8A"
+  neo-accent-violet: "#9B59D9"
+  neo-accent-rose: "#E05555"

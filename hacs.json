@@ -3,5 +3,6 @@
   "content_in_root": true,
   "filename": "neo-dashboard.js",
   "render_readme": true,
-  "homeassistant": "2023.9.0"
+  "homeassistant": "2023.9.0",
+  "zip_release": false
 }
