@@ -86,7 +86,7 @@ Manche Karten werden als eigenständige Module verteilt (z.B. über Patreon) und
 nicht im Core enthalten. Sie werden über **„🧩 Modul einfügen"** im `neo-card`-Editor
 geladen und erscheinen dann im Kartentyp-Dropdown. Mehr: **[docs/premium-modules.md](docs/premium-modules.md)**.
 
-- **Neo Wetter (Premium)** — animierter, wetterabhängiger Hintergrund (Regen, Schnee, Wolken, Blitz …) · [Code](premium/neo-weather-card.js)
+- **Neo Wetter (Premium)** — animierter, wetterabhängiger Hintergrund (Regen, Schnee, Wolken, Blitz …) · exklusiv über Patreon
 
 > Fortgeschrittene können die Karten auch direkt verwenden (`type: custom:neo-light-card` …),
 > dann erscheinen sie aber nicht im Karten-Picker.

@@ -2,3 +2,8 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.local
+
+# Premium cards are distributed via Patreon — never commit them to the
+# public repo. Only the generic template stays.
+premium/*.js
+!premium/neo-card-template.js
