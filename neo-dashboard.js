@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.4-beta.4
+// Neo Dashboard Kit v0.1.4-beta.5
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -993,7 +993,10 @@ const NEO_PILL_SCHEMA = [
 class NeoStatusCardEditor extends HTMLElement {
   setConfig(config) {
     this._config = { ...config };
-    // Normalise to a pills array (supports legacy pill1..6)
+    // The editor owns the pills model after first build. Ignore the
+    // config echoes HA sends back after our own config-changed —
+    // otherwise the model resets mid-edit (dropdowns close, add breaks).
+    if (this._built) return;
     if (Array.isArray(config.pills)) {
       this._pills = config.pills.map((p) => ({ ...p }));
     } else {
@@ -1004,7 +1007,7 @@ class NeoStatusCardEditor extends HTMLElement {
         delete this._config[`pill${i}`];
       }
     }
-    if (!this._built) this._build();
+    this._build();
   }
   set hass(h) {
     this._hass = h;
@@ -1691,7 +1694,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.4-beta.4 ",
+  "%c NEO DASHBOARD KIT %c v0.1.4-beta.5 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
