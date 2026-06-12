@@ -73,13 +73,20 @@ accent: amber
 |---|---|---|
 | `neo-hero-card` | Begrüßung, Anwesenheitsstatus, Action-Buttons | [Doku](docs/cards/hero.md) |
 | `neo-status-card` | Scrollbare Status-Pills (Karussell) | [Doku](docs/cards/status.md) |
-| `neo-weather-card` | Wetter-Banner mit Temperatur & Sonnenuntergang | [Doku](docs/cards/weather.md) |
 | `neo-light-card` | Licht mit Helligkeits-Slider | [Doku](docs/cards/light.md) |
 | `neo-sensor-card` | Sensorwert mit Icon | [Doku](docs/cards/sensor.md) |
 | `neo-scene-card` | Szene per Tap aktivieren | [Doku](docs/cards/scene.md) |
 | `neo-quick-action-card` | Schalter-Kachel mit Toggle | [Doku](docs/cards/quick-action.md) |
 
 → Vollständige Übersicht: **[docs/cards/](docs/cards/README.md)**
+
+### Premium-/Zusatzkarten
+
+Manche Karten werden als eigenständige Module verteilt (z.B. über Patreon) und sind
+nicht im Core enthalten. Sie werden über **„🧩 Modul einfügen"** im `neo-card`-Editor
+geladen und erscheinen dann im Kartentyp-Dropdown. Mehr: **[docs/premium-modules.md](docs/premium-modules.md)**.
+
+- **Neo Wetter (Premium)** — animierter, wetterabhängiger Hintergrund (Regen, Schnee, Wolken, Blitz …) · [Code](premium/neo-weather-card.js)
 
 > Fortgeschrittene können die Karten auch direkt verwenden (`type: custom:neo-light-card` …),
 > dann erscheinen sie aber nicht im Karten-Picker.

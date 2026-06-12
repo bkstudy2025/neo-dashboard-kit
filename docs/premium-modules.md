@@ -32,7 +32,21 @@ diese API und registriert ihre Karte. Mehr braucht es nicht.
 
 ---
 
-## Installation einer externen / Premium-Karte (für Nutzer)
+## Einfachster Weg: Code direkt im Editor einfügen
+
+Im `neo-card`-Editor gibt es im **Kartentyp**-Dropdown den Eintrag
+**„Neo Modul / Code laden"**. Dort den von Patreon kopierten Code in das Textfeld
+einfügen und speichern — die Karte(n) werden registriert und erscheinen anschließend
+im Kartentyp-Dropdown jeder weiteren `neo-card`.
+
+> Nach dem Einfügen den Editor einmal schließen und wieder öffnen, damit die neue
+> Karte im Dropdown auftaucht.
+
+So müssen Supporter **keine Dateien** nach `www/` kopieren oder Ressourcen anlegen.
+
+---
+
+## Alternative: als Ressource (für Karten ohne Editor-Einfügen)
 
 1. Die Karten-Datei (z.B. `neo-meine-karte.js`) herunterladen
    *(bei Premium: aus dem Patreon-Beitrag)*

@@ -15,7 +15,7 @@ card_type: <kartentyp>
 |---|---|---|
 | Hero / Begrüßung | `neo-hero-card` | [hero.md](hero.md) |
 | Status-Leiste | `neo-status-card` | [status.md](status.md) |
-| Wetter | `neo-weather-card` | [weather.md](weather.md) |
+| Wetter *(Premium-Modul)* | `neo-weather-card` | [weather.md](weather.md) |
 | Licht | `neo-light-card` | [light.md](light.md) |
 | Sensor | `neo-sensor-card` | [sensor.md](sensor.md) |
 | Szene | `neo-scene-card` | [scene.md](scene.md) |
