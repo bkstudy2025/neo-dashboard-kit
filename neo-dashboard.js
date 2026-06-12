@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.4-beta.6
+// Neo Dashboard Kit v0.1.4-beta.7
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -901,7 +901,7 @@ class NeoStatusCard extends NeoBaseCard {
   _pills() {
     if (Array.isArray(this._config?.pills)) return this._config.pills.filter(Boolean);
     const out = [];
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 8; i++) {
       const p = this._config?.[`pill${i}`];
       if (p && p.show !== false && (p.icon || p.entity || p.name)) out.push(p);
     }
@@ -979,163 +979,27 @@ class NeoStatusCard extends NeoBaseCard {
 
   static getConfigElement() { return document.createElement("neo-status-card-editor"); }
   static getStubConfig() {
-    return { pills: [{ icon: "shieldOk", name: "Armed", accent: "mint" }] };
+    return { pill1: { icon: "shieldOk", name: "Armed", accent: "mint" } };
   }
 }
 
-// Dynamic editor: add/remove pills via + / trash buttons
-const NEO_PILL_SCHEMA = [
-  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
-  { name: "name", label: "Text (leer = Entity-Status)", selector: { text: {} } },
-  { name: "entity", label: "Entity (optional)", selector: { entity: {} } },
-  { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-];
-class NeoStatusCardEditor extends HTMLElement {
-  setConfig(config) {
-    this._config = { ...config };
-    // The editor owns the pills model after first build. Ignore the
-    // config echoes HA sends back after our own config-changed —
-    // otherwise the model resets mid-edit (dropdowns close, add breaks).
-    if (this._built) return;
-    if (Array.isArray(config.pills)) {
-      this._pills = config.pills.map((p) => ({ ...p }));
-    } else {
-      this._pills = [];
-      for (let i = 1; i <= 6; i++) {
-        const p = config[`pill${i}`];
-        if (p && (p.icon || p.entity || p.name)) this._pills.push({ ...p });
-        delete this._config[`pill${i}`];
-      }
-    }
-    this._build();
-  }
-  set hass(h) {
-    this._hass = h;
-    this._rows?.forEach((f) => (f.hass = h));
-  }
-
-  _build() {
-    this._built = true;
-    this.innerHTML = "";
-
-    const header = document.createElement("div");
-    header.innerHTML = `
-      <style>
-        .neo-ed-head { display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:14px;
-          border-radius:16px; background:linear-gradient(135deg, rgba(124,156,255,0.18), rgba(124,156,255,0.04));
-          border:1px solid rgba(124,156,255,0.25); }
-        .neo-ed-ic { width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;
-          font-size:24px;background:linear-gradient(160deg,#7C9CFF,#7C9CFFcc);box-shadow:0 4px 14px rgba(124,156,255,.35); }
-        .neo-ed-del { width:30px;height:30px;border-radius:8px;cursor:pointer;
-          border:none; background:transparent; color:var(--error-color,#F87171);
-          display:flex;align-items:center;justify-content:center; }
-        .neo-ed-add { width:100%; padding:11px; border-radius:12px; cursor:pointer; margin-top:4px;
-          border:1px dashed var(--primary-color,#7C9CFF); background:transparent;
-          color:var(--primary-color,#7C9CFF); font-size:14px; font-weight:600; }
-        .neo-ed-item { border:1px solid var(--divider-color,rgba(255,255,255,.1));
-          border-radius:12px; margin-bottom:8px; overflow:hidden; }
-        .neo-ed-h { display:flex; align-items:center; gap:8px; padding:11px 12px; cursor:pointer;
-          font-size:14px; font-weight:600; color:var(--primary-text-color); }
-        .neo-ed-h .title { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .neo-ed-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
-        .neo-ed-item.open .chev { transform:rotate(90deg); }
-        .neo-ed-c { padding:0 12px 10px; }
-      </style>
-      <div class="neo-ed-head">
-        <div class="neo-ed-ic">🏷️</div>
-        <div>
-          <div style="font-size:16px;font-weight:600;color:var(--primary-text-color)">Neo Status-Leiste</div>
-          <div style="font-size:12.5px;color:var(--secondary-text-color)">Pills hinzufügen, entfernen und anordnen</div>
-        </div>
-      </div>`;
-    this.appendChild(header);
-
-    this._list = document.createElement("div");
-    this.appendChild(this._list);
-
-    this._addBtn = document.createElement("button");
-    this._addBtn.className = "neo-ed-add";
-    this._addBtn.textContent = "+ Pill hinzufügen";
-    this._addBtn.addEventListener("click", () => {
-      this._pills.push({ icon: "dot", accent: "blue" });
-      this._openIndex = this._pills.length - 1;
-      this._renderRows();
-      this._fire();
-    });
-    this.appendChild(this._addBtn);
-
-    this._renderRows();
-  }
-
-  _pillLabel(pill, i) {
-    return pill.name || pill.entity || `Pill ${i + 1}`;
-  }
-
-  _renderRows() {
-    this._list.innerHTML = "";
-    this._rows = [];
-    this._pills.forEach((pill, i) => {
-      const item = document.createElement("div");
-      item.className = "neo-ed-item" + (this._openIndex === i ? " open" : "");
-
-      const head = document.createElement("div");
-      head.className = "neo-ed-h";
-      head.innerHTML = `
-        <span class="chev">${neoIcon("chevR", { size: 16, color: "currentColor" })}</span>
-        <span class="title">${i + 1}. ${this._pillLabel(pill, i)}</span>`;
-
-      const del = document.createElement("button");
-      del.className = "neo-ed-del";
-      del.innerHTML = neoIcon("trash", { size: 16, color: "currentColor" });
-      del.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this._pills.splice(i, 1);
-        if (this._openIndex === i) this._openIndex = null;
-        this._renderRows();
-        this._fire();
-      });
-      head.appendChild(del);
-
-      const content = document.createElement("div");
-      content.className = "neo-ed-c";
-      content.style.display = this._openIndex === i ? "block" : "none";
-
-      head.addEventListener("click", () => {
-        const open = content.style.display !== "none";
-        content.style.display = open ? "none" : "block";
-        item.classList.toggle("open", !open);
-        this._openIndex = open ? null : i;
-      });
-
-      const form = document.createElement("ha-form");
-      form.schema = NEO_PILL_SCHEMA;
-      form.data = pill;
-      if (this._hass) form.hass = this._hass;
-      form.computeLabel = (s) => s.label || s.name;
-      form.addEventListener("value-changed", (e) => {
-        e.stopPropagation();
-        this._pills[i] = e.detail.value;
-        form.data = e.detail.value; // keep ha-form controlled state in sync
-        head.querySelector(".title").textContent = `${i + 1}. ${this._pillLabel(e.detail.value, i)}`;
-        this._fire();
-      });
-      content.appendChild(form);
-
-      item.appendChild(head);
-      item.appendChild(content);
-      this._rows.push(form);
-      this._list.appendChild(item);
-    });
-  }
-
-  _fire() {
-    const out = { ...this._config, pills: this._pills };
-    this.dispatchEvent(new CustomEvent("config-changed", {
-      detail: { config: out }, bubbles: true, composed: true,
-    }));
-  }
-}
-customElements.define("neo-status-card-editor", NeoStatusCardEditor);
+// HA-native editor: collapsible slots via ha-form (same proven pattern
+// as the hero buttons). Up to 8 pills; leave a slot empty to hide it.
+const _statusPillSchema = (n) => ({
+  type: "expandable",
+  name: `pill${n}`,
+  title: `Pill ${n}`,
+  schema: [
+    { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
+    { name: "name", label: "Text (leer = Entity-Status)", selector: { text: {} } },
+    { name: "entity", label: "Entity (optional)", selector: { entity: {} } },
+    { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+  ],
+});
+customElements.define("neo-status-card-editor", makeNeoEditor([
+  _statusPillSchema(1), _statusPillSchema(2), _statusPillSchema(3), _statusPillSchema(4),
+  _statusPillSchema(5), _statusPillSchema(6), _statusPillSchema(7), _statusPillSchema(8),
+], { name: "Neo Status-Leiste", description: "Pills: leeren Slot frei lassen zum Ausblenden", icon: "🏷️" }));
 NeoDashboardRegistry.registerCard("neo-status-card", NeoStatusCard, {
   name: "Neo Status-Leiste",
   description: "Scrollbare Status-Pills mit Pfeilen",
@@ -1695,7 +1559,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.4-beta.6 ",
+  "%c NEO DASHBOARD KIT %c v0.1.4-beta.7 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
