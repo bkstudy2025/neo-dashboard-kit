@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.4-beta.9
+// Neo Dashboard Kit v0.1.4-beta.10
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -1092,6 +1092,25 @@ NeoDashboardRegistry.registerCard("neo-status-card", NeoStatusCard, {
   description: "Scrollbare Status-Pills mit Pfeilen",
 });
 
+// Loads pasted module code (script injection, deduped). Used by the
+// neo-card wrapper at runtime and by its editor's "Modul einfügen" area.
+function neoLoadModule(code) {
+  if (!code || !code.trim()) return false;
+  window.__neoModules = window.__neoModules || new Set();
+  const key = code.length + ":" + code.slice(0, 96);
+  if (window.__neoModules.has(key)) return true;
+  try {
+    const s = document.createElement("script");
+    s.textContent = code;
+    document.head.appendChild(s);
+    window.__neoModules.add(key);
+    return true;
+  } catch (e) {
+    console.error("[Neo Module] Fehler beim Laden:", e);
+    return false;
+  }
+}
+
 // Default cloud texture. Served from GitHub raw so it works regardless
 // of how HACS lays out files locally. Override via `cloud_image`.
 const NEO_CLOUD_IMG = "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/img/cloud.png";
@@ -1472,6 +1491,12 @@ NeoDashboardRegistry.registerCard("neo-weather-card", NeoWeatherCard, {
 class NeoCard extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
+
+    // Load any pasted modules first so their card types are available
+    if (Array.isArray(this._config.modules)) {
+      this._config.modules.forEach((code) => neoLoadModule(code));
+    }
+
     const type = this._config.card_type;
 
     if (!type) {
@@ -1591,7 +1616,8 @@ class NeoCardEditor extends HTMLElement {
       if (newType === this._config.card_type) return;
       const cls = NeoDashboardRegistry.getCard(newType);
       const stub = cls?.getStubConfig?.() || {};
-      this._config = { type: this._config.type, card_type: newType, ...stub };
+      const mods = this._config.modules;
+      this._config = { type: this._config.type, card_type: newType, ...(mods ? { modules: mods } : {}), ...stub };
       this._mountSub();
       this._fire();
     });
@@ -1600,6 +1626,12 @@ class NeoCardEditor extends HTMLElement {
     this._subContainer = document.createElement("div");
     this._subContainer.style.marginTop = "8px";
     this.appendChild(this._subContainer);
+
+    // "Modul einfügen" area below the type dropdown
+    this._moduleSection = document.createElement("div");
+    this._moduleSection.style.marginTop = "10px";
+    this.appendChild(this._moduleSection);
+    this._renderModuleSection();
 
     this._mountSub();
   }
@@ -1613,6 +1645,99 @@ class NeoCardEditor extends HTMLElement {
     }
   }
 
+  _refreshTypeOptions() {
+    if (!this._typeForm) return;
+    const options = NeoDashboardRegistry.list()
+      .filter((c) => c.type !== "neo-card")
+      .map((c) => ({ value: c.type, label: c.name }));
+    this._typeForm.schema = [
+      { name: "card_type", label: "Kartentyp", selector: { select: { mode: "dropdown", options } } },
+    ];
+    this._typeForm.data = { card_type: this._config.card_type };
+  }
+
+  _renderModuleSection() {
+    const mods = Array.isArray(this._config.modules) ? this._config.modules : [];
+    this._moduleSection.innerHTML = `
+      <style>
+        .neo-mod { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; overflow:hidden; }
+        .neo-mod-h { display:flex; align-items:center; gap:8px; padding:11px 12px; cursor:pointer;
+          font-size:14px; font-weight:600; color:var(--primary-text-color); }
+        .neo-mod-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
+        .neo-mod.open .chev { transform:rotate(90deg); }
+        .neo-mod-c { padding:0 12px 12px; }
+        .neo-mod-c textarea { width:100%; box-sizing:border-box; min-height:120px; resize:vertical;
+          border-radius:10px; border:1px solid var(--divider-color,rgba(255,255,255,.15));
+          background:var(--secondary-background-color,#0d1020); color:var(--primary-text-color);
+          font-family:ui-monospace,monospace; font-size:12px; padding:10px; margin-top:8px; }
+        .neo-mod-btn { margin-top:8px; padding:10px 14px; border-radius:10px; cursor:pointer; border:none;
+          background:var(--primary-color,#7C9CFF); color:#fff; font-size:14px; font-weight:600; }
+        .neo-mod-msg { font-size:12.5px; margin-top:8px; min-height:16px; }
+        .neo-mod-item { display:flex; align-items:center; gap:8px; padding:8px 10px; margin-top:8px;
+          border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:10px; font-size:13px; }
+        .neo-mod-item .t { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+          color:var(--secondary-text-color); }
+        .neo-mod-del { width:28px;height:28px;border-radius:8px;border:none;background:transparent;
+          color:var(--error-color,#F87171); cursor:pointer; display:flex;align-items:center;justify-content:center; }
+      </style>
+      <div class="neo-mod ${this._modOpen ? "open" : ""}">
+        <div class="neo-mod-h" id="nm-toggle">
+          <span class="chev">${neoIcon("chevR", { size: 16, color: "currentColor" })}</span>
+          <span>🧩 Modul einfügen${mods.length ? ` (${mods.length})` : ""}</span>
+        </div>
+        <div class="neo-mod-c" id="nm-body" style="display:${this._modOpen ? "block" : "none"}">
+          ${mods.map((_, i) => `
+            <div class="neo-mod-item">
+              <span class="t">Modul ${i + 1} · geladen</span>
+              <button class="neo-mod-del" data-i="${i}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>
+            </div>`).join("")}
+          <textarea id="nm-code" placeholder="Karten-Code hier einfügen (z.B. von Patreon) …"></textarea>
+          <button class="neo-mod-btn" id="nm-add">Laden &amp; Speichern</button>
+          <div class="neo-mod-msg" id="nm-msg"></div>
+        </div>
+      </div>`;
+
+    const q = (id) => this._moduleSection.querySelector(id);
+    q("#nm-toggle").addEventListener("click", () => {
+      this._modOpen = !this._modOpen;
+      const body = q("#nm-body");
+      body.style.display = this._modOpen ? "block" : "none";
+      this._moduleSection.querySelector(".neo-mod").classList.toggle("open", this._modOpen);
+    });
+    q("#nm-add").addEventListener("click", () => {
+      const ta = q("#nm-code");
+      const code = (ta.value || "").trim();
+      const msg = q("#nm-msg");
+      if (!code) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Bitte Code einfügen."; return; }
+      const before = NeoDashboardRegistry.list().length;
+      const ok = neoLoadModule(code);
+      const added = NeoDashboardRegistry.list().length - before;
+      if (!ok) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Fehler beim Laden (siehe Konsole)."; return; }
+      const list = Array.isArray(this._config.modules) ? this._config.modules.slice() : [];
+      list.push(code);
+      this._config = { ...this._config, modules: list };
+      this._refreshTypeOptions();
+      this._fire();
+      this._modOpen = true;
+      this._renderModuleSection();
+      const m2 = this._moduleSection.querySelector("#nm-msg");
+      m2.style.color = "var(--success-color,#5EDCB8)";
+      m2.textContent = added > 0
+        ? `✓ Geladen — ${added} Karte(n). Oben im Kartentyp wählen.`
+        : "✓ Geladen. Oben im Kartentyp wählen.";
+    });
+    this._moduleSection.querySelectorAll(".neo-mod-del").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const i = +btn.getAttribute("data-i");
+        const list = (this._config.modules || []).slice();
+        list.splice(i, 1);
+        this._config = { ...this._config, modules: list.length ? list : undefined };
+        this._fire();
+        this._renderModuleSection();
+      });
+    });
+  }
+
   _mountSub() {
     this._subContainer.innerHTML = "";
     this._sub = null;
@@ -1624,13 +1749,15 @@ class NeoCardEditor extends HTMLElement {
     this._sub = cls.getConfigElement();
     const subConfig = { ...this._config };
     delete subConfig.card_type;
+    delete subConfig.modules;
     if (this._hass) this._sub.hass = this._hass;
     this._sub.setConfig(subConfig);
     this._sub.addEventListener("config-changed", (e) => {
       // Stop the sub-editor's event from bubbling to HA directly —
       // otherwise HA would receive a config without type/card_type.
       e.stopPropagation();
-      this._config = { type: this._config.type, card_type: type, ...e.detail.config };
+      const mods = this._config.modules;
+      this._config = { type: this._config.type, card_type: type, ...(mods ? { modules: mods } : {}), ...e.detail.config };
       this._fire();
     });
     this._subContainer.appendChild(this._sub);
@@ -1664,7 +1791,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.4-beta.9 ",
+  "%c NEO DASHBOARD KIT %c v0.1.4-beta.10 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
