@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.4-beta.5
+// Neo Dashboard Kit v0.1.4-beta.6
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -1115,6 +1115,7 @@ class NeoStatusCardEditor extends HTMLElement {
       form.addEventListener("value-changed", (e) => {
         e.stopPropagation();
         this._pills[i] = e.detail.value;
+        form.data = e.detail.value; // keep ha-form controlled state in sync
         head.querySelector(".title").textContent = `${i + 1}. ${this._pillLabel(e.detail.value, i)}`;
         this._fire();
       });
@@ -1694,7 +1695,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.4-beta.5 ",
+  "%c NEO DASHBOARD KIT %c v0.1.4-beta.6 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
