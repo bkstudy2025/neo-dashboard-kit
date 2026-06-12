@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.4-beta.3
+// Neo Dashboard Kit v0.1.4-beta.4
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -1029,7 +1029,14 @@ class NeoStatusCardEditor extends HTMLElement {
         .neo-ed-add { width:100%; padding:11px; border-radius:12px; cursor:pointer; margin-top:4px;
           border:1px dashed var(--primary-color,#7C9CFF); background:transparent;
           color:var(--primary-color,#7C9CFF); font-size:14px; font-weight:600; }
-        .neo-ed-num { font-size:12px; font-weight:600; color:var(--secondary-text-color); margin-bottom:6px; }
+        .neo-ed-item { border:1px solid var(--divider-color,rgba(255,255,255,.1));
+          border-radius:12px; margin-bottom:8px; overflow:hidden; }
+        .neo-ed-h { display:flex; align-items:center; gap:8px; padding:11px 12px; cursor:pointer;
+          font-size:14px; font-weight:600; color:var(--primary-text-color); }
+        .neo-ed-h .title { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .neo-ed-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
+        .neo-ed-item.open .chev { transform:rotate(90deg); }
+        .neo-ed-c { padding:0 12px 10px; }
       </style>
       <div class="neo-ed-head">
         <div class="neo-ed-ic">🏷️</div>
@@ -1048,6 +1055,7 @@ class NeoStatusCardEditor extends HTMLElement {
     this._addBtn.textContent = "+ Pill hinzufügen";
     this._addBtn.addEventListener("click", () => {
       this._pills.push({ icon: "dot", accent: "blue" });
+      this._openIndex = this._pills.length - 1;
       this._renderRows();
       this._fire();
     });
@@ -1064,23 +1072,37 @@ class NeoStatusCardEditor extends HTMLElement {
     this._list.innerHTML = "";
     this._rows = [];
     this._pills.forEach((pill, i) => {
-      const panel = document.createElement("ha-expansion-panel");
-      panel.outlined = true;
-      panel.header = `${i + 1}. ${this._pillLabel(pill, i)}`;
-      panel.style.marginBottom = "8px";
-      panel.style.setProperty("--expansion-panel-content-padding", "0 12px 8px");
+      const item = document.createElement("div");
+      item.className = "neo-ed-item" + (this._openIndex === i ? " open" : "");
+
+      const head = document.createElement("div");
+      head.className = "neo-ed-h";
+      head.innerHTML = `
+        <span class="chev">${neoIcon("chevR", { size: 16, color: "currentColor" })}</span>
+        <span class="title">${i + 1}. ${this._pillLabel(pill, i)}</span>`;
 
       const del = document.createElement("button");
       del.className = "neo-ed-del";
-      del.slot = "icons";
       del.innerHTML = neoIcon("trash", { size: 16, color: "currentColor" });
       del.addEventListener("click", (e) => {
         e.stopPropagation();
         this._pills.splice(i, 1);
+        if (this._openIndex === i) this._openIndex = null;
         this._renderRows();
         this._fire();
       });
-      panel.appendChild(del);
+      head.appendChild(del);
+
+      const content = document.createElement("div");
+      content.className = "neo-ed-c";
+      content.style.display = this._openIndex === i ? "block" : "none";
+
+      head.addEventListener("click", () => {
+        const open = content.style.display !== "none";
+        content.style.display = open ? "none" : "block";
+        item.classList.toggle("open", !open);
+        this._openIndex = open ? null : i;
+      });
 
       const form = document.createElement("ha-form");
       form.schema = NEO_PILL_SCHEMA;
@@ -1090,13 +1112,15 @@ class NeoStatusCardEditor extends HTMLElement {
       form.addEventListener("value-changed", (e) => {
         e.stopPropagation();
         this._pills[i] = e.detail.value;
-        // keep header label in sync without collapsing the panel
-        panel.header = `${i + 1}. ${this._pillLabel(e.detail.value, i)}`;
+        head.querySelector(".title").textContent = `${i + 1}. ${this._pillLabel(e.detail.value, i)}`;
         this._fire();
       });
-      panel.appendChild(form);
+      content.appendChild(form);
+
+      item.appendChild(head);
+      item.appendChild(content);
       this._rows.push(form);
-      this._list.appendChild(panel);
+      this._list.appendChild(item);
     });
   }
 
@@ -1667,7 +1691,7 @@ class NeoCardEditor extends HTMLElement {
 customElements.define("neo-card-editor", NeoCardEditor);
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.4-beta.3 ",
+  "%c NEO DASHBOARD KIT %c v0.1.4-beta.4 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
