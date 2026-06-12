@@ -17,7 +17,7 @@ Der Core stellt eine öffentliche API unter `window.NeoDashboard` bereit:
 
 | API | Zweck |
 |---|---|
-| `registerCard(type, class, meta)` | Karte registrieren (erscheint im Dropdown) |
+| `registerCard(type, class, meta)` | Karte registrieren (erscheint im Dropdown) — `meta = { name, description, icon, version, author }` |
 | `BaseCard` | Basisklasse (Render-Loop, `_state`, `_callService`, selektives Re-Render) |
 | `icon(name, {size,color})` | SVG-Icon-Set |
 | `accents`, `accentOptions` | Akzentfarben + Editor-Optionen |
@@ -91,6 +91,18 @@ registerCard("neo-meine-karte", MeineKarte, { name: "Meine Karte", description: 
 
 Wrappe das in den `init()`-Wartemechanismus aus dem Template, damit es auch
 funktioniert wenn deine Datei vor dem Core lädt.
+
+### Metadaten (Name · Version · Autor)
+
+`meta` wird in der „Modul einfügen"-Liste angezeigt — so sehen du und die Community
+auf einen Blick, welche Karte, welche Version und von wem:
+
+| Feld | Beispiel | Zweck |
+|---|---|---|
+| `name` | `"Neo Wetter"` | Anzeigename |
+| `icon` | `"🌤️"` | Symbol in Liste/Dropdown |
+| `version` | `"1.0.0"` | für Weiterentwicklung/Abgleich |
+| `author` | `"Premium"` oder `"Community"` | `Premium` → goldenes Badge, sonst grünes Community-Badge |
 
 ---
 

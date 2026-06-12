@@ -73,10 +73,14 @@
     ], { name: "Neo Beispiel (Premium)", description: "Vorlage für eine externe Karte", icon: "⭐" }));
 
     // ── Registrieren → erscheint im neo-card Dropdown ────────────
+    // meta.version + meta.author werden in der Modul-Liste angezeigt.
+    // author: "Premium" → goldenes Badge · sonst grünes Community-Badge.
     registerCard("neo-example-card", NeoExampleCard, {
-      name: "Neo Beispiel (Premium)",
+      name: "Neo Beispiel",
       description: "Beispielkarte aus einer externen Datei",
       icon: "⭐",
+      version: "1.0.0",
+      author: "Community",
     });
 
     console.info("[Neo Premium] neo-example-card geladen");

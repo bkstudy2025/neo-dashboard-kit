@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.5-beta.2
+// Neo Dashboard Kit v0.1.5-beta.3
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -176,13 +176,15 @@ const NeoDashboardRegistry = {
   getMeta(type) {
     return _registry.get(type)?.meta || {};
   },
-  // [{ type, name, description, icon }] for the dropdown
+  // [{ type, name, description, icon, version, author }] for the dropdown/module list
   list() {
     return Array.from(_registry.entries()).map(([type, { meta }]) => ({
       type,
       name: meta.name || type,
       description: meta.description || "",
       icon: meta.icon || "✨",
+      version: meta.version || "",
+      author: meta.author || "",
     }));
   },
 };
@@ -1094,20 +1096,23 @@ NeoDashboardRegistry.registerCard("neo-status-card", NeoStatusCard, {
 
 // Loads pasted module code (script injection, deduped). Used by the
 // neo-card wrapper at runtime and by its editor's "Modul einfügen" area.
+// Returns { ok, cards } where cards = metadata of newly registered cards.
 function neoLoadModule(code) {
-  if (!code || !code.trim()) return false;
+  if (!code || !code.trim()) return { ok: false, cards: [] };
   window.__neoModules = window.__neoModules || new Set();
   const key = code.length + ":" + code.slice(0, 96);
-  if (window.__neoModules.has(key)) return true;
+  if (window.__neoModules.has(key)) return { ok: true, cards: [] };
+  const before = new Set(NeoDashboardRegistry.list().map((c) => c.type));
   try {
     const s = document.createElement("script");
     s.textContent = code;
     document.head.appendChild(s);
     window.__neoModules.add(key);
-    return true;
+    const cards = NeoDashboardRegistry.list().filter((c) => !before.has(c.type));
+    return { ok: true, cards };
   } catch (e) {
     console.error("[Neo Module] Fehler beim Laden:", e);
-    return false;
+    return { ok: false, cards: [] };
   }
 }
 
@@ -1121,9 +1126,10 @@ class NeoCard extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
 
-    // Load any pasted modules first so their card types are available
+    // Load any pasted modules first so their card types are available.
+    // Modules may be code strings (legacy) or { code, cards } objects.
     if (Array.isArray(this._config.modules)) {
-      this._config.modules.forEach((code) => neoLoadModule(code));
+      this._config.modules.forEach((m) => neoLoadModule(typeof m === "string" ? m : m?.code));
     }
 
     const type = this._config.card_type;
@@ -1285,6 +1291,35 @@ class NeoCardEditor extends HTMLElement {
     this._typeForm.data = { card_type: this._config.card_type };
   }
 
+  _authorBadge(author) {
+    if (!author) return "";
+    const cls = String(author).toLowerCase().includes("premium") ? "premium" : "community";
+    const star = cls === "premium" ? "★ " : "";
+    return `<span class="neo-badge ${cls}">${star}${author}</span>`;
+  }
+
+  _moduleItemHtml(m, i) {
+    const cards = m && Array.isArray(m.cards) ? m.cards : [];
+    const icon = cards[0]?.icon || "📦";
+    const title = cards.length ? cards.map((c) => c.name).join(", ") : `Modul ${i + 1}`;
+    let meta;
+    if (cards.length) {
+      meta = cards.map((c) => {
+        const v = c.version ? `v${c.version}` : "";
+        const a = c.author ? this._authorBadge(c.author) : "";
+        return [v, a].filter(Boolean).join(" · ");
+      }).join(" · ");
+    } else {
+      meta = "geladen";
+    }
+    return `
+      <div class="neo-mod-item">
+        <span class="ic">${icon}</span>
+        <div class="t"><div class="nm">${title}</div><div class="meta">${meta}</div></div>
+        <button class="neo-mod-del" data-i="${i}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>
+      </div>`;
+  }
+
   _renderModuleSection() {
     const mods = Array.isArray(this._config.modules) ? this._config.modules : [];
     this._moduleSection.innerHTML = `
@@ -1302,12 +1337,19 @@ class NeoCardEditor extends HTMLElement {
         .neo-mod-btn { margin-top:8px; padding:10px 14px; border-radius:10px; cursor:pointer; border:none;
           background:var(--primary-color,#7C9CFF); color:#fff; font-size:14px; font-weight:600; }
         .neo-mod-msg { font-size:12.5px; margin-top:8px; min-height:16px; }
-        .neo-mod-item { display:flex; align-items:center; gap:8px; padding:8px 10px; margin-top:8px;
+        .neo-mod-item { display:flex; align-items:center; gap:10px; padding:9px 10px; margin-top:8px;
           border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:10px; font-size:13px; }
-        .neo-mod-item .t { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-          color:var(--secondary-text-color); }
+        .neo-mod-item .ic { font-size:18px; line-height:1; }
+        .neo-mod-item .t { flex:1; min-width:0; }
+        .neo-mod-item .nm { font-weight:600; color:var(--primary-text-color);
+          white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .neo-mod-item .meta { font-size:11.5px; color:var(--secondary-text-color); margin-top:1px; }
+        .neo-badge { display:inline-block; padding:1px 7px; border-radius:999px; font-size:10.5px;
+          font-weight:700; vertical-align:middle; }
+        .neo-badge.premium { background:rgba(255,178,107,.18); color:#FFB26B; border:1px solid rgba(255,178,107,.4); }
+        .neo-badge.community { background:rgba(94,220,184,.16); color:#5EDCB8; border:1px solid rgba(94,220,184,.4); }
         .neo-mod-del { width:28px;height:28px;border-radius:8px;border:none;background:transparent;
-          color:var(--error-color,#F87171); cursor:pointer; display:flex;align-items:center;justify-content:center; }
+          color:var(--error-color,#F87171); cursor:pointer; display:flex;align-items:center;justify-content:center;flex-shrink:0; }
       </style>
       <div class="neo-mod ${this._modOpen ? "open" : ""}">
         <div class="neo-mod-h" id="nm-toggle">
@@ -1315,11 +1357,7 @@ class NeoCardEditor extends HTMLElement {
           <span>🧩 Modul einfügen${mods.length ? ` (${mods.length})` : ""}</span>
         </div>
         <div class="neo-mod-c" id="nm-body" style="display:${this._modOpen ? "block" : "none"}">
-          ${mods.map((_, i) => `
-            <div class="neo-mod-item">
-              <span class="t">Modul ${i + 1} · geladen</span>
-              <button class="neo-mod-del" data-i="${i}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>
-            </div>`).join("")}
+          ${mods.map((m, i) => this._moduleItemHtml(m, i)).join("")}
           <textarea id="nm-code" placeholder="Karten-Code hier einfügen (z.B. von Patreon) …"></textarea>
           <button class="neo-mod-btn" id="nm-add">Laden &amp; Speichern</button>
           <div class="neo-mod-msg" id="nm-msg"></div>
@@ -1338,12 +1376,11 @@ class NeoCardEditor extends HTMLElement {
       const code = (ta.value || "").trim();
       const msg = q("#nm-msg");
       if (!code) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Bitte Code einfügen."; return; }
-      const before = NeoDashboardRegistry.list().length;
-      const ok = neoLoadModule(code);
-      const added = NeoDashboardRegistry.list().length - before;
-      if (!ok) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Fehler beim Laden (siehe Konsole)."; return; }
+      const res = neoLoadModule(code);
+      if (!res.ok) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Fehler beim Laden (siehe Konsole)."; return; }
+      const cards = res.cards.map((c) => ({ type: c.type, name: c.name, version: c.version, author: c.author, icon: c.icon }));
       const list = Array.isArray(this._config.modules) ? this._config.modules.slice() : [];
-      list.push(code);
+      list.push({ code, cards });
       this._config = { ...this._config, modules: list };
       this._refreshTypeOptions();
       this._fire();
@@ -1351,8 +1388,8 @@ class NeoCardEditor extends HTMLElement {
       this._renderModuleSection();
       const m2 = this._moduleSection.querySelector("#nm-msg");
       m2.style.color = "var(--success-color,#5EDCB8)";
-      m2.textContent = added > 0
-        ? `✓ Geladen — ${added} Karte(n). Oben im Kartentyp wählen.`
+      m2.textContent = cards.length
+        ? `✓ Geladen — ${cards.map((c) => c.name).join(", ")}. Oben im Kartentyp wählen.`
         : "✓ Geladen. Oben im Kartentyp wählen.";
     });
     this._moduleSection.querySelectorAll(".neo-mod-del").forEach((btn) => {
@@ -1420,7 +1457,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.5-beta.2 ",
+  "%c NEO DASHBOARD KIT %c v0.1.5-beta.3 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
