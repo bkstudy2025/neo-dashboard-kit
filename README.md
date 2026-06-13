@@ -1,4 +1,8 @@
-# Neo Dashboard Kit
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/logo.png" width="170" alt="Neo Dashboard Kit" />
+</p>
+
+<h1 align="center">Neo Dashboard Kit</h1>
 
 A glassmorphism-style Home Assistant dashboard with a community plugin system.
 

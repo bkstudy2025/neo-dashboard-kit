@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/logo.png" width="150" alt="Neo Dashboard Kit" />
+</p>
+
 # Neo Dashboard Kit
 
 Glassmorphism-Karten für Home Assistant mit Community-Modul-System.
