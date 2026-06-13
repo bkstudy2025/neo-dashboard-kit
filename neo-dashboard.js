@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.6-beta.4
+// Neo Dashboard Kit v0.2.0-beta.1
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -198,6 +198,7 @@ const NEO_LINKS = {
   patreon: "https://www.patreon.com/",
   paypal: "https://www.paypal.com/",
   kofi: "https://ko-fi.com/",
+  store: "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/store/index.json",
 };
 
 // ── Icon set (SF-symbol style SVG, ported from prototype) ──────
@@ -1170,6 +1171,12 @@ const NeoStore = {
   async delete(name) {
     return this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/delete", name });
   },
+
+  // Server-side fetch of an https URL (Module Store) — avoids browser CORS.
+  async fetch(url) {
+    const res = await this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/fetch", url });
+    return res.content;
+  },
 };
 window.NeoDashboard.store = NeoStore;
 
@@ -1395,11 +1402,8 @@ class NeoCardEditor extends HTMLElement {
       </div>`;
   }
 
-  async _renderModPanel() {
-    const backend = NeoStore.available();
-    const mods = this._mods || [];
-    const open = this._modOpen;
-    this._modPanel.innerHTML = `
+  _modStyles() {
+    return `
       <style>
         .nm2 { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; overflow:hidden; }
         .nm2-h { display:flex; align-items:center; gap:8px; padding:11px 12px; cursor:pointer;
@@ -1407,40 +1411,61 @@ class NeoCardEditor extends HTMLElement {
         .nm2-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
         .nm2.open .chev { transform:rotate(90deg); }
         .nm2-c { padding:0 12px 12px; }
-        .nm2-c textarea { width:100%; box-sizing:border-box; min-height:110px; resize:vertical; margin-top:8px;
+        .nm2-tabs { display:flex; gap:6px; margin:6px 0 10px; }
+        .nm2-tab { flex:1; text-align:center; padding:8px; border-radius:9px; cursor:pointer; font-size:13px; font-weight:600;
+          color:var(--secondary-text-color); background:transparent; border:1px solid var(--divider-color,rgba(255,255,255,.1)); }
+        .nm2-tab.active { color:#fff; background:var(--primary-color,#7C9CFF); border-color:transparent; }
+        .nm2 textarea { width:100%; box-sizing:border-box; min-height:110px; resize:vertical; margin-top:8px;
           border-radius:10px; border:1px solid var(--divider-color,rgba(255,255,255,.15));
           background:var(--secondary-background-color,#0d1020); color:var(--primary-text-color);
           font-family:ui-monospace,monospace; font-size:12px; padding:10px; }
+        .nm2-input { width:100%; box-sizing:border-box; padding:9px 12px; border-radius:10px;
+          border:1px solid var(--divider-color,rgba(255,255,255,.15)); background:var(--secondary-background-color,#0d1020);
+          color:var(--primary-text-color); font-size:13px; }
         .nm2-btn { margin-top:8px; padding:9px 14px; border-radius:10px; cursor:pointer; border:none;
           background:var(--primary-color,#7C9CFF); color:#fff; font-size:14px; font-weight:600; }
-        .nm2-item { display:flex; align-items:center; gap:10px; padding:8px 10px; margin-top:8px; font-size:13px;
+        .nm2-btn.sm { margin:0; padding:7px 12px; font-size:12.5px; }
+        .nm2-btn.ghost { background:transparent; border:1px solid var(--divider-color,rgba(255,255,255,.15)); color:var(--primary-text-color); }
+        .nm2-item { display:flex; align-items:center; gap:10px; padding:9px 10px; margin-top:8px; font-size:13px;
           border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:10px; }
         .nm2-item .t { flex:1; min-width:0; }
         .nm2-item .nm { font-weight:600; color:var(--primary-text-color); }
         .nm2-item .meta { font-size:11.5px; color:var(--secondary-text-color); margin-top:1px; }
-        .nm2-del { width:28px;height:28px;border:none;background:transparent;color:var(--error-color,#F87171);
-          cursor:pointer; border-radius:8px; display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+        .nm2-iconbtn { width:30px;height:30px;border:none;background:transparent;cursor:pointer; border-radius:8px;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0; color:var(--secondary-text-color); }
+        .nm2-iconbtn.del { color:var(--error-color,#F87171); }
         .nm2-msg { font-size:12px; margin-top:8px; min-height:14px; }
-        .nm2-note { font-size:11.5px; color:var(--secondary-text-color); margin-top:8px; line-height:1.4; }
-      </style>
+        .nm2-note { font-size:11.5px; color:var(--secondary-text-color); margin:6px 0; line-height:1.4; }
+        .nm2-store { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; padding:10px; margin-top:8px; }
+        .nm2-store .img { width:100%; border-radius:8px; margin-top:8px; display:block; }
+        .nm2-store .desc { font-size:12.5px; color:var(--secondary-text-color); margin-top:6px; line-height:1.45; }
+        .nm2-store .row { display:flex; gap:8px; margin-top:10px; }
+        .nm2-badge { display:inline-block; padding:1px 7px; border-radius:999px; font-size:10.5px; font-weight:700;
+          background:rgba(94,220,184,.16); color:#5EDCB8; border:1px solid rgba(94,220,184,.4); margin-left:6px; }
+      </style>`;
+  }
+
+  async _renderModPanel() {
+    const backend = NeoStore.available();
+    const mods = this._mods || [];
+    const open = this._modOpen;
+    const tab = this._modTab || "mine";
+
+    const body = tab === "store" ? this._storeHtml() : this._mineHtml(backend, mods);
+
+    this._modPanel.innerHTML = `
+      ${this._modStyles()}
       <div class="nm2 ${open ? "open" : ""}">
         <div class="nm2-h" id="nm2-toggle">
           <span class="chev">${neoIcon("chevR", { size: 16, color: "currentColor" })}</span>
-          <span>🧩 Module verwalten${mods.length ? ` (${mods.length})` : ""}</span>
+          <span>🧩 Module${mods.length ? ` (${mods.length})` : ""}</span>
         </div>
         <div class="nm2-c" id="nm2-body" style="display:${open ? "block" : "none"}">
-          ${backend ? "" : `<div class="nm2-note">⚠️ Integration <b>Neo Dashboard Tools</b> nicht gefunden — zum zentralen Speichern bitte installieren.</div>`}
-          ${mods.map((m, i) => {
-            const meta = this._parseMod(m.code);
-            return `<div class="nm2-item">
-              <span style="font-size:18px;">${meta.icon || "📦"}</span>
-              <div class="t"><div class="nm">${meta.name}</div>
-                <div class="meta">${[meta.version ? "v" + meta.version : "", meta.author || ""].filter(Boolean).join(" · ")}</div></div>
-              <button class="nm2-del" data-i="${i}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>
-            </div>`;
-          }).join("")}
-          <textarea id="nm2-code" placeholder="Karten-Code (z.B. von Patreon) einfügen …"></textarea>
-          <button class="nm2-btn" id="nm2-add">Hinzufügen / Aktualisieren</button>
+          <div class="nm2-tabs">
+            <div class="nm2-tab ${tab === "mine" ? "active" : ""}" data-tab="mine">Meine Module</div>
+            <div class="nm2-tab ${tab === "store" ? "active" : ""}" data-tab="store">Modul-Store</div>
+          </div>
+          ${body}
           <div class="nm2-msg" id="nm2-msg"></div>
         </div>
       </div>`;
@@ -1451,33 +1476,173 @@ class NeoCardEditor extends HTMLElement {
       q("#nm2-body").style.display = this._modOpen ? "block" : "none";
       this._modPanel.querySelector(".nm2").classList.toggle("open", this._modOpen);
     });
+    this._modPanel.querySelectorAll(".nm2-tab").forEach((t) => {
+      t.addEventListener("click", () => {
+        this._modTab = t.getAttribute("data-tab");
+        this._modOpen = true;
+        this._renderModPanel();
+        if (this._modTab === "store" && !this._storeItems) this._loadStore();
+      });
+    });
+
+    if (tab === "mine") this._wireMine(backend);
+    else this._wireStore(backend);
+  }
+
+  // ── My Modules tab ─────────────────────────────────────────
+  _mineHtml(backend, mods) {
+    if (!backend) {
+      return `<div class="nm2-note">⚠️ Integration <b>Neo Dashboard Tools</b> nicht gefunden — zum zentralen Speichern/Bearbeiten bitte installieren.</div>`;
+    }
+    const list = mods.map((m, i) => {
+      const meta = this._parseMod(m.code);
+      if (this._editIdx === i) {
+        return `<div class="nm2-item" style="flex-direction:column;align-items:stretch;">
+          <div style="font-weight:600;color:var(--primary-text-color)">${meta.name} bearbeiten</div>
+          <textarea data-edit="${i}">${(m.code || "").replace(/</g, "&lt;")}</textarea>
+          <div class="nm2-store-row" style="display:flex;gap:8px;margin-top:8px;">
+            <button class="nm2-btn sm" data-save="${i}">Speichern</button>
+            <button class="nm2-btn sm ghost" data-cancel="1">Abbrechen</button>
+          </div>
+        </div>`;
+      }
+      return `<div class="nm2-item">
+        <span style="font-size:18px;">${meta.icon || "📦"}</span>
+        <div class="t"><div class="nm">${meta.name}</div>
+          <div class="meta">${[meta.version ? "v" + meta.version : "", meta.author || ""].filter(Boolean).join(" · ")}</div></div>
+        <button class="nm2-iconbtn" data-editbtn="${i}" title="Bearbeiten">${neoIcon("settings", { size: 16, color: "currentColor" })}</button>
+        <button class="nm2-iconbtn del" data-del="${i}" title="Entfernen">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>
+      </div>`;
+    }).join("");
+    return `
+      ${mods.length ? list : `<div class="nm2-note">Noch keine Module installiert. Über den <b>Modul-Store</b> oder per Code-Einfügen unten hinzufügen.</div>`}
+      <div style="margin-top:12px;font-size:12.5px;font-weight:700;color:var(--primary-text-color)">Code einfügen (z.B. Patreon)</div>
+      <textarea id="nm2-code" placeholder="Karten-Code hier einfügen …"></textarea>
+      <button class="nm2-btn" id="nm2-add">Hinzufügen / Aktualisieren</button>`;
+  }
+
+  _wireMine(backend) {
+    const q = (s) => this._modPanel.querySelector(s);
+    const msg = (txt, err) => {
+      const m = this._modPanel.querySelector("#nm2-msg");
+      if (m) { m.style.color = err ? "var(--error-color,#F87171)" : "var(--success-color,#5EDCB8)"; m.textContent = txt; }
+    };
     q("#nm2-add")?.addEventListener("click", async () => {
       const code = (q("#nm2-code").value || "").trim();
-      const msg = q("#nm2-msg");
-      if (!code) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Bitte Code einfügen."; return; }
-      neoLoadModule(code);
-      const meta = this._parseMod(code);
-      const name = meta.type || `modul-${Date.now()}`;
-      if (backend) {
-        try { await NeoStore.save(name, code); } catch (e) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Speichern fehlgeschlagen."; return; }
-        this._mods = await NeoStore.list();
-      }
-      this._refreshTypeOptions();
-      this._modOpen = true;
-      this._renderModPanel();
-      const m2 = this._modPanel.querySelector("#nm2-msg");
-      m2.style.color = "var(--success-color,#5EDCB8)";
-      m2.textContent = `✓ Gespeichert — ${meta.name}. Oben im Kartentyp wählen.`;
+      if (!code) return msg("Bitte Code einfügen.", true);
+      await this._saveModule(code, msg);
     });
-    this._modPanel.querySelectorAll(".nm2-del").forEach((b) => {
+    this._modPanel.querySelectorAll("[data-editbtn]").forEach((b) =>
+      b.addEventListener("click", () => { this._editIdx = +b.getAttribute("data-editbtn"); this._renderModPanel(); }));
+    this._modPanel.querySelectorAll("[data-cancel]").forEach((b) =>
+      b.addEventListener("click", () => { this._editIdx = null; this._renderModPanel(); }));
+    this._modPanel.querySelectorAll("[data-save]").forEach((b) =>
       b.addEventListener("click", async () => {
-        const i = +b.getAttribute("data-i");
-        const mod = mods[i];
+        const i = +b.getAttribute("data-save");
+        const ta = this._modPanel.querySelector(`textarea[data-edit="${i}"]`);
+        const code = (ta?.value || "").trim();
+        if (!code) return msg("Code ist leer.", true);
+        this._editIdx = null;
+        await this._saveModule(code, msg);
+      }));
+    this._modPanel.querySelectorAll("[data-del]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        const i = +b.getAttribute("data-del");
+        const mod = (this._mods || [])[i];
         if (backend && mod) { try { await NeoStore.delete(mod.name); } catch (e) {} this._mods = await NeoStore.list(); }
         this._refreshTypeOptions();
         this._renderModPanel();
+      }));
+  }
+
+  async _saveModule(code, msg) {
+    neoLoadModule(code);
+    const meta = this._parseMod(code);
+    const name = meta.type || `modul-${Date.now()}`;
+    if (NeoStore.available()) {
+      try { await NeoStore.save(name, code); } catch (e) { return msg("Speichern fehlgeschlagen.", true); }
+      this._mods = await NeoStore.list();
+    }
+    this._refreshTypeOptions();
+    this._renderModPanel();
+    msg(`✓ Gespeichert — ${meta.name}. Oben im Kartentyp wählen.`);
+  }
+
+  // ── Module Store tab ───────────────────────────────────────
+  async _loadStore() {
+    try {
+      const txt = await NeoStore.fetch(NEO_LINKS.store);
+      this._storeItems = (JSON.parse(txt).modules) || [];
+    } catch (e) {
+      this._storeItems = [];
+      this._storeError = "Store konnte nicht geladen werden.";
+    }
+    this._renderModPanel();
+  }
+
+  _storeHtml() {
+    if (!NeoStore.available()) {
+      return `<div class="nm2-note">⚠️ Für den Store wird die Integration <b>Neo Dashboard Tools</b> benötigt.</div>`;
+    }
+    if (!this._storeItems) return `<div class="nm2-note">Lade Store …</div>`;
+    if (this._storeError) return `<div class="nm2-note">${this._storeError} <button class="nm2-btn sm ghost" id="nm2-reload">Erneut</button></div>`;
+    const installed = new Set((this._mods || []).map((m) => this._parseMod(m.code).type));
+    const ql = (this._storeQuery || "").toLowerCase();
+    const items = this._storeItems.filter((it) =>
+      !ql || (it.name + " " + (it.author || "") + " " + (it.description || "")).toLowerCase().includes(ql));
+    const cards = items.map((it, i) => {
+      const has = installed.has(it.type);
+      return `<div class="nm2-store">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">🧩</span>
+          <div style="flex:1;min-width:0;">
+            <div class="nm">${it.name}${has ? `<span class="nm2-badge">installiert</span>` : ""}</div>
+            <div class="meta" style="font-size:11.5px;color:var(--secondary-text-color)">von ${it.author || "?"}${it.version ? " · v" + it.version : ""}</div>
+          </div>
+        </div>
+        ${it.image ? `<img class="img" src="${it.image}" loading="lazy" />` : ""}
+        ${it.description ? `<div class="desc">${it.description}</div>` : ""}
+        <div class="row">
+          <button class="nm2-btn sm" data-install="${i}">${has ? "Aktualisieren" : "Installieren"}</button>
+          ${it.repo ? `<a class="nm2-btn sm ghost" href="${it.repo}" target="_blank" rel="noopener" style="text-decoration:none;">Mehr Infos</a>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+    return `
+      <input class="nm2-input" id="nm2-search" placeholder="🔍 Module suchen …" value="${this._storeQuery || ""}" />
+      ${items.length ? cards : `<div class="nm2-note">Keine Module gefunden.</div>`}`;
+  }
+
+  _wireStore() {
+    const q = (s) => this._modPanel.querySelector(s);
+    q("#nm2-reload")?.addEventListener("click", () => { this._storeItems = null; this._storeError = null; this._loadStore(); });
+    const search = q("#nm2-search");
+    if (search) {
+      search.addEventListener("input", () => {
+        this._storeQuery = search.value;
+        const pos = search.selectionStart;
+        this._renderModPanel();
+        const s2 = this._modPanel.querySelector("#nm2-search");
+        if (s2) { s2.focus(); s2.setSelectionRange(pos, pos); }
       });
-    });
+    }
+    this._modPanel.querySelectorAll("[data-install]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        const it = this._storeItems[+b.getAttribute("data-install")];
+        const msg = (t, e) => { const m = q("#nm2-msg"); if (m) { m.style.color = e ? "var(--error-color,#F87171)" : "var(--success-color,#5EDCB8)"; m.textContent = t; } };
+        b.textContent = "Lädt …"; b.disabled = true;
+        try {
+          const code = await NeoStore.fetch(it.url);
+          neoLoadModule(code);
+          await NeoStore.save(it.type || `modul-${Date.now()}`, code);
+          this._mods = await NeoStore.list();
+          this._refreshTypeOptions();
+          this._renderModPanel();
+          msg(`✓ ${it.name} installiert. Oben im Kartentyp wählen.`);
+        } catch (e) {
+          msg(`Installation fehlgeschlagen: ${e?.message || e}`, true);
+        }
+      }));
   }
 
   _parseMod(code) {
@@ -1559,14 +1724,14 @@ Object.assign(window.NeoDashboard, {
   makeEditor: makeNeoEditor,
   iconOptions: NEO_ICON_OPTIONS,
   accentOptions: NEO_ACCENT_OPTIONS,
-  version: "0.1.6",
+  version: "0.2.0",
   ready: true,
 });
 // Let external files that loaded first know the API is now available
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.6-beta.4 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.1 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
