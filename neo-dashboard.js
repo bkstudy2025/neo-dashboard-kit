@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.6-beta.3
+// Neo Dashboard Kit v0.1.6-beta.4
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -189,6 +189,16 @@ const NeoDashboardRegistry = {
   },
 };
 window.NeoDashboard = NeoDashboardRegistry;
+
+// Links shown in the editor's "Info & Support" panel.
+// TODO: trage hier deine echte Patreon-/PayPal-/Ko-fi-URL ein.
+const NEO_LINKS = {
+  repo: "https://github.com/bkstudy2025/neo-dashboard-kit",
+  issues: "https://github.com/bkstudy2025/neo-dashboard-kit/issues",
+  patreon: "https://www.patreon.com/",
+  paypal: "https://www.paypal.com/",
+  kofi: "https://ko-fi.com/",
+};
 
 // ── Icon set (SF-symbol style SVG, ported from prototype) ──────
 // Returned as strings so cards can inline them via innerHTML.
@@ -1327,7 +1337,62 @@ class NeoCardEditor extends HTMLElement {
     this._renderModPanel();
     if (NeoStore.available()) NeoStore.list().then((m) => { this._mods = m; this._renderModPanel(); });
 
+    // Info & Support panel (collapsed)
+    const info = document.createElement("div");
+    info.style.marginTop = "10px";
+    info.innerHTML = this._infoPanelHtml();
+    this.appendChild(info);
+    info.querySelector("#ni-toggle")?.addEventListener("click", () => {
+      const body = info.querySelector("#ni-body");
+      const open = body.style.display !== "none";
+      body.style.display = open ? "none" : "block";
+      info.querySelector(".ni").classList.toggle("open", !open);
+    });
+
     this._mountSub();
+  }
+
+  _infoPanelHtml() {
+    const v = (window.NeoDashboard && window.NeoDashboard.version) || "";
+    const chip = (href, label) =>
+      `<a href="${href}" target="_blank" rel="noopener" class="ni-chip">${label}</a>`;
+    return `
+      <style>
+        .ni { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; overflow:hidden; }
+        .ni-h { display:flex; align-items:center; gap:8px; padding:11px 12px; cursor:pointer;
+          font-size:14px; font-weight:600; color:var(--primary-text-color); }
+        .ni-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
+        .ni.open .chev { transform:rotate(90deg); }
+        .ni-c { padding:4px 12px 14px; }
+        .ni-sec { font-size:13px; font-weight:700; color:var(--primary-text-color); margin:12px 0 8px; }
+        .ni-txt { font-size:12.5px; color:var(--secondary-text-color); line-height:1.5; }
+        .ni-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+        .ni-chip { display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px;
+          font-size:12.5px; font-weight:600; text-decoration:none; cursor:pointer;
+          color:var(--primary-text-color); background:var(--neo-fill2,rgba(255,255,255,.06));
+          border:1px solid var(--neo-line2,rgba(255,255,255,.1)); }
+        .ni-chip.heart { color:#FFB26B; border-color:rgba(255,178,107,.4); background:rgba(255,178,107,.12); }
+      </style>
+      <div class="ni ${this._infoOpen ? "open" : ""}">
+        <div class="ni-h" id="ni-toggle">
+          <span class="chev">${neoIcon("chevR", { size: 16, color: "currentColor" })}</span>
+          <span>ℹ️ Info &amp; Support${v ? ` · v${v}` : ""}</span>
+        </div>
+        <div class="ni-c" id="ni-body" style="display:${this._infoOpen ? "block" : "none"}">
+          <div class="ni-sec">Ressourcen &amp; Hilfe</div>
+          <div class="ni-chips">
+            ${chip(NEO_LINKS.repo, "📖 Dokumentation")}
+            ${chip(NEO_LINKS.issues, "🐞 Probleme melden")}
+          </div>
+          <div class="ni-sec">Projekt unterstützen ❤️</div>
+          <div class="ni-txt">Wenn dir Neo Dashboard Kit gefällt, freue ich mich über deine Unterstützung — so kann ich weiter neue Karten &amp; Module entwickeln.</div>
+          <div class="ni-chips">
+            ${chip(NEO_LINKS.patreon, "Patreon")}
+            ${chip(NEO_LINKS.paypal, "PayPal")}
+            ${chip(NEO_LINKS.kofi, "☕ Kaffee")}
+          </div>
+        </div>
+      </div>`;
   }
 
   async _renderModPanel() {
@@ -1501,7 +1566,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.6-beta.3 ",
+  "%c NEO DASHBOARD KIT %c v0.1.6-beta.4 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
