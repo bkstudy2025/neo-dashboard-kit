@@ -65,12 +65,17 @@
     }
 
     // ── Der Editor (HA-native ha-form über die Factory) ──────────
-    customElements.define("neo-example-card-editor", makeEditor([
-      { name: "entity", label: "Entity", selector: { entity: {} } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-      { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: iconOptions } } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: accentOptions } } },
-    ], { name: "Neo Beispiel (Premium)", description: "Vorlage für eine externe Karte", icon: "⭐" }));
+    // WICHTIG: Editor unter festem Tag nur EINMAL definieren. Sonst wirft
+    // define() beim Modul-Update einen Fehler und bricht ab, bevor
+    // registerCard() unten die neue Version registriert.
+    if (!customElements.get("neo-example-card-editor")) {
+      customElements.define("neo-example-card-editor", makeEditor([
+        { name: "entity", label: "Entity", selector: { entity: {} } },
+        { name: "name", label: "Name (optional)", selector: { text: {} } },
+        { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: iconOptions } } },
+        { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: accentOptions } } },
+      ], { name: "Neo Beispiel (Premium)", description: "Vorlage für eine externe Karte", icon: "⭐" }));
+    }
 
     // ── Registrieren → erscheint im neo-card Dropdown ────────────
     // meta.version + meta.author werden in der Modul-Liste angezeigt.
