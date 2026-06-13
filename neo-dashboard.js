@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.5-beta.5
+// Neo Dashboard Kit v0.1.6-beta.1
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -1116,6 +1116,53 @@ function neoLoadModule(code) {
   }
 }
 
+// ── Module Store — talks to the "Neo Dashboard Tools" integration ──
+// Persists modules server-side (file-based) so the dashboard config stays
+// clean. Falls back gracefully (available=false) when not installed.
+const NeoStore = {
+  _hass: null, _initStarted: false, _available: false, _loaded: false, _cache: [],
+
+  setHass(hass) {
+    if (!hass) return;
+    this._hass = hass;
+    if (!this._initStarted) this._init();
+  },
+
+  async _init() {
+    this._initStarted = true;
+    try {
+      const res = await this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/list" });
+      this._available = true;
+      this._cache = res.modules || [];
+      this._cache.forEach((m) => neoLoadModule(m.code));
+    } catch (e) {
+      this._available = false; // integration not installed → fallback mode
+    }
+    this._loaded = true;
+    window.dispatchEvent(new CustomEvent("neo-modules-loaded"));
+  },
+
+  available() { return this._available; },
+
+  async list() {
+    if (!this._available || !this._hass) return [];
+    try {
+      const res = await this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/list" });
+      this._cache = res.modules || [];
+    } catch (e) { /* keep cache */ }
+    return this._cache;
+  },
+
+  async save(name, code) {
+    return this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/save", name, code });
+  },
+
+  async delete(name) {
+    return this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/delete", name });
+  },
+};
+window.NeoDashboard.store = NeoStore;
+
 
 // ══════════════════════════════════════════════════════════════
 // NEO CARD — single wrapper card with a type dropdown.
@@ -1157,10 +1204,18 @@ class NeoCard extends HTMLElement {
     }
 
     if (!NeoDashboardRegistry.getCard(type)) {
+      // Module may still be loading from the backend store — retry once ready
       this.innerHTML = `
-        <ha-card style="padding:24px;text-align:center;color:var(--error-color,#F87171);">
-          Unbekannter Neo-Kartentyp: ${type}
+        <ha-card style="padding:24px;text-align:center;color:var(--secondary-text-color);">
+          ${NeoStore._loaded ? `Unbekannter Neo-Kartentyp: ${type}` : "Modul wird geladen …"}
         </ha-card>`;
+      if (!NeoStore._loaded && !this._waitingModules) {
+        this._waitingModules = true;
+        window.addEventListener("neo-modules-loaded", () => {
+          this._waitingModules = false;
+          this.setConfig(this._config);
+        }, { once: true });
+      }
       return;
     }
 
@@ -1180,6 +1235,7 @@ class NeoCard extends HTMLElement {
 
   set hass(h) {
     this._hass = h;
+    NeoStore.setHass(h);
     if (this._child) this._child.hass = h;
   }
   get hass() { return this._hass; }
@@ -1225,6 +1281,7 @@ class NeoCardEditor extends HTMLElement {
   }
   set hass(h) {
     this._hass = h;
+    NeoStore.setHass(h);
     if (this._typeForm) this._typeForm.hass = h;
     if (this._sub) this._sub.hass = h;
   }
@@ -1267,8 +1324,18 @@ class NeoCardEditor extends HTMLElement {
     this._moduleSection.style.marginTop = "10px";
     this.appendChild(this._moduleSection);
     this._renderModuleSection();
+    this._loadBackendMods();
 
     this._mountSub();
+  }
+
+  // Fetch the server-side module list (if the integration is installed)
+  async _loadBackendMods() {
+    if (!NeoStore.available()) return;
+    this._useBackend = true;
+    this._backendMods = await NeoStore.list();
+    this._renderModuleSection();
+    this._refreshTypeOptions();
   }
 
   _syncTypeForm() {
@@ -1333,7 +1400,11 @@ class NeoCardEditor extends HTMLElement {
   }
 
   _renderModuleSection() {
-    const mods = Array.isArray(this._config.modules) ? this._config.modules : [];
+    const useBackend = !!this._useBackend;
+    const mods = useBackend
+      ? (this._backendMods || [])
+      : (Array.isArray(this._config.modules) ? this._config.modules : []);
+    const hint = useBackend ? "Server-Speicher (Neo Dashboard Tools)" : "in der Karte gespeichert";
     this._moduleSection.innerHTML = `
       <style>
         .neo-mod { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; overflow:hidden; }
@@ -1373,6 +1444,7 @@ class NeoCardEditor extends HTMLElement {
           <textarea id="nm-code" placeholder="Karten-Code hier einfügen (z.B. von Patreon) …"></textarea>
           <button class="neo-mod-btn" id="nm-add">Laden &amp; Speichern</button>
           <div class="neo-mod-msg" id="nm-msg"></div>
+          <div style="font-size:11px;color:var(--secondary-text-color);margin-top:8px;opacity:.8;">Speicher: ${hint}</div>
         </div>
       </div>`;
 
@@ -1383,7 +1455,7 @@ class NeoCardEditor extends HTMLElement {
       body.style.display = this._modOpen ? "block" : "none";
       this._moduleSection.querySelector(".neo-mod").classList.toggle("open", this._modOpen);
     });
-    q("#nm-add").addEventListener("click", () => {
+    q("#nm-add").addEventListener("click", async () => {
       const ta = q("#nm-code");
       const code = (ta.value || "").trim();
       const msg = q("#nm-msg");
@@ -1392,9 +1464,27 @@ class NeoCardEditor extends HTMLElement {
       if (!res.ok) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Fehler beim Laden (siehe Konsole)."; return; }
       const src = res.cards.length ? res.cards : this._modCards(code);
       const cards = src.map((c) => ({ type: c.type, name: c.name, version: c.version, author: c.author, icon: c.icon }));
+      const names = cards.map((c) => c.name).join(", ");
+      const setMsg = (txt, err) => {
+        const m2 = this._moduleSection.querySelector("#nm-msg");
+        if (m2) { m2.style.color = err ? "var(--error-color,#F87171)" : "var(--success-color,#5EDCB8)"; m2.textContent = txt; }
+      };
+
+      if (useBackend) {
+        // Save server-side; nothing is written to the card config
+        const name = cards[0]?.type || `modul-${Date.now()}`;
+        try { await NeoStore.save(name, code); } catch (e) { setMsg("Speichern fehlgeschlagen.", true); return; }
+        this._backendMods = await NeoStore.list();
+        this._refreshTypeOptions();
+        this._modOpen = true;
+        this._renderModuleSection();
+        setMsg(cards.length ? `✓ Auf Server gespeichert — ${names}. Oben wählen.` : "✓ Auf Server gespeichert.");
+        return;
+      }
+
+      // Fallback: store in the card config (replace same card type)
       const newTypes = cards.map((c) => c.type).filter(Boolean);
       const list = Array.isArray(this._config.modules) ? this._config.modules.slice() : [];
-      // Replace an existing module that provides the same card type(s)
       const idx = list.findIndex((m) => this._modCards(m).some((c) => newTypes.includes(c.type)));
       let replaced = false;
       if (idx >= 0) { list[idx] = { code, cards }; replaced = true; }
@@ -1404,16 +1494,21 @@ class NeoCardEditor extends HTMLElement {
       this._fire();
       this._modOpen = true;
       this._renderModuleSection();
-      const m2 = this._moduleSection.querySelector("#nm-msg");
-      m2.style.color = "var(--success-color,#5EDCB8)";
-      const names = cards.map((c) => c.name).join(", ");
-      m2.textContent = cards.length
+      setMsg(cards.length
         ? `✓ ${replaced ? "Aktualisiert" : "Geladen"} — ${names}. Oben im Kartentyp wählen.`
-        : `✓ ${replaced ? "Aktualisiert" : "Geladen"}.`;
+        : `✓ ${replaced ? "Aktualisiert" : "Geladen"}.`);
     });
     this._moduleSection.querySelectorAll(".neo-mod-del").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const i = +btn.getAttribute("data-i");
+        if (useBackend) {
+          const mod = (this._backendMods || [])[i];
+          if (mod) { try { await NeoStore.delete(mod.name); } catch (e) {} }
+          this._backendMods = await NeoStore.list();
+          this._refreshTypeOptions();
+          this._renderModuleSection();
+          return;
+        }
         const list = (this._config.modules || []).slice();
         list.splice(i, 1);
         this._config = { ...this._config, modules: list.length ? list : undefined };
@@ -1469,14 +1564,14 @@ Object.assign(window.NeoDashboard, {
   makeEditor: makeNeoEditor,
   iconOptions: NEO_ICON_OPTIONS,
   accentOptions: NEO_ACCENT_OPTIONS,
-  version: "0.1.4",
+  version: "0.1.6",
   ready: true,
 });
 // Let external files that loaded first know the API is now available
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.5-beta.5 ",
+  "%c NEO DASHBOARD KIT %c v0.1.6-beta.1 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
