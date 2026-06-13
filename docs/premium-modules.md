@@ -32,6 +32,19 @@ diese API und registriert ihre Karte. Mehr braucht es nicht.
 
 ---
 
+## Speicherort der Module
+
+Es gibt zwei Speichermodi — der Editor wählt automatisch:
+
+| Modus | Voraussetzung | Verhalten |
+|---|---|---|
+| **Server-Speicher** (empfohlen) | [Neo Dashboard Tools](https://github.com/bkstudy2025/neo-dashboard-tools) installiert | Module liegen dateibasiert unter `config/neo_dashboard_modules/`. Config bleibt sauber, geräteübergreifend. Übersicht unter **Geräte & Dienste → Neo Dashboard Tools → Sensor „Module"**. |
+| **In der Karte** (Fallback) | ohne Integration | Modul-Code wird in der Karten-Config gespeichert. |
+
+Unten im „Modul einfügen"-Bereich steht der aktive Modus (z.B. „Speicher: Server-Speicher").
+
+---
+
 ## Einfachster Weg: Code direkt im Editor einfügen
 
 Im `neo-card`-Editor gibt es im **Kartentyp**-Dropdown den Eintrag

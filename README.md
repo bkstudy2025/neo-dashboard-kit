@@ -15,6 +15,7 @@ Vor der Installation müssen folgende HACS-Plugins installiert sein:
 | Plugin | HACS-Kategorie | Pflicht |
 |---|---|---|
 | [Card Mod](https://github.com/thomasloven/lovelace-card-mod) | Frontend | ✅ Ja — für Mobile-Header und Dialog-Styles |
+| [Neo Dashboard Tools](https://github.com/bkstudy2025/neo-dashboard-tools) | Integration | ⭐ Empfohlen — server-seitiger Modul-Speicher (saubere Config). Ohne sie werden Module in der Karten-Config gespeichert. |
 
 ---
 
