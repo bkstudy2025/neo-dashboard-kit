@@ -1,13 +1,17 @@
-// Neo Dashboard Kit v0.2.0-beta.3
+// Neo Dashboard Kit v0.2.0-beta.4
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
-// ── Auto-inject theme into HA frontend ───────────────────────
-(function injectNeoTheme() {
+// ── Token fallback (one-time, lightweight) ───────────────────
+// Stellt nur die --neo-*-Design-Tokens als Fallback bereit, falls das
+// offizielle Theme (themes/neo-dashboard.yaml) nicht aktiv ist. CSS-Custom-
+// Properties auf :root vererben sich in alle Shadow-Roots – kein Polling,
+// kein Eingriff in fremde Shadow-DOMs. Hintergründe/Layout übernimmt das Theme.
+(function injectNeoTokens() {
   const STYLE_ID = "neo-dashboard-theme";
   if (document.getElementById(STYLE_ID)) return;
 
   const css = `
-    /* Neo Dashboard Kit — auto-injected theme */
+    /* Neo Dashboard Kit — Token-Fallback */
     :root, html {
       --lovelace-background:
         radial-gradient(80% 60% at 20% 0%, #161d33 0%, rgba(7,9,15,0) 55%),
@@ -70,16 +74,7 @@
       --neo-accent-rose: #F87171;
     }
 
-    /* Lovelace background */
-    home-assistant,
-    home-assistant-main,
-    ha-panel-lovelace,
-    hui-root,
-    #view {
-      background: var(--lovelace-background) !important;
-    }
-
-    /* Scrollbar */
+    /* Scrollbar (Haupt-Dokument) */
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
@@ -89,26 +84,6 @@
   style.id = STYLE_ID;
   style.textContent = css;
   document.head.appendChild(style);
-
-  // Also inject into any existing shadow roots (HA uses lots of them)
-  const injectIntoShadow = (root) => {
-    if (!root) return;
-    const s = document.createElement("style");
-    s.id = STYLE_ID;
-    s.textContent = css;
-    try { root.appendChild(s); } catch(e) {}
-  };
-
-  // Retry a few times until HA elements are available
-  let tries = 0;
-  const tryInject = setInterval(() => {
-    const ha = document.querySelector("home-assistant");
-    if (ha?.shadowRoot) {
-      injectIntoShadow(ha.shadowRoot);
-      clearInterval(tryInject);
-    }
-    if (++tries > 20) clearInterval(tryInject);
-  }, 500);
 })();
 
 const NEO_ACCENTS = {
@@ -163,15 +138,22 @@ const NEO_CSS = `
 // neo-card dropdown automatically — only the single "neo-card"
 // wrapper is exposed in HA's native card picker.
 const _registry = new Map();
+let _tagSeq = 0;
 const NeoDashboardRegistry = {
+  // Each card is defined under an internal, versioned tag so UPDATES work
+  // live (a custom element can't be re-defined under the same name). The
+  // public `type` maps to the current concrete tag — neo-card uses that.
   registerCard(type, cls, meta = {}) {
-    if (_registry.has(type)) return;
-    _registry.set(type, { cls, meta });
-    if (!customElements.get(type)) customElements.define(type, cls);
-    console.info(`[Neo Dashboard] Registered: ${type}`);
+    const tag = `${type}--neo${++_tagSeq}`;
+    try { customElements.define(tag, cls); } catch (e) { console.error("[Neo Dashboard]", e); return; }
+    _registry.set(type, { cls, meta, tag }); // overwrite on update
+    console.info(`[Neo Dashboard] Registered: ${type} (${tag})`);
   },
   getCard(type) {
     return _registry.get(type)?.cls;
+  },
+  getTag(type) {
+    return _registry.get(type)?.tag;
   },
   getMeta(type) {
     return _registry.get(type)?.meta || {};
@@ -1122,6 +1104,8 @@ function neoLoadModule(code) {
     document.head.appendChild(s);
     window.__neoModules.add(key);
     const cards = NeoDashboardRegistry.list().filter((c) => !before.has(c.type));
+    // Live-Swap aller neo-card-Instanzen auf die (neue) Modul-Version – kein Reload nötig.
+    window.dispatchEvent(new CustomEvent("neo-module-changed"));
     return { ok: true, cards };
   } catch (e) {
     console.error("[Neo Module] Fehler beim Laden:", e);
@@ -1238,11 +1222,15 @@ class NeoCard extends HTMLElement {
       return;
     }
 
-    // (Re)create child element only when the type changes
-    if (!this._child || this._childType !== type) {
+    // (Re)create child when the type OR its concrete tag changes. The tag
+    // changes when a module is updated → the new version goes live without
+    // a page reload.
+    const tag = NeoDashboardRegistry.getTag(type) || type;
+    if (!this._child || this._childTag !== tag) {
       this.innerHTML = "";
-      this._child = document.createElement(type);
+      this._child = document.createElement(tag);
       this._childType = type;
+      this._childTag = tag;
       this.appendChild(this._child);
     }
 
@@ -1258,6 +1246,17 @@ class NeoCard extends HTMLElement {
     if (this._child) this._child.hass = h;
   }
   get hass() { return this._hass; }
+
+  connectedCallback() {
+    // Live-Swap: wenn ein Modul (neu) geladen/aktualisiert wird, Kind mit
+    // aktuellem versioniertem Tag neu aufbauen – ohne Browser-Reload.
+    this._onModChange = () => { if (this._config) this.setConfig(this._config); };
+    window.addEventListener("neo-module-changed", this._onModChange);
+  }
+
+  disconnectedCallback() {
+    if (this._onModChange) window.removeEventListener("neo-module-changed", this._onModChange);
+  }
 
   getCardSize() {
     return this._child?.getCardSize?.() ?? 2;
@@ -1659,6 +1658,9 @@ class NeoCardEditor extends HTMLElement {
       </div>`;
     }).join("");
     return `
+      <div class="nm2-note" style="border-left:3px solid var(--warning-color,#F0B429);">
+        ⚠️ Store-Module sind <b>ungeprüfter Community-Code</b> mit vollem Frontend-Zugriff.
+        Nur aus vertrauenswürdigen Quellen installieren.</div>
       <input class="nm2-input" id="nm2-search" placeholder="🔍 Module suchen …" value="${this._storeQuery || ""}" />
       ${items.length ? cards : `<div class="nm2-note">Noch keine Module veröffentlicht.</div>`}
       <div class="nm2-note" style="margin-top:10px;">Eigenes Modul teilen? Einfach eine
@@ -1683,6 +1685,17 @@ class NeoCardEditor extends HTMLElement {
       b.addEventListener("click", async () => {
         const it = this._storeItems[+b.getAttribute("data-install")];
         const msg = (t, e) => { const m = q("#nm2-msg"); if (m) { m.style.color = e ? "var(--error-color,#F87171)" : "var(--success-color,#5EDCB8)"; m.textContent = t; } };
+        const src = it.url || it.discussion || "GitHub Discussions";
+        const ok = window.confirm(
+          `⚠ Sicherheitshinweis – „${it.name}" installieren?\n\n` +
+          `Dies ist ungeprüfter Community-Code und läuft mit vollem Zugriff ` +
+          `auf dein Home Assistant Frontend (Tokens, alle Entitäten).\n` +
+          `Installiere nur Module aus Quellen, denen du vertraust.\n\n` +
+          `Autor: ${it.author || "unbekannt"}\n` +
+          `Quelle: ${src}\n\n` +
+          `Fortfahren?`
+        );
+        if (!ok) return;
         b.textContent = "Lädt …"; b.disabled = true;
         try {
           const code = it.code; // already loaded from the discussion
@@ -1784,7 +1797,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.3 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.4 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
