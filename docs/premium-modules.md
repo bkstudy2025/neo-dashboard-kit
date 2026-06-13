@@ -45,20 +45,20 @@ Unten im „Modul einfügen"-Bereich steht der aktive Modus (z.B. „Speicher: S
 
 ---
 
-## Module verwalten (zentral in der Integration)
+## Module verwalten
 
-Module werden **an einer Stelle** verwaltet — nicht pro Karte:
+Im **Neo Card**-Editor (eine beliebige Neo-Karte bearbeiten) gibt es das aufklappbare
+Panel **„🧩 Module verwalten"**:
+- **Hinzufügen / Aktualisieren** → Karten-Code (z.B. von Patreon) einfügen → speichern
+- **Entfernen** → Papierkorb am Modul
 
-**Einstellungen → Geräte & Dienste → Neo Dashboard Tools → Konfigurieren**
-- **Modul hinzufügen / aktualisieren** → Karten-Code (z.B. von Patreon) einfügen → Speichern
-- **Modul entfernen** → Modul aus der Liste wählen
+Ist die Integration **Neo Dashboard Tools** installiert, werden die Module dateibasiert
+auf dem Server gespeichert (`config/neo_dashboard_modules/`) — die Karten-/Dashboard-Config
+bleibt sauber und die Module gelten geräteübergreifend. Die Karten erscheinen danach
+direkt im **Kartentyp**-Dropdown.
 
-Die Module liegen dateibasiert unter `config/neo_dashboard_modules/` und werden beim
-Laden des Dashboards automatisch aktiv. Im `neo-card`-Editor erscheinen die Karten
-dann direkt im **Kartentyp**-Dropdown.
-
-> Übersicht aller installierten Module: Geräte & Dienste → Neo Dashboard Tools →
-> Sensor **„Module"** (Anzahl + Name/Version/Autor).
+> Übersicht aller installierten Module: **Geräte & Dienste → Neo Dashboard Tools**
+> — Sensor „Module" (Gesamtzahl) + je ein Sensor pro Modul (Version/Typ/Autor).
 
 ---
 
