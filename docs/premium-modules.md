@@ -45,21 +45,24 @@ Unten im „Modul einfügen"-Bereich steht der aktive Modus (z.B. „Speicher: S
 
 ---
 
-## Einfachster Weg: Code direkt im Editor einfügen
+## Module verwalten (zentral in der Integration)
 
-Im `neo-card`-Editor gibt es im **Kartentyp**-Dropdown den Eintrag
-**„Neo Modul / Code laden"**. Dort den von Patreon kopierten Code in das Textfeld
-einfügen und speichern — die Karte(n) werden registriert und erscheinen anschließend
-im Kartentyp-Dropdown jeder weiteren `neo-card`.
+Module werden **an einer Stelle** verwaltet — nicht pro Karte:
 
-> Nach dem Einfügen den Editor einmal schließen und wieder öffnen, damit die neue
-> Karte im Dropdown auftaucht.
+**Einstellungen → Geräte & Dienste → Neo Dashboard Tools → Konfigurieren**
+- **Modul hinzufügen / aktualisieren** → Karten-Code (z.B. von Patreon) einfügen → Speichern
+- **Modul entfernen** → Modul aus der Liste wählen
 
-So müssen Supporter **keine Dateien** nach `www/` kopieren oder Ressourcen anlegen.
+Die Module liegen dateibasiert unter `config/neo_dashboard_modules/` und werden beim
+Laden des Dashboards automatisch aktiv. Im `neo-card`-Editor erscheinen die Karten
+dann direkt im **Kartentyp**-Dropdown.
+
+> Übersicht aller installierten Module: Geräte & Dienste → Neo Dashboard Tools →
+> Sensor **„Module"** (Anzahl + Name/Version/Autor).
 
 ---
 
-## Alternative: als Ressource (für Karten ohne Editor-Einfügen)
+## Alternative: als Ressource (für Karten ohne Integration)
 
 1. Die Karten-Datei (z.B. `neo-meine-karte.js`) herunterladen
    *(bei Premium: aus dem Patreon-Beitrag)*
