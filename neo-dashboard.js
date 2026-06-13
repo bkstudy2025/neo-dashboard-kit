@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.5-beta.4
+// Neo Dashboard Kit v0.1.5-beta.5
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -1392,8 +1392,13 @@ class NeoCardEditor extends HTMLElement {
       if (!res.ok) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Fehler beim Laden (siehe Konsole)."; return; }
       const src = res.cards.length ? res.cards : this._modCards(code);
       const cards = src.map((c) => ({ type: c.type, name: c.name, version: c.version, author: c.author, icon: c.icon }));
+      const newTypes = cards.map((c) => c.type).filter(Boolean);
       const list = Array.isArray(this._config.modules) ? this._config.modules.slice() : [];
-      list.push({ code, cards });
+      // Replace an existing module that provides the same card type(s)
+      const idx = list.findIndex((m) => this._modCards(m).some((c) => newTypes.includes(c.type)));
+      let replaced = false;
+      if (idx >= 0) { list[idx] = { code, cards }; replaced = true; }
+      else list.push({ code, cards });
       this._config = { ...this._config, modules: list };
       this._refreshTypeOptions();
       this._fire();
@@ -1401,9 +1406,10 @@ class NeoCardEditor extends HTMLElement {
       this._renderModuleSection();
       const m2 = this._moduleSection.querySelector("#nm-msg");
       m2.style.color = "var(--success-color,#5EDCB8)";
+      const names = cards.map((c) => c.name).join(", ");
       m2.textContent = cards.length
-        ? `✓ Geladen — ${cards.map((c) => c.name).join(", ")}. Oben im Kartentyp wählen.`
-        : "✓ Geladen. Oben im Kartentyp wählen.";
+        ? `✓ ${replaced ? "Aktualisiert" : "Geladen"} — ${names}. Oben im Kartentyp wählen.`
+        : `✓ ${replaced ? "Aktualisiert" : "Geladen"}.`;
     });
     this._moduleSection.querySelectorAll(".neo-mod-del").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1470,7 +1476,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.5-beta.4 ",
+  "%c NEO DASHBOARD KIT %c v0.1.5-beta.5 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
