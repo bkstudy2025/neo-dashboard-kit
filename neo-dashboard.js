@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.1.5-beta.3
+// Neo Dashboard Kit v0.1.5-beta.4
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -1298,8 +1298,20 @@ class NeoCardEditor extends HTMLElement {
     return `<span class="neo-badge ${cls}">${star}${author}</span>`;
   }
 
+  // Resolve the card(s) a module provides — prefer stored meta, else
+  // parse registerCard("type") from the code and read the live registry.
+  _modCards(m) {
+    if (m && Array.isArray(m.cards) && m.cards.length) return m.cards;
+    const code = typeof m === "string" ? m : (m && m.code) || "";
+    const types = [...code.matchAll(/registerCard\(\s*["'`]([\w-]+)["'`]/g)].map((x) => x[1]);
+    return types.map((t) => {
+      const meta = NeoDashboardRegistry.getMeta(t) || {};
+      return { type: t, name: meta.name || t, version: meta.version, author: meta.author, icon: meta.icon };
+    });
+  }
+
   _moduleItemHtml(m, i) {
-    const cards = m && Array.isArray(m.cards) ? m.cards : [];
+    const cards = this._modCards(m);
     const icon = cards[0]?.icon || "📦";
     const title = cards.length ? cards.map((c) => c.name).join(", ") : `Modul ${i + 1}`;
     let meta;
@@ -1378,7 +1390,8 @@ class NeoCardEditor extends HTMLElement {
       if (!code) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Bitte Code einfügen."; return; }
       const res = neoLoadModule(code);
       if (!res.ok) { msg.style.color = "var(--error-color,#F87171)"; msg.textContent = "Fehler beim Laden (siehe Konsole)."; return; }
-      const cards = res.cards.map((c) => ({ type: c.type, name: c.name, version: c.version, author: c.author, icon: c.icon }));
+      const src = res.cards.length ? res.cards : this._modCards(code);
+      const cards = src.map((c) => ({ type: c.type, name: c.name, version: c.version, author: c.author, icon: c.icon }));
       const list = Array.isArray(this._config.modules) ? this._config.modules.slice() : [];
       list.push({ code, cards });
       this._config = { ...this._config, modules: list };
@@ -1457,7 +1470,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.1.5-beta.3 ",
+  "%c NEO DASHBOARD KIT %c v0.1.5-beta.4 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
