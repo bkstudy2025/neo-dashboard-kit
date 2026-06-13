@@ -14,7 +14,6 @@ card_type: neo-quick-actions-card
 columns: 2
 tile_height: 150
 show_toggle: true
-fill_style: tile        # tile | icon
 show_arrows: true
 show_dots: true
 items:
@@ -30,8 +29,7 @@ items:
 | `columns` | 1–4 | `2` | Kacheln pro Ansicht |
 | `tile_height` | px (90–260) | `150` | Kachelhöhe |
 | `show_toggle` | bool | `true` | Toggle anzeigen. Aus → zentriertes großes Icon (Quickbar-Look) |
-| `fill_style` | `tile` / `icon` | `tile` | Bei „An": ganze Kachel einfärben oder nur das Icon |
-| `show_arrows` | bool | `true` | Pfeile (erscheinen nur wenn scrollbar) |
+| `show_arrows` | bool | `true` | Pfeile (Touch: dauerhaft wenn scrollbar · Maus: bei Hover) |
 | `show_dots` | bool | `true` | Indikator-Punkte (ab 2 Seiten) |
 | `items` | Liste | – | Aktions-Kacheln |
 
