@@ -1,44 +1,45 @@
-# Neo Dashboard — Modul-Store
+# Neo Dashboard — Modul-Store (über GitHub Discussions)
 
-Dieser Ordner enthält den **Store-Index** (`index.json`), den das Neo Dashboard Kit
-im Editor unter **Modul-Store** anzeigt. Nutzer können Module von hier mit einem Klick
-installieren.
+Der **Modul-Store** im Editor liest Community-Module direkt aus den
+[GitHub Discussions](https://github.com/bkstudy2025/neo-dashboard-kit/discussions)
+dieses Repos. **Kein eigenes Repo, kein Pull Request nötig.**
 
-## Eigenes Modul eintragen (Community)
+## Eigenes Modul veröffentlichen
 
-1. Veröffentliche deine Karten-`.js` in deinem **eigenen öffentlichen GitHub-Repo**
-   (eine eigenständige Datei, die `window.NeoDashboard.registerCard(...)` aufruft —
-   siehe [Plugin-Anleitung](../docs/premium-modules.md)).
-2. Stelle einen **Pull Request** auf dieses Repo, der einen Eintrag zu `store/index.json`
-   hinzufügt:
+1. Erstelle eine **neue Discussion** in diesem Repo.
+2. Schreib eine kurze Beschreibung und (optional) füge ein Vorschaubild ein.
+3. Füge deinen Karten-Code in einen **`js`-Codeblock** ein:
 
-```json
-{
-  "name": "Mein cooles Modul",
-  "type": "neo-mein-modul-card",
-  "author": "DeinName",
-  "version": "1.0.0",
-  "description": "Kurze Beschreibung der Karte.",
-  "image": "https://raw.githubusercontent.com/DU/REPO/main/preview.png",
-  "url": "https://raw.githubusercontent.com/DU/REPO/main/neo-mein-modul-card.js",
-  "repo": "https://github.com/DU/REPO"
-}
-```
+  <pre>
+  ```js
+  (function(){
+    function init(){
+      const NEO = window.NeoDashboard;
+      if(!NEO || !NEO.BaseCard){ window.addEventListener("neo-dashboard-ready", init, {once:true}); return; }
+      const { BaseCard, icon, accents, registerCard, makeEditor } = NEO;
+      class MeineKarte extends BaseCard { /* ... */ }
+      registerCard("neo-meine-karte", MeineKarte, {
+        name: "Meine Karte", icon: "⭐", version: "1.0.0", author: "DeinName"
+      });
+    }
+    init();
+  })();
+  ```
+  </pre>
 
-### Felder
+Das war's. Der Store erkennt automatisch jede Discussion, deren Codeblock
+`registerCard(...)` enthält, und zeigt sie mit Name, Autor, Version, Beschreibung
+und Vorschaubild an. Nutzer installieren sie mit einem Klick.
 
-| Feld | Pflicht | Beschreibung |
-|---|---|---|
-| `name` | ✅ | Anzeigename |
-| `type` | ✅ | Kartentyp (`registerCard`-Name), z.B. `neo-...-card` |
-| `author` | ✅ | Dein Name / „Community" |
-| `version` | ✅ | SemVer |
-| `description` | ✅ | Kurzbeschreibung |
-| `image` | – | Vorschaubild (raw URL) |
-| `url` | ✅ | **raw**-URL der `.js`-Datei |
-| `repo` | ✅ | Link zum Repo (für „Mehr Infos") |
+## Felder (aus dem Code/Post)
 
-> Premium-Karten (Patreon) gehören **nicht** in den öffentlichen Store —
-> die werden direkt über den Code (Karten-Editor → Module verwalten) eingespielt.
+| Anzeige | Quelle |
+|---|---|
+| Name | `registerCard`-Meta `name` (sonst Discussion-Titel) |
+| Autor | Meta `author` (sonst GitHub-Benutzer) |
+| Version | Meta `version` |
+| Beschreibung | erste Textzeile der Discussion |
+| Bild | erstes Bild im Post |
 
-Nach dem Merge erscheint dein Modul im Store aller Nutzer.
+> Premium-Karten (Patreon) gehören **nicht** öffentlich in die Discussions —
+> die werden direkt über „Module → Code einfügen" im Karten-Editor eingespielt.

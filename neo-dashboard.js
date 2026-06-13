@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.1
+// Neo Dashboard Kit v0.2.0-beta.2
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Auto-inject theme into HA frontend ───────────────────────
@@ -198,7 +198,9 @@ const NEO_LINKS = {
   patreon: "https://www.patreon.com/",
   paypal: "https://www.paypal.com/",
   kofi: "https://ko-fi.com/",
-  store: "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/store/index.json",
+  // Module Store reads community modules from GitHub Discussions
+  discussions: "https://api.github.com/repos/bkstudy2025/neo-dashboard-kit/discussions?per_page=100",
+  newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
 };
 
 // ── Icon set (SF-symbol style SVG, ported from prototype) ──────
@@ -1568,14 +1570,62 @@ class NeoCardEditor extends HTMLElement {
     msg(`✓ Gespeichert — ${meta.name}. Oben im Kartentyp wählen.`);
   }
 
-  // ── Module Store tab ───────────────────────────────────────
+  // ── Module Store tab (reads GitHub Discussions) ────────────
+  _extractJs(body) {
+    const m = body.match(/```(?:js|javascript)?\s*\n([\s\S]*?)```/i);
+    return m ? m[1].trim() : "";
+  }
+  _extractImage(body) {
+    const m = body.match(/!\[[^\]]*\]\(([^)]+)\)/) || body.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return m ? m[1] : "";
+  }
+  _extractDesc(body) {
+    const text = body
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+      .replace(/<img[^>]*>/gi, "")
+      .replace(/[#>*_`]/g, "")
+      .trim();
+    const line = text.split("\n").map((l) => l.trim()).filter(Boolean)[0] || "";
+    return line.length > 180 ? line.slice(0, 177) + "…" : line;
+  }
+  _parseCodeMeta(code) {
+    const m = code.match(/registerCard\(\s*["'`]([\w-]+)["'`]\s*,\s*[A-Za-z_$][\w$]*\s*,\s*\{([^{}]*)\}/);
+    const field = (body, key) => {
+      const f = body.match(new RegExp(key + "\\s*:\\s*[\"'`]([^\"'`]+)[\"'`]"));
+      return f ? f[1] : null;
+    };
+    if (m) return { type: m[1], name: field(m[2], "name") || m[1], version: field(m[2], "version"), author: field(m[2], "author"), icon: field(m[2], "icon") };
+    const t = (code.match(/registerCard\(\s*["'`]([\w-]+)["'`]/) || [])[1];
+    return { type: t, name: t, version: null, author: null, icon: null };
+  }
+
   async _loadStore() {
     try {
-      const txt = await NeoStore.fetch(NEO_LINKS.store);
-      this._storeItems = (JSON.parse(txt).modules) || [];
+      const txt = await NeoStore.fetch(NEO_LINKS.discussions);
+      const discussions = JSON.parse(txt);
+      const items = [];
+      for (const d of discussions) {
+        const code = this._extractJs(d.body || "");
+        if (!code || !/registerCard\(/.test(code)) continue; // only module posts
+        const meta = this._parseCodeMeta(code);
+        items.push({
+          name: meta.name || d.title,
+          type: meta.type,
+          author: meta.author || d.user?.login || "?",
+          version: meta.version,
+          icon: meta.icon,
+          description: this._extractDesc(d.body || ""),
+          image: this._extractImage(d.body || ""),
+          repo: d.html_url,
+          code,
+        });
+      }
+      this._storeItems = items;
+      this._storeError = null;
     } catch (e) {
       this._storeItems = [];
-      this._storeError = "Store konnte nicht geladen werden.";
+      this._storeError = "Store konnte nicht geladen werden (GitHub-Limit?).";
     }
     this._renderModPanel();
   }
@@ -1610,7 +1660,10 @@ class NeoCardEditor extends HTMLElement {
     }).join("");
     return `
       <input class="nm2-input" id="nm2-search" placeholder="🔍 Module suchen …" value="${this._storeQuery || ""}" />
-      ${items.length ? cards : `<div class="nm2-note">Keine Module gefunden.</div>`}`;
+      ${items.length ? cards : `<div class="nm2-note">Noch keine Module veröffentlicht.</div>`}
+      <div class="nm2-note" style="margin-top:10px;">Eigenes Modul teilen? Einfach eine
+        <a href="${NEO_LINKS.newDiscussion}" target="_blank" rel="noopener">GitHub-Diskussion</a>
+        mit deinem Code in einem <code>\`\`\`js</code>-Block erstellen.</div>`;
   }
 
   _wireStore() {
@@ -1632,7 +1685,7 @@ class NeoCardEditor extends HTMLElement {
         const msg = (t, e) => { const m = q("#nm2-msg"); if (m) { m.style.color = e ? "var(--error-color,#F87171)" : "var(--success-color,#5EDCB8)"; m.textContent = t; } };
         b.textContent = "Lädt …"; b.disabled = true;
         try {
-          const code = await NeoStore.fetch(it.url);
+          const code = it.code; // already loaded from the discussion
           neoLoadModule(code);
           await NeoStore.save(it.type || `modul-${Date.now()}`, code);
           this._mods = await NeoStore.list();
@@ -1731,7 +1784,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.1 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.2 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
