@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.5
+// Neo Dashboard Kit v0.2.0-beta.6
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -131,6 +131,10 @@ const NEO_CSS = `
   [role="button"]:active { transform: scale(0.97); }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
   @keyframes spin { from{transform:rotate(0)}to{transform:rotate(360deg)} }
+  /* Responsives Layout (per data-neo-layout am Host gesetzt). min-height ist
+     nur ein Boden → kleiner = kompakter, Inhalt wird nie abgeschnitten. */
+  :host([data-neo-layout="tablet"]) .neo-card { padding:14px !important; min-height:140px !important; }
+  :host([data-neo-layout="mobile"]) .neo-card { padding:12px !important; min-height:118px !important; }
 `;
 
 // ── Registry ──────────────────────────────────────────────────
@@ -373,6 +377,11 @@ const NEO_LAYOUT_OPTS = [
 function normalizeLayout(v) {
   return ["mobile", "tablet", "desktop", "auto"].includes(v) ? v : "auto";
 }
+// Wiederverwendbares Editor-Feld für die Layout-Auswahl (alle Karten).
+const NEO_LAYOUT_FIELD = {
+  name: "layout", label: "Layout / Gerät",
+  selector: { select: { mode: "dropdown", options: NEO_LAYOUT_OPTS } },
+};
 function neoViewportLayout() {
   const w = window.innerWidth || 1024;
   if (w <= NEO_BP.mobile) return "mobile";
@@ -432,6 +441,7 @@ class NeoBaseCard extends HTMLElement {
   render() { return `<div style="padding:16px">Override render()</div>`; }
 
   _render() {
+    this.setAttribute("data-neo-layout", this._layout());
     this.shadowRoot.innerHTML = `<style>${NEO_CSS}</style>${this.render()}`;
     this._bindEvents();
   }
@@ -523,6 +533,7 @@ customElements.define("neo-light-card-editor", makeNeoEditor([
   { name: "entity", label: "Licht-Entity", selector: { entity: { domain: "light" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+  NEO_LAYOUT_FIELD,
 ], { name: "Neo Licht", description: "Licht mit Helligkeits-Slider", icon: "💡" }));
 NeoDashboardRegistry.registerCard("neo-light-card", NeoLightCard, {
   name: "Neo Licht",
@@ -566,6 +577,7 @@ customElements.define("neo-sensor-card-editor", makeNeoEditor([
   { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
   { name: "unit", label: "Einheit (optional)", selector: { text: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+  NEO_LAYOUT_FIELD,
 ], { name: "Neo Sensor", description: "Sensorwert mit Icon", icon: "📊" }));
 NeoDashboardRegistry.registerCard("neo-sensor-card", NeoSensorCard, {
   name: "Neo Sensor",
@@ -614,6 +626,7 @@ customElements.define("neo-scene-card-editor", makeNeoEditor([
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
   { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+  NEO_LAYOUT_FIELD,
 ], { name: "Neo Szene", description: "Szene per Tap aktivieren", icon: "🎬" }));
 NeoDashboardRegistry.registerCard("neo-scene-card", NeoSceneCard, {
   name: "Neo Szene",
@@ -672,6 +685,7 @@ customElements.define("neo-quick-action-card-editor", makeNeoEditor([
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
   { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+  NEO_LAYOUT_FIELD,
 ], { name: "Neo Schnellaktion", description: "Schalter-Kachel mit Toggle", icon: "⚡" }));
 NeoDashboardRegistry.registerCard("neo-quick-action-card", NeoQuickActionCard, {
   name: "Neo Schnellaktion",
@@ -900,6 +914,7 @@ customElements.define("neo-hero-card-editor", makeNeoEditor([
   _heroButtonSchema(1, "Button 1 – Suche"),
   _heroButtonSchema(2, "Button 2 – Kalender"),
   _heroButtonSchema(3, "Button 3 – Benachrichtigungen"),
+  NEO_LAYOUT_FIELD,
 ], { name: "Neo Hero / Begrüßung", description: "Begrüßung mit Name und Action-Buttons", icon: "👋" }));
 NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
   name: "Neo Hero / Begrüßung",
@@ -1059,7 +1074,7 @@ class NeoStatusCardEditor extends HTMLElement {
 
   _schema() {
     const slots = this._pills.length + 1; // trailing empty slot = add
-    const arr = [];
+    const arr = [NEO_LAYOUT_FIELD];
     for (let i = 0; i < slots; i++) {
       const last = i === this._pills.length;
       const p = this._pills[i] || {};
@@ -1069,7 +1084,7 @@ class NeoStatusCardEditor extends HTMLElement {
     return arr;
   }
   _data() {
-    const d = {};
+    const d = { layout: normalizeLayout(this._config.layout) };
     this._pills.forEach((p, i) => (d[`p${i}`] = p));
     d[`p${this._pills.length}`] = {};
     return d;
@@ -1114,6 +1129,7 @@ class NeoStatusCardEditor extends HTMLElement {
     }
     const countChanged = next.length !== this._pills.length;
     this._pills = next;
+    this._config.layout = normalizeLayout(v.layout);
     if (countChanged) this._form.schema = this._schema(); // grow / shrink slots
     this._form.data = this._data();
     this._fire();
@@ -1845,7 +1861,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.5 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.6 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

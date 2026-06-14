@@ -33,6 +33,19 @@ Viele Karten haben eine Option `accent`:
 Karten mit Icon-Auswahl nutzen das eingebaute SVG-Icon-Set (im Editor als Dropdown).
 Beispiele: `lightbulb`, `thermo`, `lock`, `blinds`, `calendar`, `bell`, `sun`, `leaf` …
 
+### Layout / Gerät
+**Jede** Karte hat im Editor die Auswahl **Layout / Gerät**: `auto · mobil · tablet · desktop`.
+
+- `auto` (Standard) richtet sich nach der Bildschirmbreite — Mobil ≤640 px,
+  Tablet ≤1024 px, sonst Desktop — und passt sich automatisch an, wenn ein
+  Breakpoint überschritten wird.
+- Feste Werte erzwingen ein Layout, z. B. `layout: tablet` für ein dediziertes
+  Tablet-Dashboard.
+
+In den kompakten Stufen werden die Karten enger dargestellt. Einzelne Karten
+nutzen das Layout zusätzlich inhaltlich (z. B. zeigt **Wetter** ab Tablet eine
+Mehrtages-Vorhersage, **Quick Actions** wird mobil zum Icon-Raster).
+
 ### Eigene Karten (Community)
 Eigene Karten lassen sich registrieren und erscheinen automatisch im Dropdown —
 siehe [../plugin-development.md](../plugin-development.md).
