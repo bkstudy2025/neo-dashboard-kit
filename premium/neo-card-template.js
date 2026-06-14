@@ -81,7 +81,7 @@
       customElements.define(ED_TAG, makeEditor([
         { name: "entity", label: "Entity", selector: { entity: {} } },
         { name: "name", label: "Name (optional)", selector: { text: {} } },
-        { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: iconOptions, custom_value: true } } },
+        { name: "icon", label: "Icon", selector: { icon: {} } },
         { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: accentOptions } } },
         { name: "layout", label: "Layout / Gerät", selector: { select: { mode: "dropdown", options: layoutOptions } } },
       ], { name: "Neo Beispiel (Premium)", description: "Vorlage für eine externe Karte", icon: "⭐" }));

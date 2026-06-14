@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.10
+// Neo Dashboard Kit v0.2.0-beta.11
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -604,7 +604,7 @@ class NeoSensorCard extends NeoBaseCard {
 customElements.define("neo-sensor-card-editor", makeNeoEditor([
   { name: "entity", label: "Sensor-Entity", selector: { entity: { domain: "sensor" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
-  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true } } },
+  { name: "icon", label: "Icon", selector: { icon: {} } },
   { name: "unit", label: "Einheit (optional)", selector: { text: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
@@ -654,7 +654,7 @@ customElements.define("neo-scene-card-editor", makeNeoEditor([
   { name: "entity", label: "Szenen-Entity", selector: { entity: { domain: "scene" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true } } },
+  { name: "icon", label: "Icon", selector: { icon: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Szene", description: "Szene per Tap aktivieren", icon: "🎬" }));
@@ -713,7 +713,7 @@ customElements.define("neo-quick-action-card-editor", makeNeoEditor([
   { name: "entity", label: "Entity (switch, light, etc.)", selector: { entity: {} } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true } } },
+  { name: "icon", label: "Icon", selector: { icon: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Schnellaktion", description: "Schalter-Kachel mit Toggle", icon: "⚡" }));
@@ -920,7 +920,7 @@ const _heroButtonSchema = (slot, title) => ({
   title,
   schema: [
     { name: "show", label: "Anzeigen", selector: { boolean: {} } },
-    { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true } } },
+    { name: "icon", label: "Icon", selector: { icon: {} } },
     { name: "action", label: "Aktion beim Klick", selector: { select: { mode: "dropdown", options: [
       { value: "navigate", label: "Navigation (Pfad)" },
       { value: "quickbar", label: "Schnellsuche (Entitäten)" },
@@ -1443,14 +1443,6 @@ class NeoCardEditor extends HTMLElement {
       body.style.display = open ? "none" : "block";
       info.querySelector(".ni").classList.toggle("open", !open);
     });
-    info.querySelectorAll(".ni-ic").forEach((el) => {
-      el.addEventListener("click", () => {
-        const name = el.getAttribute("data-icon");
-        try { navigator.clipboard?.writeText(name); } catch (e) {}
-        el.classList.add("copied");
-        setTimeout(() => el.classList.remove("copied"), 1000);
-      });
-    });
 
     this._mountSub();
   }
@@ -1475,14 +1467,6 @@ class NeoCardEditor extends HTMLElement {
           color:var(--primary-text-color); background:var(--neo-fill2,rgba(255,255,255,.06));
           border:1px solid var(--neo-line2,rgba(255,255,255,.1)); }
         .ni-chip.heart { color:#FFB26B; border-color:rgba(255,178,107,.4); background:rgba(255,178,107,.12); }
-        .ni-icons { display:grid; grid-template-columns:repeat(auto-fill, minmax(74px, 1fr)); gap:8px; margin-top:8px; }
-        .ni-ic { display:flex; flex-direction:column; align-items:center; gap:5px; padding:9px 4px; border-radius:10px; cursor:pointer;
-          background:var(--neo-fill1,rgba(255,255,255,.04)); border:1px solid var(--neo-line2,rgba(255,255,255,.08));
-          color:var(--primary-text-color); transition:background .15s, border-color .15s; }
-        .ni-ic:hover { background:var(--neo-fill2,rgba(255,255,255,.07)); border-color:var(--primary-color,#7C9CFF); }
-        .ni-ic .nm { font-size:10px; color:var(--secondary-text-color); max-width:68px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .ni-ic.copied { border-color:var(--success-color,#5EDCB8); }
-        .ni-ic.copied .nm { color:var(--success-color,#5EDCB8); }
       </style>
       <div class="ni ${this._infoOpen ? "open" : ""}">
         <div class="ni-h" id="ni-toggle">
@@ -1501,15 +1485,6 @@ class NeoCardEditor extends HTMLElement {
             ${chip(NEO_LINKS.patreon, "Patreon")}
             ${chip(NEO_LINKS.paypal, "PayPal")}
             ${chip(NEO_LINKS.kofi, "☕ Kaffee")}
-          </div>
-          <div class="ni-sec">Icons (${NEO_ICON_OPTIONS.length}) · zum Kopieren klicken</div>
-          <div class="ni-txt">Diese Namen kannst du im Icon-Feld einer Karte verwenden.</div>
-          <div class="ni-icons">
-            ${NEO_ICON_OPTIONS.map((o) => `
-              <div class="ni-ic" data-icon="${o.value}" title="${o.value}">
-                ${neoIcon(o.value, { size: 22, color: "currentColor" })}
-                <span class="nm">${o.value}</span>
-              </div>`).join("")}
           </div>
         </div>
       </div>`;
@@ -1920,7 +1895,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.10 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.11 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
