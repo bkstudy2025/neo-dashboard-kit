@@ -94,6 +94,41 @@ Accent colors (use inline):
 - Violet: `#C084FC` / glow `rgba(192,132,252,0.35)`
 - Rose: `#F87171` / glow `rgba(248,113,113,0.35)`
 
+### 4b. Responsive layout (shared system)
+
+`NeoBaseCard` provides a consistent device/breakpoint system so every card
+(including community cards) behaves the same. Give your card a `layout` config
+option with values `auto | mobile | tablet | desktop` and read the resolved
+layout in `render()`:
+
+```js
+class MyCard extends NeoBaseCard {
+  render() {
+    const lay = this._layout();          // "mobile" | "tablet" | "desktop"
+    if (this._isMobile())  { /* compact */ }
+    if (this._isTablet())  { /* medium, show more detail */ }
+    // ...
+  }
+}
+```
+
+- `layout: auto` (default) resolves by viewport width — mobile ≤640 px,
+  tablet ≤1024 px, otherwise desktop. The card **re-renders automatically**
+  when the viewport crosses a breakpoint.
+- Fixed values (`mobile`/`tablet`/`desktop`) force a layout — useful for a
+  dedicated tablet dashboard.
+
+For the editor dropdown, reuse the shared options:
+
+```js
+const { layoutOptions } = window.NeoDashboard;
+// in your ha-form schema:
+{ name: "layout", label: "Layout / Gerät", selector: { select: { mode: "dropdown", options: layoutOptions } } }
+```
+
+Helpers on the API: `window.NeoDashboard.normalizeLayout(v)` and
+`window.NeoDashboard.viewportLayout()`.
+
 ### 5. YAML config example
 
 ```yaml

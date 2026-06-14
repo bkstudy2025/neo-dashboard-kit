@@ -28,6 +28,7 @@
     if (customElements.get("neo-example-card")) return; // schon registriert
 
     const { BaseCard, icon, accents, registerCard, makeEditor, accentOptions, iconOptions } = NEO;
+    const layoutOptions = NEO.layoutOptions || [{ value: "auto", label: "Automatisch" }];
 
     // ── Die Karte ────────────────────────────────────────────────
     class NeoExampleCard extends BaseCard {
@@ -41,9 +42,14 @@
         const name = this._config?.name || s?.attributes?.friendly_name || id || "Beispiel";
         const value = s ? s.state : "—";
 
+        // Responsives Layout (geteiltes System): "mobile" | "tablet" | "desktop".
+        // layout: auto richtet sich nach der Bildschirmbreite und rendert bei
+        // Breakpoint-Wechsel automatisch neu. Hier z.B. die Höhe anpassen:
+        const minH = this._isMobile() ? 110 : this._isTablet() ? 130 : 140;
+
         return `
           <div class="neo-card" style="
-            padding:16px;min-height:140px;display:flex;flex-direction:column;
+            padding:16px;min-height:${minH}px;display:flex;flex-direction:column;
             background:linear-gradient(160deg, ${acc.glow} 0%, var(--neo-fill1) 60%, var(--neo-fill0) 100%);
             backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
             border:1px solid var(--neo-line6);
@@ -61,7 +67,7 @@
       }
 
       static getConfigElement() { return document.createElement("neo-example-card-editor"); }
-      static getStubConfig() { return { entity: "", icon: "star", accent: "blue" }; }
+      static getStubConfig() { return { entity: "", icon: "star", accent: "blue", layout: "auto" }; }
     }
 
     // ── Der Editor (HA-native ha-form über die Factory) ──────────
@@ -74,6 +80,7 @@
         { name: "name", label: "Name (optional)", selector: { text: {} } },
         { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: iconOptions } } },
         { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: accentOptions } } },
+        { name: "layout", label: "Layout / Gerät", selector: { select: { mode: "dropdown", options: layoutOptions } } },
       ], { name: "Neo Beispiel (Premium)", description: "Vorlage für eine externe Karte", icon: "⭐" }));
     }
 

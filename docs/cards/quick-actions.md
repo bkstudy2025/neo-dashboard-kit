@@ -26,12 +26,20 @@ items:
 
 | Option | Typ | Standard | Beschreibung |
 |---|---|---|---|
-| `columns` | 1–4 | `2` | Kacheln pro Ansicht |
-| `tile_height` | px (90–260) | `150` | Kachelhöhe |
-| `show_toggle` | bool | `true` | Toggle anzeigen. Aus → zentriertes großes Icon (Quickbar-Look) |
+| `layout` | `auto`·`mobile`·`tablet`·`desktop` | `auto` | Geräte-Layout (siehe unten) |
+| `columns` | 1–4 | automatisch | Kacheln pro Ansicht (leer = je Layout: Desktop 2, Tablet/Mobil 3) |
+| `tile_height` | px | automatisch | Kachelhöhe (leer = je Layout: Mobil 94, Tablet 120, Desktop 150) |
+| `show_toggle` | bool | `true` | Toggle anzeigen (im Mobil-Layout immer aus → zentriertes Icon) |
 | `show_arrows` | bool | `true` | Pfeile (Touch: dauerhaft wenn scrollbar · Maus: bei Hover) |
 | `show_dots` | bool | `true` | Indikator-Punkte (ab 2 Seiten) |
 | `items` | Liste | – | Aktions-Kacheln |
+
+> **Responsives Layout:** `layout: auto` richtet sich nach der Bildschirmbreite
+> (Mobil ≤640 px, Tablet ≤1024 px, sonst Desktop). Für ein festes Mobil-/Tablet-
+> Dashboard kann man `layout` hart setzen. Mobil = sehr kompakt (zentriertes Icon,
+> 3 Spalten); Tablet = kompakt mit Toggle; Desktop = volle Größe, 2 Spalten.
+> `columns`/`tile_height` überschreiben die Automatik. (`compact_mode` aus älteren
+> Versionen wird weiterhin gelesen.)
 
 ### Item-Felder
 

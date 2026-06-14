@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.4
+// Neo Dashboard Kit v0.2.0-beta.5
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -359,8 +359,53 @@ function makeNeoEditor(schema, meta = {}) {
 }
 
 // ── Base Card ─────────────────────────────────────────────────
+// ── Responsives Layout (geteilt von ALLEN Karten) ─────────────
+// Jede Karte erhält eine "layout"-Option: auto | mobile | tablet | desktop.
+// "auto" richtet sich nach der Bildschirmbreite (Mobil-/Tablet-Dashboard),
+// die festen Werte erzwingen ein Layout (z.B. Tablet-Ansicht am Desktop).
+const NEO_BP = { mobile: 640, tablet: 1024 }; // max. Breite je Stufe (px)
+const NEO_LAYOUT_OPTS = [
+  { value: "auto", label: "Automatisch (Bildschirmbreite)" },
+  { value: "mobile", label: "Mobil (kompakt)" },
+  { value: "tablet", label: "Tablet" },
+  { value: "desktop", label: "Desktop (groß)" },
+];
+function normalizeLayout(v) {
+  return ["mobile", "tablet", "desktop", "auto"].includes(v) ? v : "auto";
+}
+function neoViewportLayout() {
+  const w = window.innerWidth || 1024;
+  if (w <= NEO_BP.mobile) return "mobile";
+  if (w <= NEO_BP.tablet) return "tablet";
+  return "desktop";
+}
+
 class NeoBaseCard extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: "open" }); }
+
+  // Re-render bei Breakpoint-Wechsel, solange layout="auto".
+  connectedCallback() {
+    this._mqL = window.matchMedia(`(max-width:${NEO_BP.mobile}px)`);
+    this._mqT = window.matchMedia(`(max-width:${NEO_BP.tablet}px)`);
+    this._onBP = () => { if (normalizeLayout(this._config?.layout) === "auto") this._render(); };
+    this._mqL.addEventListener("change", this._onBP);
+    this._mqT.addEventListener("change", this._onBP);
+  }
+  disconnectedCallback() {
+    if (this._onBP) {
+      this._mqL?.removeEventListener("change", this._onBP);
+      this._mqT?.removeEventListener("change", this._onBP);
+    }
+  }
+
+  // Aufgelöstes Layout für diese Karte: "mobile" | "tablet" | "desktop".
+  _layout() {
+    const m = normalizeLayout(this._config?.layout);
+    return m === "auto" ? neoViewportLayout() : m;
+  }
+  _isMobile() { return this._layout() === "mobile"; }
+  _isTablet() { return this._layout() === "tablet"; }
+  _isDesktop() { return this._layout() === "desktop"; }
 
   setConfig(config) {
     this._config = config;
@@ -1790,6 +1835,9 @@ Object.assign(window.NeoDashboard, {
   makeEditor: makeNeoEditor,
   iconOptions: NEO_ICON_OPTIONS,
   accentOptions: NEO_ACCENT_OPTIONS,
+  layoutOptions: NEO_LAYOUT_OPTS,
+  normalizeLayout,
+  viewportLayout: neoViewportLayout,
   version: "0.2.0",
   ready: true,
 });
@@ -1797,7 +1845,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.4 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.5 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

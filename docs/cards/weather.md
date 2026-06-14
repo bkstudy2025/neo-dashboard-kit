@@ -19,9 +19,22 @@ sunset_entity: sensor.sun_next_setting
 |---|---|---|---|
 | `entity` | entity (`weather`) | `weather.forecast_home` | Wetter-Integration |
 | `sunset_entity` | entity (`sensor`) | `sensor.sun_next_setting` | Sonnenuntergangs-Zeit |
+| `layout` | `auto`·`mobile`·`tablet`·`desktop` | `auto` | Geräte-Layout (siehe unten) |
+| `show_forecast` | `auto`·`on`·`off` | `auto` | Mehrtages-Vorhersage. `auto` = ab Tablet sichtbar |
 | `animated_background` | bool | `true` | Verlauf-Hintergrund je Zustand |
 | `animations` | bool | `true` | Partikel/Wolken-Animationen |
 | `cloud_image` | string (URL) | mitgeliefertes PNG | eigenes Wolken-PNG |
+
+## Responsives Layout & Vorhersage
+
+`layout` steuert, wie kompakt die Karte ist — `auto` richtet sich nach der
+Bildschirmbreite (Mobil ≤640 px, Tablet ≤1024 px, sonst Desktop). Auf einem
+dedizierten Tablet-Dashboard kann man `layout: tablet` fest setzen.
+
+Im **Tablet- und Desktop-Layout** wird zusätzlich eine **Mehrtages-Vorhersage**
+unter dem Banner eingeblendet (Tablet 4 Tage, Desktop 6). Die Daten kommen über
+`weather.get_forecasts` (Fallback: Legacy-`forecast`-Attribut). Mit
+`show_forecast: on` erzwingst du sie auch auf dem Handy, mit `off` blendest du sie aus.
 
 ## Animationen je Zustand
 
