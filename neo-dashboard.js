@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.9
+// Neo Dashboard Kit v0.2.0-beta.10
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -604,7 +604,7 @@ class NeoSensorCard extends NeoBaseCard {
 customElements.define("neo-sensor-card-editor", makeNeoEditor([
   { name: "entity", label: "Sensor-Entity", selector: { entity: { domain: "sensor" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
-  { name: "icon", label: "Icon", selector: { icon: {} } },
+  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true } } },
   { name: "unit", label: "Einheit (optional)", selector: { text: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
@@ -654,7 +654,7 @@ customElements.define("neo-scene-card-editor", makeNeoEditor([
   { name: "entity", label: "Szenen-Entity", selector: { entity: { domain: "scene" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-  { name: "icon", label: "Icon", selector: { icon: {} } },
+  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true } } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Szene", description: "Szene per Tap aktivieren", icon: "🎬" }));
@@ -713,7 +713,7 @@ customElements.define("neo-quick-action-card-editor", makeNeoEditor([
   { name: "entity", label: "Entity (switch, light, etc.)", selector: { entity: {} } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-  { name: "icon", label: "Icon", selector: { icon: {} } },
+  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true } } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Schnellaktion", description: "Schalter-Kachel mit Toggle", icon: "⚡" }));
@@ -920,7 +920,7 @@ const _heroButtonSchema = (slot, title) => ({
   title,
   schema: [
     { name: "show", label: "Anzeigen", selector: { boolean: {} } },
-    { name: "icon", label: "Icon", selector: { icon: {} } },
+    { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true } } },
     { name: "action", label: "Aktion beim Klick", selector: { select: { mode: "dropdown", options: [
       { value: "navigate", label: "Navigation (Pfad)" },
       { value: "quickbar", label: "Schnellsuche (Entitäten)" },
@@ -1400,13 +1400,9 @@ class NeoCardEditor extends HTMLElement {
     this.innerHTML = "";
 
     // Type dropdown (ha-form select, populated from the registry)
-    const options = NeoDashboardRegistry.list()
-      .filter((c) => c.type !== "neo-card")
-      .map((c) => ({ value: c.type, label: c.name }));
-
     this._typeForm = document.createElement("ha-form");
     this._typeForm.schema = [
-      { name: "card_type", label: "Kartentyp", selector: { select: { mode: "dropdown", options } } },
+      { name: "card_type", label: "Kartentyp", selector: { select: { mode: "dropdown", options: this._typeOptions() } } },
     ];
     this._typeForm.data = { card_type: this._config.card_type };
     if (this._hass) this._typeForm.hass = this._hass;
@@ -1850,13 +1846,21 @@ class NeoCardEditor extends HTMLElement {
 
   _refreshTypeOptions() {
     if (!this._typeForm) return;
-    const options = NeoDashboardRegistry.list()
-      .filter((c) => c.type !== "neo-card")
-      .map((c) => ({ value: c.type, label: c.name }));
     this._typeForm.schema = [
-      { name: "card_type", label: "Kartentyp", selector: { select: { mode: "dropdown", options } } },
+      { name: "card_type", label: "Kartentyp", selector: { select: { mode: "dropdown", options: this._typeOptions() } } },
     ];
     this._typeForm.data = { card_type: this._config.card_type };
+  }
+
+  // Kartentyp-Optionen, gruppiert nach Standard · Premium · Community.
+  _typeOptions() {
+    const cat = (a) => a === "Premium" ? "Premium" : a === "Community" ? "Community" : "Standard";
+    const order = { Standard: 0, Premium: 1, Community: 2 };
+    return NeoDashboardRegistry.list()
+      .filter((c) => c.type !== "neo-card")
+      .map((c) => ({ value: c.type, name: c.name, group: cat(c.author) }))
+      .sort((a, b) => (order[a.group] - order[b.group]) || a.name.localeCompare(b.name))
+      .map((c) => ({ value: c.value, label: `${c.name} · ${c.group}` }));
   }
 
 
@@ -1916,7 +1920,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.9 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.10 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
