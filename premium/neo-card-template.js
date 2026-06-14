@@ -66,16 +66,19 @@
           </div>`;
       }
 
-      static getConfigElement() { return document.createElement("neo-example-card-editor"); }
+      static getConfigElement() { return document.createElement(ED_TAG); }
       static getStubConfig() { return { entity: "", icon: "star", accent: "blue", layout: "auto" }; }
     }
 
     // ── Der Editor (HA-native ha-form über die Factory) ──────────
-    // WICHTIG: Editor unter festem Tag nur EINMAL definieren. Sonst wirft
-    // define() beim Modul-Update einen Fehler und bricht ab, bevor
-    // registerCard() unten die neue Version registriert.
-    if (!customElements.get("neo-example-card-editor")) {
-      customElements.define("neo-example-card-editor", makeEditor([
+    // WICHTIG: Editor unter VERSIONIERTEM Tag definieren (nicht festem!). So
+    // gehen auch Editor-Änderungen beim Modul-Update OHNE Browser-Reload live —
+    // getConfigElement() nutzt immer den aktuellen Tag. Ein fester Tag würde
+    // beim Re-Import die alte Editor-Version behalten (Reload nötig).
+    window.__neoEdSeq = (window.__neoEdSeq || 0) + 1;
+    const ED_TAG = `neo-example-card-editor-${window.__neoEdSeq}`;
+    {
+      customElements.define(ED_TAG, makeEditor([
         { name: "entity", label: "Entity", selector: { entity: {} } },
         { name: "name", label: "Name (optional)", selector: { text: {} } },
         { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: iconOptions } } },
