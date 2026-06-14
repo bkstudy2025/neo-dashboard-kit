@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.7
+// Neo Dashboard Kit v0.2.0-beta.8
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -226,6 +226,29 @@ const NEO_ICON_PATHS = {
   leaf: `<path d="M5 21c0-9 7-16 16-16 0 9-7 16-16 16zM5 21c4-4 8-6 12-7"/>`,
   info: `<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r="1" fill="currentColor"/>`,
   grid: `<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>`,
+  // ── SmartHome-Erweiterung ───────────────────────────────────
+  garage: `<path d="M3 21V9l9-5 9 5v12"/><rect x="6" y="12" width="12" height="9"/><path d="M6 15h12M6 18h12"/>`,
+  motion: `<circle cx="5" cy="12" r="1.6" fill="currentColor"/><path d="M9 8a6 6 0 0 1 0 8"/><path d="M13 5a10 10 0 0 1 0 14"/><path d="M17 2a14 14 0 0 1 0 20"/>`,
+  coffee: `<path d="M4 8h13v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 9h2a2 2 0 0 1 0 4h-2"/><path d="M8 2v2.5M12 2v2.5"/>`,
+  washer: `<rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="14" r="5"/><circle cx="12" cy="14" r="2"/><path d="M7 6h.01M10 6h.01"/>`,
+  dishwasher: `<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M4 7h16"/><path d="M8 4.5h.01M11 4.5h.01"/><path d="M9 11c1 1 2 1 3 0s2-1 3 0M9 15c1 1 2 1 3 0s2-1 3 0"/>`,
+  outlet: `<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9v2M15 9v2M9 14h6"/>`,
+  toggle: `<rect x="2" y="8" width="20" height="8" rx="4"/><circle cx="8" cy="12" r="2.5" fill="currentColor"/>`,
+  valve: `<circle cx="12" cy="12" r="3"/><path d="M12 9V3M12 21v-6M9 12H3M21 12h-6M9.5 9.5L7 7M14.5 9.5L17 7M9.5 14.5L7 17M14.5 14.5L17 17"/>`,
+  smoke: `<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>`,
+  warning: `<path d="M12 3l10 18H2z"/><path d="M12 10v4"/><circle cx="12" cy="17.5" r="1" fill="currentColor"/>`,
+  solar: `<rect x="3" y="5" width="18" height="11" rx="1"/><path d="M3 9h18M3 12.5h18M9 5v11M15 5v11M12 19v2M9 21h6"/>`,
+  bed: `<path d="M3 18v-5h18v5"/><path d="M3 13V8h8v5"/><path d="M3 18v2M21 18v2"/><circle cx="7" cy="10.5" r="1.5"/>`,
+  sofa: `<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 12a2 2 0 0 1 2 2v3h14v-3a2 2 0 0 1 2-2"/><path d="M5 17v2M19 17v2"/>`,
+  shower: `<path d="M4 12h16"/><path d="M6 12V7a3 3 0 0 1 6 0"/><path d="M12 7h4a3 3 0 0 1 3 3"/><path d="M8 16v1M12 16v2M16 16v1"/>`,
+  bath: `<path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M6 12V6a2 2 0 0 1 4 0"/><path d="M6 19l-1 2M18 19l1 2"/>`,
+  toilet: `<path d="M6 4v7a5 5 0 0 0 10 0V4"/><path d="M5 4h14"/><path d="M11 16v4M8 20h6"/>`,
+  plant: `<path d="M12 21v-7"/><path d="M12 14c0-3-2-5-5-5 0 3 2 5 5 5z"/><path d="M12 12c0-3 2-5 5-5 0 3-2 5-5 5z"/>`,
+  paw: `<circle cx="6" cy="11" r="1.6"/><circle cx="10" cy="8" r="1.6"/><circle cx="14" cy="8" r="1.6"/><circle cx="18" cy="11" r="1.6"/><path d="M8 16a4 4 0 0 1 8 0 3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3z"/>`,
+  key: `<circle cx="8" cy="8" r="4"/><path d="M11 11l9 9M17 17l2-2M19 19l2-2"/>`,
+  remote: `<rect x="7" y="2" width="10" height="20" rx="3"/><circle cx="12" cy="6" r="1.2" fill="currentColor"/><path d="M10 10h4M10 13h4M10 16h4"/>`,
+  sprinkler: `<path d="M12 3v6M5 9h14"/><path d="M5 9c-1 3-1 6 0 9M19 9c1 3 1 6 0 9M12 9v10"/>`,
+  gate: `<path d="M3 8h18M3 20V8M21 20V8M7 20V8M11 20V8M15 20V8M19 20V8"/>`,
   shield: `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/>`,
   shieldOk: `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/>`,
   water: `<path d="M12 3s-7 8-7 13a7 7 0 0 0 14 0c0-5-7-13-7-13z"/>`,
@@ -1419,6 +1442,14 @@ class NeoCardEditor extends HTMLElement {
       body.style.display = open ? "none" : "block";
       info.querySelector(".ni").classList.toggle("open", !open);
     });
+    info.querySelectorAll(".ni-ic").forEach((el) => {
+      el.addEventListener("click", () => {
+        const name = el.getAttribute("data-icon");
+        try { navigator.clipboard?.writeText(name); } catch (e) {}
+        el.classList.add("copied");
+        setTimeout(() => el.classList.remove("copied"), 1000);
+      });
+    });
 
     this._mountSub();
   }
@@ -1443,6 +1474,14 @@ class NeoCardEditor extends HTMLElement {
           color:var(--primary-text-color); background:var(--neo-fill2,rgba(255,255,255,.06));
           border:1px solid var(--neo-line2,rgba(255,255,255,.1)); }
         .ni-chip.heart { color:#FFB26B; border-color:rgba(255,178,107,.4); background:rgba(255,178,107,.12); }
+        .ni-icons { display:grid; grid-template-columns:repeat(auto-fill, minmax(74px, 1fr)); gap:8px; margin-top:8px; }
+        .ni-ic { display:flex; flex-direction:column; align-items:center; gap:5px; padding:9px 4px; border-radius:10px; cursor:pointer;
+          background:var(--neo-fill1,rgba(255,255,255,.04)); border:1px solid var(--neo-line2,rgba(255,255,255,.08));
+          color:var(--primary-text-color); transition:background .15s, border-color .15s; }
+        .ni-ic:hover { background:var(--neo-fill2,rgba(255,255,255,.07)); border-color:var(--primary-color,#7C9CFF); }
+        .ni-ic .nm { font-size:10px; color:var(--secondary-text-color); max-width:68px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .ni-ic.copied { border-color:var(--success-color,#5EDCB8); }
+        .ni-ic.copied .nm { color:var(--success-color,#5EDCB8); }
       </style>
       <div class="ni ${this._infoOpen ? "open" : ""}">
         <div class="ni-h" id="ni-toggle">
@@ -1461,6 +1500,15 @@ class NeoCardEditor extends HTMLElement {
             ${chip(NEO_LINKS.patreon, "Patreon")}
             ${chip(NEO_LINKS.paypal, "PayPal")}
             ${chip(NEO_LINKS.kofi, "☕ Kaffee")}
+          </div>
+          <div class="ni-sec">Icons (${NEO_ICON_OPTIONS.length}) · zum Kopieren klicken</div>
+          <div class="ni-txt">Diese Namen kannst du im Icon-Feld einer Karte verwenden.</div>
+          <div class="ni-icons">
+            ${NEO_ICON_OPTIONS.map((o) => `
+              <div class="ni-ic" data-icon="${o.value}" title="${o.value}">
+                ${neoIcon(o.value, { size: 22, color: "currentColor" })}
+                <span class="nm">${o.value}</span>
+              </div>`).join("")}
           </div>
         </div>
       </div>`;
@@ -1863,7 +1911,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.7 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.8 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
