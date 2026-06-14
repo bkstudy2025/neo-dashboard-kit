@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.11
+// Neo Dashboard Kit v0.2.0-beta.12
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -302,7 +302,7 @@ function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 } = {})
   // Name mit Doppelpunkt → HA-Icon (mdi:…, hue:… oder andere registrierte Sets).
   // So lassen sich Standard-MDI und installierte Custom-Icon-Sets nutzen.
   if (typeof name === "string" && name.includes(":")) {
-    return `<ha-icon icon="${name}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px;color:${color};display:block"></ha-icon>`;
+    return `<ha-icon icon="${name}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px;color:${color};display:flex;align-items:center;justify-content:center;line-height:0;flex-shrink:0"></ha-icon>`;
   }
   const inner = NEO_ICON_PATHS[name] || `<circle cx="12" cy="12" r="9"/>`;
   const paint = NEO_ICON_FILLED.has(name)
@@ -1827,15 +1827,16 @@ class NeoCardEditor extends HTMLElement {
     this._typeForm.data = { card_type: this._config.card_type };
   }
 
-  // Kartentyp-Optionen, gruppiert nach Standard · Premium · Community.
+  // Kartentyp-Optionen, gruppiert + farblich markiert (⚪ Standard · 🟡 Premium · 🟢 Community).
   _typeOptions() {
     const cat = (a) => a === "Premium" ? "Premium" : a === "Community" ? "Community" : "Standard";
     const order = { Standard: 0, Premium: 1, Community: 2 };
+    const badge = { Standard: "⚪", Premium: "🟡", Community: "🟢" };
     return NeoDashboardRegistry.list()
       .filter((c) => c.type !== "neo-card")
       .map((c) => ({ value: c.type, name: c.name, group: cat(c.author) }))
       .sort((a, b) => (order[a.group] - order[b.group]) || a.name.localeCompare(b.name))
-      .map((c) => ({ value: c.value, label: `${c.name} · ${c.group}` }));
+      .map((c) => ({ value: c.value, label: `${badge[c.group]} ${c.name} · ${c.group}` }));
   }
 
 
@@ -1895,7 +1896,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.11 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.12 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
