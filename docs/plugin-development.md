@@ -160,6 +160,50 @@ resources:
 
 ---
 
+## Free → Premium (Open-Core-Konvention)
+
+Das Kit registriert jede Karte über `registerCard(type, cls, meta)`. Die Registry
+ist **pro `type` eindeutig**: registriert ein später geladenes Modul denselben
+`type`, **überschreibt** es den vorherigen Eintrag — dank versionierter Custom-
+Element-Tags sogar **live** (kein Reload). Das ist die Grundlage des Open-Core-
+Modells, hat aber eine klare Regel:
+
+### Regel: Override nur als *Superset*, nicht als Ersatz
+
+Eine Premium-Karte darf eine freie Karte **nur dann** über denselben `type`
+überschreiben, wenn sie ein echtes **Superset** ist:
+
+- **Gleicher `type`** wie die freie Basiskarte.
+- **Config-kompatibel:** dieselben Config-Keys werden gelesen; Premium fügt nur
+  **zusätzliche, optionale** Keys hinzu. So bleiben bestehende Konfigurationen
+  gültig und gewinnen einfach Funktionen dazu.
+- **Kein Schema-Bruch:** keine bestehenden Keys umbenennen/entfernen.
+
+Ergebnis: keine Doppelung im Dropdown, ein nahtloses Upgrade derselben Karte.
+
+```js
+// FREI (im Repo): Basisversion
+registerCard("neo-sensor-card", NeoSensorCard, { name: "Neo Sensor" });
+
+// PREMIUM (separates .js, via Patreon): gleicher type → überschreibt live,
+// liest dieselbe Config + optionale Extra-Keys (z.B. thresholds, graph).
+registerCard("neo-sensor-card", NeoSensorProCard, { name: "Neo Sensor", version: "2.0.0" });
+```
+
+### Wann KEIN Override (eigener `type`)
+
+Ist die Premium-Karte ein **anderes Konzept/Design** (anderes Config-Schema,
+andere Bedienung), bekommt sie einen **eigenen `type`**. Dann gibt es ohnehin
+keine Doppelung, weil kein freies Pendang existiert. Beispiele:
+`neo-weather-card`, `neo-quick-actions-card`, `neo-bottom-nav-card`,
+`neo-status-chips-card` (eigenes Chips-Design neben der freien Pillen-Leiste
+`neo-status-card`).
+
+**Faustregel:** Veredelt das Premium-Modul dieselbe Karte → gleicher `type`
+(Override). Ist es eine neue Karte → neuer `type`.
+
+---
+
 ## Community
 
 Share your card in the [Discussions tab](https://github.com/bkstudy2025/neo-dashboard-kit/discussions) so others can find it!
