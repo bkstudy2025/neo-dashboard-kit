@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.8
+// Neo Dashboard Kit v0.2.0-beta.9
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -299,6 +299,11 @@ const NEO_ICON_PATHS = {
   router_wifi: `<rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 17h.01M11 17h.01M12 6a6 6 0 0 1 6 6M12 9a3 3 0 0 1 3 3"/>`,
 };
 function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 } = {}) {
+  // Name mit Doppelpunkt → HA-Icon (mdi:…, hue:… oder andere registrierte Sets).
+  // So lassen sich Standard-MDI und installierte Custom-Icon-Sets nutzen.
+  if (typeof name === "string" && name.includes(":")) {
+    return `<ha-icon icon="${name}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px;color:${color};display:block"></ha-icon>`;
+  }
   const inner = NEO_ICON_PATHS[name] || `<circle cx="12" cy="12" r="9"/>`;
   const paint = NEO_ICON_FILLED.has(name)
     ? `fill="currentColor"`
@@ -599,7 +604,7 @@ class NeoSensorCard extends NeoBaseCard {
 customElements.define("neo-sensor-card-editor", makeNeoEditor([
   { name: "entity", label: "Sensor-Entity", selector: { entity: { domain: "sensor" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
-  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
+  { name: "icon", label: "Icon", selector: { icon: {} } },
   { name: "unit", label: "Einheit (optional)", selector: { text: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
@@ -649,7 +654,7 @@ customElements.define("neo-scene-card-editor", makeNeoEditor([
   { name: "entity", label: "Szenen-Entity", selector: { entity: { domain: "scene" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
+  { name: "icon", label: "Icon", selector: { icon: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Szene", description: "Szene per Tap aktivieren", icon: "🎬" }));
@@ -708,7 +713,7 @@ customElements.define("neo-quick-action-card-editor", makeNeoEditor([
   { name: "entity", label: "Entity (switch, light, etc.)", selector: { entity: {} } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-  { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
+  { name: "icon", label: "Icon", selector: { icon: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Schnellaktion", description: "Schalter-Kachel mit Toggle", icon: "⚡" }));
@@ -915,7 +920,7 @@ const _heroButtonSchema = (slot, title) => ({
   title,
   schema: [
     { name: "show", label: "Anzeigen", selector: { boolean: {} } },
-    { name: "icon", label: "Icon", selector: { select: { mode: "dropdown", options: NEO_ICON_OPTIONS } } },
+    { name: "icon", label: "Icon", selector: { icon: {} } },
     { name: "action", label: "Aktion beim Klick", selector: { select: { mode: "dropdown", options: [
       { value: "navigate", label: "Navigation (Pfad)" },
       { value: "quickbar", label: "Schnellsuche (Entitäten)" },
@@ -1911,7 +1916,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.8 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.9 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
