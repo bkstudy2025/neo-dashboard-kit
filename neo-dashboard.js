@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.13
+// Neo Dashboard Kit v0.2.0-beta.14
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -1461,26 +1461,11 @@ class NeoCardEditor extends HTMLElement {
     this._built = true;
     this.innerHTML = "";
 
-    // Type dropdown (ha-form select, populated from the registry)
-    this._typeForm = document.createElement("ha-form");
-    this._typeForm.schema = [
-      { name: "card_type", label: "Kartentyp", selector: { select: { mode: "dropdown", options: this._typeOptions() } } },
-    ];
-    this._typeForm.data = { card_type: this._config.card_type };
-    if (this._hass) this._typeForm.hass = this._hass;
-    this._typeForm.computeLabel = (s) => s.label || s.name;
-    this._typeForm.addEventListener("value-changed", (e) => {
-      e.stopPropagation();
-      const newType = e.detail.value.card_type;
-      if (newType === this._config.card_type) return;
-      const cls = NeoDashboardRegistry.getCard(newType);
-      const stub = cls?.getStubConfig?.() || {};
-      const mods = this._config.modules;
-      this._config = { type: this._config.type, card_type: newType, ...(mods ? { modules: mods } : {}), ...stub };
-      this._mountSub();
-      this._fire();
-    });
-    this.appendChild(this._typeForm);
+    // Kartentyp-Picker — eigener, nach Kategorie gruppierter Auswahldialog
+    // (ha-form kann keine echten Gruppen/Überschriften).
+    this._typeBox = document.createElement("div");
+    this.appendChild(this._typeBox);
+    this._renderTypePicker();
 
     this._subContainer = document.createElement("div");
     this._subContainer.style.marginTop = "8px";
@@ -1873,32 +1858,99 @@ class NeoCardEditor extends HTMLElement {
   }
 
   _syncTypeForm() {
-    if (!this._typeForm) return;
-    // Only update when the value actually changed — avoids re-rendering
-    // the dropdown (which would close it mid-interaction).
-    if (this._typeForm.data?.card_type !== this._config.card_type) {
-      this._typeForm.data = { card_type: this._config.card_type };
-    }
+    if (this._typeBox) this._renderTypePicker();
   }
 
   _refreshTypeOptions() {
-    if (!this._typeForm) return;
-    this._typeForm.schema = [
-      { name: "card_type", label: "Kartentyp", selector: { select: { mode: "dropdown", options: this._typeOptions() } } },
-    ];
-    this._typeForm.data = { card_type: this._config.card_type };
+    if (this._typeBox) this._renderTypePicker();
   }
 
-  // Kartentyp-Optionen, gruppiert + farblich markiert (⚪ Standard · 🟡 Premium · 🟢 Community).
-  _typeOptions() {
+  // Karten nach Kategorie gruppiert: Standard · Premium · Community.
+  _typeGroups() {
     const cat = (a) => a === "Premium" ? "Premium" : a === "Community" ? "Community" : "Standard";
-    const order = { Standard: 0, Premium: 1, Community: 2 };
-    const badge = { Standard: "⚪", Premium: "🟡", Community: "🟢" };
-    return NeoDashboardRegistry.list()
+    const order = ["Standard", "Premium", "Community"];
+    const groups = { Standard: [], Premium: [], Community: [] };
+    NeoDashboardRegistry.list()
       .filter((c) => c.type !== "neo-card")
-      .map((c) => ({ value: c.type, name: c.name, group: cat(c.author) }))
-      .sort((a, b) => (order[a.group] - order[b.group]) || a.name.localeCompare(b.name))
-      .map((c) => ({ value: c.value, label: `${badge[c.group]} ${c.name} · ${c.group}` }));
+      .forEach((c) => groups[cat(c.author)].push({ value: c.type, name: c.name, icon: c.icon || "✨" }));
+    order.forEach((g) => groups[g].sort((a, b) => a.name.localeCompare(b.name)));
+    return order.filter((g) => groups[g].length).map((g) => ({ group: g, items: groups[g] }));
+  }
+
+  _selectType(newType) {
+    if (!newType || newType === this._config.card_type) return;
+    const cls = NeoDashboardRegistry.getCard(newType);
+    const stub = cls?.getStubConfig?.() || {};
+    const mods = this._config.modules;
+    this._config = { type: this._config.type, card_type: newType, ...(mods ? { modules: mods } : {}), ...stub };
+    this._renderTypePicker();
+    this._mountSub();
+    this._fire();
+  }
+
+  // Eigener, gruppierter Kartentyp-Picker (ha-form kann keine Gruppen).
+  _renderTypePicker() {
+    if (!this._typeBox) return;
+    const DOT = { Standard: "#9aa0a6", Premium: "#F0B429", Community: "#5EDCB8" };
+    const catOf = (a) => a === "Premium" ? "Premium" : a === "Community" ? "Community" : "Standard";
+    const cur = this._config.card_type;
+    const m = NeoDashboardRegistry.getMeta(cur) || {};
+    const curCat = catOf(m.author);
+    const curName = m.name || cur || "Kartentyp wählen …";
+    const groups = this._typeGroups();
+    this._typeBox.innerHTML = `
+      <style>
+        .nt-h { font-size:12px; color:var(--secondary-text-color); margin:0 0 4px 4px; }
+        .nt { position:relative; }
+        .nt-btn { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; box-sizing:border-box;
+          padding:11px 12px; border-radius:10px; cursor:pointer; font-size:14px;
+          background:var(--secondary-background-color,#0d1020); color:var(--primary-text-color);
+          border:1px solid var(--divider-color,rgba(255,255,255,.15)); }
+        .nt-lbl { display:flex; align-items:center; gap:8px; min-width:0; }
+        .nt-nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .nt-dot { width:8px; height:8px; border-radius:4px; flex-shrink:0; }
+        .nt-cv { opacity:.6; transition:transform .2s; }
+        .nt.open .nt-cv { transform:rotate(180deg); }
+        .nt-panel { position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:30; max-height:330px; overflow:auto;
+          border-radius:10px; background:var(--card-background-color,#1b2030);
+          border:1px solid var(--divider-color,rgba(255,255,255,.15)); box-shadow:0 14px 34px rgba(0,0,0,.45); }
+        .nt-grp { font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+          color:var(--secondary-text-color); padding:10px 12px 4px; position:sticky; top:0;
+          background:var(--card-background-color,#1b2030); }
+        .nt-opt { display:flex; align-items:center; gap:9px; padding:9px 12px; cursor:pointer; font-size:14px;
+          color:var(--primary-text-color); }
+        .nt-opt:hover { background:var(--neo-fill2,rgba(255,255,255,.06)); }
+        .nt-opt.sel { color:var(--primary-color,#7C9CFF); font-weight:600; }
+        .nt-ic { width:20px; text-align:center; flex-shrink:0; }
+      </style>
+      <div class="nt-h">Kartentyp</div>
+      <div class="nt">
+        <div class="nt-btn" id="nt-btn">
+          <span class="nt-lbl"><span class="nt-dot" style="background:${DOT[curCat]};"></span>
+            <span class="nt-ic">${m.icon || "✨"}</span><span class="nt-nm">${curName}</span></span>
+          <span class="nt-cv">▾</span>
+        </div>
+        <div class="nt-panel" id="nt-panel" style="display:none;">
+          ${groups.map((grp) => `
+            <div class="nt-grp"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};margin-right:6px;"></span>${grp.group}</div>
+            ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}">
+              <span class="nt-ic">${it.icon}</span><span class="nt-nm">${it.name}</span>
+            </div>`).join("")}
+          `).join("")}
+        </div>
+      </div>`;
+    const root = this._typeBox.querySelector(".nt");
+    const panel = this._typeBox.querySelector("#nt-panel");
+    const close = () => { panel.style.display = "none"; root.classList.remove("open"); document.removeEventListener("click", onDoc, true); };
+    const onDoc = (e) => { if (!this._typeBox.contains(e.target)) close(); };
+    this._typeBox.querySelector("#nt-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (panel.style.display !== "none") { close(); return; }
+      panel.style.display = "block"; root.classList.add("open");
+      document.addEventListener("click", onDoc, true);
+    });
+    this._typeBox.querySelectorAll(".nt-opt").forEach((o) =>
+      o.addEventListener("click", () => { close(); this._selectType(o.getAttribute("data-v")); }));
   }
 
 
@@ -1959,7 +2011,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.13 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.14 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
