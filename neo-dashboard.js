@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.14
+// Neo Dashboard Kit v0.2.0-beta.15
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -1629,8 +1629,7 @@ class NeoCardEditor extends HTMLElement {
     if (!backend) {
       return `<div class="nm2-note">⚠️ Integration <b>Neo Dashboard Tools</b> nicht gefunden — zum zentralen Speichern/Bearbeiten bitte installieren.</div>`;
     }
-    const list = mods.map((m, i) => {
-      const meta = this._parseMod(m.code);
+    const item = (m, i, meta) => {
       if (this._editIdx === i) {
         return `<div class="nm2-item" style="flex-direction:column;align-items:stretch;">
           <div style="font-weight:600;color:var(--primary-text-color)">${meta.name} bearbeiten</div>
@@ -1644,11 +1643,21 @@ class NeoCardEditor extends HTMLElement {
       return `<div class="nm2-item">
         <span style="font-size:18px;">${meta.icon || "📦"}</span>
         <div class="t"><div class="nm">${meta.name}</div>
-          <div class="meta">${[meta.version ? "v" + meta.version : "", meta.author || ""].filter(Boolean).join(" · ")}</div></div>
+          <div class="meta">${meta.version ? "v" + meta.version : ""}</div></div>
         <button class="nm2-iconbtn" data-editbtn="${i}" title="Bearbeiten">${neoIcon("settings", { size: 16, color: "currentColor" })}</button>
         <button class="nm2-iconbtn del" data-del="${i}" title="Entfernen">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>
       </div>`;
-    }).join("");
+    };
+    // Nach Kategorie gruppieren (Original-Index für Edit/Delete erhalten).
+    const cat = (a) => a === "Community" ? "Community" : a === "Premium" ? "Premium" : "Sonstige";
+    const groups = { Premium: [], Community: [], Sonstige: [] };
+    mods.forEach((m, i) => { const meta = this._parseMod(m.code); groups[cat(meta.author)].push({ m, i, meta }); });
+    const badge = { Premium: "🟡", Community: "🟢", Sonstige: "📦" };
+    const hdr = (g, n) => `<div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--secondary-text-color);margin:12px 0 2px;">${badge[g]} ${g} (${n})</div>`;
+    const list = ["Premium", "Community", "Sonstige"]
+      .filter((g) => groups[g].length)
+      .map((g) => hdr(g, groups[g].length) + groups[g].map(({ m, i, meta }) => item(m, i, meta)).join(""))
+      .join("");
     return `
       ${mods.length ? list : `<div class="nm2-note">Noch keine Module installiert. Über den <b>Modul-Store</b> oder per Code-Einfügen unten hinzufügen.</div>`}
       <div style="margin-top:12px;font-size:12.5px;font-weight:700;color:var(--primary-text-color)">Code einfügen (z.B. Patreon)</div>
@@ -1922,6 +1931,12 @@ class NeoCardEditor extends HTMLElement {
         .nt-opt:hover { background:var(--neo-fill2,rgba(255,255,255,.06)); }
         .nt-opt.sel { color:var(--primary-color,#7C9CFF); font-weight:600; }
         .nt-ic { width:20px; text-align:center; flex-shrink:0; }
+        .nt-search { position:sticky; top:0; z-index:1; padding:8px; background:var(--card-background-color,#1b2030);
+          border-bottom:1px solid var(--divider-color,rgba(255,255,255,.1)); }
+        .nt-search input { width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px; font-size:13px;
+          background:var(--secondary-background-color,#0d1020); color:var(--primary-text-color);
+          border:1px solid var(--divider-color,rgba(255,255,255,.15)); }
+        .nt-empty { padding:14px 12px; font-size:13px; color:var(--secondary-text-color); }
       </style>
       <div class="nt-h">Kartentyp</div>
       <div class="nt">
@@ -1931,23 +1946,45 @@ class NeoCardEditor extends HTMLElement {
           <span class="nt-cv">▾</span>
         </div>
         <div class="nt-panel" id="nt-panel" style="display:none;">
+          <div class="nt-search"><input id="nt-search" type="text" placeholder="🔍 Karte suchen …" /></div>
+          <div id="nt-list">
           ${groups.map((grp) => `
-            <div class="nt-grp"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};margin-right:6px;"></span>${grp.group}</div>
-            ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}">
-              <span class="nt-ic">${it.icon}</span><span class="nt-nm">${it.name}</span>
+            <div class="nt-section">
+              <div class="nt-grp"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};margin-right:6px;"></span>${grp.group}</div>
+              ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}" data-s="${(it.name + " " + it.value + " " + grp.group).toLowerCase()}">
+                <span class="nt-ic">${it.icon}</span><span class="nt-nm">${it.name}</span>
+              </div>`).join("")}
             </div>`).join("")}
-          `).join("")}
+          <div class="nt-empty" id="nt-empty" style="display:none;">Keine Treffer.</div>
+          </div>
         </div>
       </div>`;
     const root = this._typeBox.querySelector(".nt");
     const panel = this._typeBox.querySelector("#nt-panel");
     const close = () => { panel.style.display = "none"; root.classList.remove("open"); document.removeEventListener("click", onDoc, true); };
     const onDoc = (e) => { if (!this._typeBox.contains(e.target)) close(); };
+    const search = this._typeBox.querySelector("#nt-search");
     this._typeBox.querySelector("#nt-btn").addEventListener("click", (e) => {
       e.stopPropagation();
       if (panel.style.display !== "none") { close(); return; }
       panel.style.display = "block"; root.classList.add("open");
       document.addEventListener("click", onDoc, true);
+      setTimeout(() => search?.focus(), 30);
+    });
+    search?.addEventListener("click", (e) => e.stopPropagation());
+    search?.addEventListener("input", () => {
+      const q = search.value.trim().toLowerCase();
+      let any = false;
+      this._typeBox.querySelectorAll(".nt-section").forEach((sec) => {
+        let vis = 0;
+        sec.querySelectorAll(".nt-opt").forEach((o) => {
+          const hit = !q || o.getAttribute("data-s").includes(q);
+          o.style.display = hit ? "" : "none"; if (hit) vis++;
+        });
+        sec.style.display = vis ? "" : "none"; if (vis) any = true;
+      });
+      const empty = this._typeBox.querySelector("#nt-empty");
+      if (empty) empty.style.display = any ? "none" : "block";
     });
     this._typeBox.querySelectorAll(".nt-opt").forEach((o) =>
       o.addEventListener("click", () => { close(); this._selectType(o.getAttribute("data-v")); }));
@@ -2011,7 +2048,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.14 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.15 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
