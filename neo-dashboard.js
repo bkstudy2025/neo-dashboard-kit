@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.18
+// Neo Dashboard Kit v0.2.0-beta.19
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -855,7 +855,7 @@ class NeoHeroCard extends NeoBaseCard {
     if (v == null) return null;
     const low = String(v).trim().toLowerCase();
     if (["", "off", "none", "unknown", "unavailable", "keine", "0", "false", "no"].includes(low)) return null;
-    return { text: st.attributes?.waste_text || v };
+    return { text: st.attributes?.waste_text || v, when: st.attributes?.when || null };
   }
 
   // Presence → { label, color } for the big status line
@@ -888,16 +888,19 @@ class NeoHeroCard extends NeoBaseCard {
 
     const waste = this._waste();
     const wcfg = this._config?.waste || {};
-    const wc = (NEO_ACCENTS[wcfg.color] || NEO_ACCENTS.mint).c;
-    const wicon = wcfg.icon || "trash";
-    const wlabel = wcfg.label != null ? wcfg.label : "Morgen";
     let wasteHtml = "";
     if (waste) {
+      const isToday = waste.when === "today" || waste.when === "heute";
+      const wc = (NEO_ACCENTS[isToday ? (wcfg.color_today || "rose") : (wcfg.color || "mint")] || NEO_ACCENTS.mint).c;
+      const wicon = wcfg.icon || "trash";
+      const prefix = isToday
+        ? (wcfg.label_today != null ? wcfg.label_today : "Heute")
+        : (wcfg.label != null ? wcfg.label : "Morgen");
       const mobile = this._isMobile();
       const bins = String(waste.text).split(/,\s*/).filter(Boolean);
       const wtext = mobile
         ? (bins.length > 1 ? `${bins[0]} +${bins.length - 1}` : waste.text)
-        : `${wlabel ? wlabel + ": " : ""}${waste.text}`;
+        : `${prefix ? prefix + ": " : ""}${waste.text}`;
       wasteHtml = `<div style="margin-top:8px;max-width:100%;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:${wc}1f;border:1px solid ${wc}55;font-size:12px;font-weight:600;color:${wc};white-space:nowrap;overflow:hidden;">${neoIcon(wicon, { size: 14, color: wc })}<span style="overflow:hidden;text-overflow:ellipsis;">${wtext}</span></div>`;
     }
 
@@ -1022,10 +1025,12 @@ customElements.define("neo-hero-card-editor", makeNeoEditor([
     name: "waste",
     title: "Müll-Badge (zeigt nur wenn morgen Abholung)",
     schema: [
-      { name: "entity", label: "Müll-Sensor (State = Tonne morgen, sonst off)", selector: { entity: { domain: "sensor" } } },
-      { name: "label", label: "Präfix-Text (z.B. Morgen, leer = ohne)", selector: { text: {} } },
+      { name: "entity", label: "Müll-Sensor (State = Tonne, Attribut when = today/tomorrow)", selector: { entity: { domain: "sensor" } } },
       { name: "icon", label: "Icon", selector: { icon: {} } },
-      { name: "color", label: "Farbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+      { name: "label", label: "Präfix morgen (Standard: Morgen)", selector: { text: {} } },
+      { name: "color", label: "Farbe morgen", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+      { name: "label_today", label: "Präfix heute (Standard: Heute)", selector: { text: {} } },
+      { name: "color_today", label: "Farbe heute", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
     ],
   },
   NEO_LAYOUT_FIELD,
@@ -2089,7 +2094,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.18 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.19 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
