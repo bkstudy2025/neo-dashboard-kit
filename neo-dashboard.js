@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.15
+// Neo Dashboard Kit v0.2.0-beta.16
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -171,6 +171,7 @@ const NeoDashboardRegistry = {
       icon: meta.icon || "✨",
       version: meta.version || "",
       author: meta.author || "",
+      hidden: !!meta.hidden,
     }));
   },
 };
@@ -1880,7 +1881,7 @@ class NeoCardEditor extends HTMLElement {
     const order = ["Standard", "Premium", "Community"];
     const groups = { Standard: [], Premium: [], Community: [] };
     NeoDashboardRegistry.list()
-      .filter((c) => c.type !== "neo-card")
+      .filter((c) => c.type !== "neo-card" && !c.hidden)
       .forEach((c) => groups[cat(c.author)].push({ value: c.type, name: c.name, icon: c.icon || "✨" }));
     order.forEach((g) => groups[g].sort((a, b) => a.name.localeCompare(b.name)));
     return order.filter((g) => groups[g].length).map((g) => ({ group: g, items: groups[g] }));
@@ -2048,7 +2049,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.15 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.16 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
