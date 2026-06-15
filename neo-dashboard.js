@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.19
+// Neo Dashboard Kit v0.2.0-beta.20
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -901,7 +901,8 @@ class NeoHeroCard extends NeoBaseCard {
       const wtext = mobile
         ? (bins.length > 1 ? `${bins[0]} +${bins.length - 1}` : waste.text)
         : `${prefix ? prefix + ": " : ""}${waste.text}`;
-      wasteHtml = `<div style="margin-top:8px;max-width:100%;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:${wc}1f;border:1px solid ${wc}55;font-size:12px;font-weight:600;color:${wc};white-space:nowrap;overflow:hidden;">${neoIcon(wicon, { size: 14, color: wc })}<span style="overflow:hidden;text-overflow:ellipsis;">${wtext}</span></div>`;
+      const full = `${prefix ? prefix + ": " : ""}${waste.text}`;
+      wasteHtml = `<div class="neo-hero-waste" title="${full}" style="margin-top:8px;max-width:100%;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:${wc}1f;border:1px solid ${wc}55;font-size:12px;font-weight:600;color:${wc};white-space:nowrap;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;">${neoIcon(wicon, { size: 14, color: wc })}<span style="overflow:hidden;text-overflow:ellipsis;">${wtext}</span></div>`;
     }
 
     const presence = this._presence();
@@ -974,6 +975,8 @@ class NeoHeroCard extends NeoBaseCard {
         this._runAction(this._button(slot));
       });
     });
+    const w = this.shadowRoot.querySelector(".neo-hero-waste");
+    if (w) w.addEventListener("click", () => this._moreInfo(this._config?.waste?.entity));
   }
 
   static getConfigElement() {
@@ -2094,7 +2097,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.19 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.20 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
