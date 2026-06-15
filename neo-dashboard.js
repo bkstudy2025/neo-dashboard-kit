@@ -1,4 +1,4 @@
-// Neo Dashboard Kit v0.2.0-beta.16
+// Neo Dashboard Kit v0.2.0-beta.17
 // https://github.com/bkstudy2025/neo-dashboard-kit
 
 // ── Token fallback (one-time, lightweight) ───────────────────
@@ -845,6 +845,19 @@ class NeoHeroCard extends NeoBaseCard {
       ">${neoIcon(b.icon, { size: 18, color: iconColor })}${badgeHtml}</button>`;
   }
 
+  // Müll-Badge: zeigt nur, wenn der Sensor einen "echten" Wert hat
+  // (Sensor-State = Tonnen-Name(n) für morgen, sonst off/none/leer)
+  _waste() {
+    const ent = this._config?.waste?.entity;
+    if (!ent) return null;
+    const st = this._state(ent);
+    const v = st?.state;
+    if (v == null) return null;
+    const low = String(v).trim().toLowerCase();
+    if (["", "off", "none", "unknown", "unavailable", "keine", "0", "false", "no"].includes(low)) return null;
+    return { text: st.attributes?.waste_text || v };
+  }
+
   // Presence → { label, color } for the big status line
   _presence() {
     const personId = this._config?.person_entity;
@@ -873,6 +886,15 @@ class NeoHeroCard extends NeoBaseCard {
     const nameHtml = `<span style="${nameStyle}">${name}</span>`;
     const greetLine = name && name !== "Home" ? `${greeting}, ${nameHtml}` : greeting;
 
+    const waste = this._waste();
+    const wcfg = this._config?.waste || {};
+    const wc = (NEO_ACCENTS[wcfg.color] || NEO_ACCENTS.mint).c;
+    const wicon = wcfg.icon || "trash";
+    const wlabel = wcfg.label != null ? wcfg.label : "Morgen";
+    const wasteHtml = waste
+      ? `<div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:${wc}1f;border:1px solid ${wc}55;font-size:12px;font-weight:600;color:${wc};">${neoIcon(wicon, { size: 14, color: wc })}<span>${wlabel ? wlabel + ": " : ""}${waste.text}</span></div>`
+      : "";
+
     const presence = this._presence();
     const bigLine = presence ? presence.label : name;
     const showDot = presence && this._config?.show_status_dot !== false;
@@ -886,6 +908,7 @@ class NeoHeroCard extends NeoBaseCard {
           <div style="min-width:0;">
             <div style="font-size:13px;color:var(--neo-text2);font-weight:500;letter-spacing:0.2px;line-height:1.2;">${greetLine}</div>
             <div style="display:flex;align-items:center;gap:8px;font-size:28px;font-weight:600;letter-spacing:-0.6px;line-height:1.1;margin-top:1px;">${dot}<span>${bigLine}</span></div>
+            ${wasteHtml}
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
             ${this._renderButton(1)}
@@ -988,6 +1011,17 @@ customElements.define("neo-hero-card-editor", makeNeoEditor([
   _heroButtonSchema(1, "Button 1 – Suche"),
   _heroButtonSchema(2, "Button 2 – Kalender"),
   _heroButtonSchema(3, "Button 3 – Benachrichtigungen"),
+  {
+    type: "expandable",
+    name: "waste",
+    title: "Müll-Badge (zeigt nur wenn morgen Abholung)",
+    schema: [
+      { name: "entity", label: "Müll-Sensor (State = Tonne morgen, sonst off)", selector: { entity: { domain: "sensor" } } },
+      { name: "label", label: "Präfix-Text (z.B. Morgen, leer = ohne)", selector: { text: {} } },
+      { name: "icon", label: "Icon", selector: { icon: {} } },
+      { name: "color", label: "Farbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+    ],
+  },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Hero / Begrüßung", description: "Begrüßung mit Name und Action-Buttons", icon: "👋" }));
 NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
@@ -2049,7 +2083,7 @@ Object.assign(window.NeoDashboard, {
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.16 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.17 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
