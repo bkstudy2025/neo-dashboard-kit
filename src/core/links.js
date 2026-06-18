@@ -10,4 +10,8 @@ export const NEO_LINKS = {
   // Module Store reads community modules from GitHub Discussions
   discussions: "https://api.github.com/repos/bkstudy2025/neo-dashboard-kit/discussions?per_page=100",
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
+  // Neo Module Store — kuratiertes Index-Repo, ausgeliefert über jsDelivr-CDN.
+  // index.json = [{ id, name, description, target, author, version, icon, image, url }]
+  modulesIndex: "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-modules@main/index.json",
+  modulesRepo: "https://github.com/bkstudy2025/neo-modules",
 };

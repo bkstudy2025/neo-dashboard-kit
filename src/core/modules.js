@@ -36,6 +36,8 @@ export const NeoModules = {
   },
   get(id) { return _modules.get(id); },
   list() { return Array.from(_modules.values()); },
+  // Passt ein target (Manifest oder Store-Eintrag) zu einer Karte?
+  matches(target, cardType) { return matches(target, cardType); },
   // Nur Module, deren target zur Karte passt (für den Editor + Anzeige).
   forCard(cardType) {
     return Array.from(_modules.values()).filter((m) => matches(m.target, cardType));
