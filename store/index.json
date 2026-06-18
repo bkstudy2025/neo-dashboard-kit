@@ -8,5 +8,15 @@
     "version": "1.0.0",
     "icon": "🟢",
     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-state-glow.js"
+  },
+  {
+    "id": "neo-cover-position",
+    "name": "Cover-Positions-Slider",
+    "description": "Positions-Slider (%) für Rollläden — exakt anfahren.",
+    "target": ["neo-control-card", "neo-cover-card"],
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "🪟",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-cover-position.js"
   }
 ]
