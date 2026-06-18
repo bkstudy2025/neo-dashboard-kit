@@ -2344,11 +2344,8 @@ class NeoCardEditor extends HTMLElement {
       <div class="nmod">
         <div class="nmod-h"><span>🧩</span> ${heading}</div>
         ${type && available.length ? `<div class="nmod-list"></div>` : `<div class="nmod-empty">${emptyText}</div>`}
-        ${this._installedHtml()}
         <div class="nmod-add" id="nmod-add"></div>
       </div>`;
-    this._modPanel.querySelectorAll("[data-rm-inst]").forEach((b) =>
-      b.addEventListener("click", () => this._removeInstalled(b.getAttribute("data-rm-inst"))));
 
     // Aktive Module zuerst (in Layer-Reihenfolge = config.modules), dann inaktive.
     const list = this._modPanel.querySelector(".nmod-list");
@@ -2457,25 +2454,40 @@ class NeoCardEditor extends HTMLElement {
     this._renderModulesSection();
   }
 
-  // Überblick aller installierten Add-ons (serverseitig via Neo Dashboard Tools)
-  // — egal ob eigenständige Karte (registerCard) oder Layer-Modul (registerModule).
-  _installedHtml() {
-    const ids = Array.from(this._installed || []);
-    if (!ids.length) return "";
-    const rows = ids.map((id) => {
-      const isCard = !!NeoDashboardRegistry.getCard(id);
-      const meta = NeoDashboardRegistry.getMeta(id) || {};
-      const mod = NeoModules.get(id);
-      const name = meta.name || mod?.name || id;
-      const icon = meta.icon || mod?.icon || "🧩";
-      const kind = isCard ? "Karte" : (mod ? "Modul" : "Add-on");
-      return `<div class="nmod-item"><div class="nmod-row">
-          <span class="nmod-ic">${icon}</span>
-          <div class="nmod-meta"><div class="nmod-name">${name} <span class="nmod-badge">${kind}</span></div></div>
-          <button class="nmod-rm" data-rm-inst="${id}" title="Entfernen">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>
-        </div></div>`;
-    }).join("");
-    return `<div class="nmod-h" style="margin-top:10px;">Installiert (${ids.length})</div>${rows}`;
+  // Katalog-Einträge, gefiltert nach aktueller Karte (auf der Startseite: alle).
+  _catalog() {
+    const type = this._config.card_type;
+    return (this._storeItems || []).filter((it) => !type || NeoModules.matches(it.target, type));
+  }
+  // Meta eines installierten Add-ons aus der Karten- bzw. Modul-Registry.
+  _addonMeta(id) {
+    const isCard = !!NeoDashboardRegistry.getCard(id);
+    const meta = NeoDashboardRegistry.getMeta(id) || {};
+    const mod = NeoModules.get(id);
+    return {
+      isCard,
+      name: meta.name || mod?.name || id,
+      icon: meta.icon || mod?.icon,
+      author: meta.author || mod?.author,
+      version: meta.version || mod?.version,
+    };
+  }
+  _storeRow(o) {
+    return `<div class="nmod-store">
+        <div class="nmod-store-h">
+          <span class="nmod-ic">${o.icon || "🧩"}</span>
+          <div class="nmod-meta">
+            <div class="nmod-name">${o.name} <span class="nmod-badge">${o.kind}</span>${o.installed ? ` <span class="nmod-badge ok">✓ Installiert</span>` : ""}</div>
+            <div class="nmod-desc">von ${o.author || "?"}${o.version ? " · v" + o.version : ""}</div>
+          </div>
+        </div>
+        ${o.image ? `<img class="nmod-img" src="${o.image}" loading="lazy" />` : ""}
+        ${o.description ? `<div class="nmod-desc" style="margin-top:6px;">${o.description}</div>` : ""}
+        <div class="nmod-store-row">
+          ${o.installAttr ? `<button class="nmod-mini" ${o.installAttr}>${o.installLabel}</button>` : ""}
+          ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${o.uninstallId}">Entfernen</button>` : ""}
+        </div>
+      </div>`;
   }
 
   _renderAddArea() {
@@ -2519,32 +2531,37 @@ class NeoCardEditor extends HTMLElement {
     }
     if (this._storeLoading) return `<div class="nmod-note">Lade Store …</div>`;
     if (this._storeErr) return `<div class="nmod-note">${this._storeErr} <button class="nmod-mini" id="nmod-reload">Erneut</button></div>`;
-    // Ohne Kartentyp (Startseite) alles zeigen; mit Kartentyp nach target filtern.
-    const type = this._config.card_type;
-    const items = (this._storeItems || []).filter((it) => !type || NeoModules.matches(it.target, type));
-    if (!items.length) {
-      return `<div class="nmod-note">${type ? "Für diese Karte sind aktuell keine Store-Module verfügbar." : "Aktuell keine Store-Module verfügbar."}
+
+    // Eine Liste: Katalog (Store) + installierte Add-ons, die NICHT im Katalog
+    // sind (z. B. eingefügte Premium-Karten) — mit Version, Aktualisieren/Entfernen.
+    const catalog = this._catalog();
+    const seen = new Set(catalog.map((c) => c.id));
+    const extra = Array.from(this._installed || []).filter((id) => !seen.has(id));
+    if (!catalog.length && !extra.length) {
+      return `<div class="nmod-note">Aktuell keine Store-Module verfügbar.
         Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.</div>`;
     }
-    return items.map((it, i) => {
-      const has = !!NeoModules.get(it.id);
+
+    const rows = catalog.map((it, i) => {
       const installed = this._isInstalled(it.id);
-      return `<div class="nmod-store">
-        <div class="nmod-store-h">
-          <span class="nmod-ic">${it.icon || "🧩"}</span>
-          <div class="nmod-meta">
-            <div class="nmod-name">${it.name || it.id}${has ? ` <span class="nmod-badge ok">✓ Installiert</span>` : (it.author ? ` <span class="nmod-badge">${it.author}</span>` : "")}</div>
-            <div class="nmod-desc">von ${it.author || "?"}${it.version ? " · v" + it.version : ""}</div>
-          </div>
-        </div>
-        ${it.image ? `<img class="nmod-img" src="${it.image}" loading="lazy" />` : ""}
-        ${it.description ? `<div class="nmod-desc" style="margin-top:6px;">${it.description}</div>` : ""}
-        <div class="nmod-store-row">
-          <button class="nmod-mini" data-install="${i}">${has ? "Aktualisieren" : "Installieren"}</button>
-          ${installed ? `<button class="nmod-mini ghost" data-uninstall="${it.id}">Entfernen</button>` : ""}
-        </div>
-      </div>`;
-    }).join("");
+      const reg = this._addonMeta(it.id);
+      return this._storeRow({
+        icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
+        version: (installed && reg.version) || it.version, kind: reg.isCard ? "Karte" : "Modul",
+        installed, image: it.image, description: it.description,
+        installAttr: `data-install="${i}"`, installLabel: installed ? "Aktualisieren" : "Installieren",
+        uninstallId: installed ? it.id : null,
+      });
+    });
+    // Installierte ohne Katalog-Eintrag (kein "Aktualisieren" — keine Quelle).
+    extra.forEach((id) => {
+      const reg = this._addonMeta(id);
+      rows.push(this._storeRow({
+        icon: reg.icon, name: reg.name, author: reg.author, version: reg.version,
+        kind: reg.isCard ? "Karte" : "Modul", installed: true, uninstallId: id,
+      }));
+    });
+    return rows.join("");
   }
 
   _pasteHtml() {
@@ -2565,9 +2582,7 @@ class NeoCardEditor extends HTMLElement {
     });
     this._modPanel.querySelectorAll("[data-install]").forEach((b) =>
       b.addEventListener("click", () => {
-        const type = this._config.card_type;
-        const items = (this._storeItems || []).filter((it) => NeoModules.matches(it.target, type));
-        this._installFromStore(items[+b.getAttribute("data-install")]);
+        this._installFromStore(this._catalog()[+b.getAttribute("data-install")]);
       }));
     this._modPanel.querySelectorAll("[data-uninstall]").forEach((b) =>
       b.addEventListener("click", () => this._removeInstalled(b.getAttribute("data-uninstall"))));
@@ -3075,7 +3090,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0",
+  version: "0.2.0-beta.50", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3087,7 +3102,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.48 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.50 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
