@@ -163,8 +163,11 @@ class NeoCardEditor extends HTMLElement {
       <div class="nmod">
         <div class="nmod-h"><span>🧩</span> ${heading}</div>
         ${type && available.length ? `<div class="nmod-list"></div>` : `<div class="nmod-empty">${emptyText}</div>`}
+        ${this._installedHtml()}
         <div class="nmod-add" id="nmod-add"></div>
       </div>`;
+    this._modPanel.querySelectorAll("[data-rm-inst]").forEach((b) =>
+      b.addEventListener("click", () => this._removeInstalled(b.getAttribute("data-rm-inst"))));
 
     // Aktive Module zuerst (in Layer-Reihenfolge = config.modules), dann inaktive.
     const list = this._modPanel.querySelector(".nmod-list");
@@ -271,6 +274,27 @@ class NeoCardEditor extends HTMLElement {
       this._installed = new Set(mods.map((m) => m.name));
     } catch (e) { this._installed = new Set(); }
     this._renderModulesSection();
+  }
+
+  // Überblick aller installierten Add-ons (serverseitig via Neo Dashboard Tools)
+  // — egal ob eigenständige Karte (registerCard) oder Layer-Modul (registerModule).
+  _installedHtml() {
+    const ids = Array.from(this._installed || []);
+    if (!ids.length) return "";
+    const rows = ids.map((id) => {
+      const isCard = !!NeoDashboardRegistry.getCard(id);
+      const meta = NeoDashboardRegistry.getMeta(id) || {};
+      const mod = NeoModules.get(id);
+      const name = meta.name || mod?.name || id;
+      const icon = meta.icon || mod?.icon || "🧩";
+      const kind = isCard ? "Karte" : (mod ? "Modul" : "Add-on");
+      return `<div class="nmod-item"><div class="nmod-row">
+          <span class="nmod-ic">${icon}</span>
+          <div class="nmod-meta"><div class="nmod-name">${name} <span class="nmod-badge">${kind}</span></div></div>
+          <button class="nmod-rm" data-rm-inst="${id}" title="Entfernen">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>
+        </div></div>`;
+    }).join("");
+    return `<div class="nmod-h" style="margin-top:10px;">Installiert (${ids.length})</div>${rows}`;
   }
 
   _renderAddArea() {
