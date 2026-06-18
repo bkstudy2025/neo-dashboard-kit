@@ -2780,7 +2780,9 @@ class NeoCardEditor extends HTMLElement {
   }
 
   _syncTypeForm() {
-    if (this._typeBox) this._renderTypePicker();
+    // Picker NICHT neu aufbauen, während das Dropdown offen ist — sonst klappt
+    // es beim nächsten setConfig-Echo (z. B. Live-Vorschau) sofort wieder zu.
+    if (this._typeBox && !this._typeMenuOpen) this._renderTypePicker();
     // Modul-Sektion nur neu aufbauen, wenn sich der Kartentyp geändert hat —
     // sonst verliert das Tippen in Modul-Einstellungen den Fokus, weil HA
     // setConfig nach jeder Änderung zurück-echot.
@@ -2887,13 +2889,14 @@ class NeoCardEditor extends HTMLElement {
       </div>`;
     const root = this._typeBox.querySelector(".nt");
     const panel = this._typeBox.querySelector("#nt-panel");
-    const close = () => { panel.style.display = "none"; root.classList.remove("open"); document.removeEventListener("click", onDoc, true); };
-    const onDoc = (e) => { if (!this._typeBox.contains(e.target)) close(); };
+    const close = () => { panel.style.display = "none"; root.classList.remove("open"); this._typeMenuOpen = false; document.removeEventListener("click", onDoc, true); };
+    // composedPath() statt contains(e.target): robust über Shadow-Grenzen (HA-Dialog).
+    const onDoc = (e) => { const path = e.composedPath ? e.composedPath() : []; if (!path.includes(this._typeBox)) close(); };
     const search = this._typeBox.querySelector("#nt-search");
     this._typeBox.querySelector("#nt-btn").addEventListener("click", (e) => {
       e.stopPropagation();
       if (panel.style.display !== "none") { close(); return; }
-      panel.style.display = "block"; root.classList.add("open");
+      panel.style.display = "block"; root.classList.add("open"); this._typeMenuOpen = true;
       document.addEventListener("click", onDoc, true);
       setTimeout(() => search?.focus(), 30);
     });
@@ -3090,7 +3093,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.50", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.51", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3102,7 +3105,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.50 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.51 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
