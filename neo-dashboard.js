@@ -2534,17 +2534,21 @@ class NeoCardEditor extends HTMLElement {
     }
     return items.map((it, i) => {
       const has = !!NeoModules.get(it.id);
+      const installed = this._isInstalled(it.id);
       return `<div class="nmod-store">
         <div class="nmod-store-h">
           <span class="nmod-ic">${it.icon || "🧩"}</span>
           <div class="nmod-meta">
-            <div class="nmod-name">${it.name || it.id}${it.author ? ` <span class="nmod-badge">${it.author}</span>` : ""}</div>
+            <div class="nmod-name">${it.name || it.id}${has ? ` <span class="nmod-badge ok">✓ Installiert</span>` : (it.author ? ` <span class="nmod-badge">${it.author}</span>` : "")}</div>
             <div class="nmod-desc">von ${it.author || "?"}${it.version ? " · v" + it.version : ""}</div>
           </div>
         </div>
         ${it.image ? `<img class="nmod-img" src="${it.image}" loading="lazy" />` : ""}
         ${it.description ? `<div class="nmod-desc" style="margin-top:6px;">${it.description}</div>` : ""}
-        <button class="nmod-mini" data-install="${i}">${has ? "Aktualisieren" : "Installieren"}</button>
+        <div class="nmod-store-row">
+          <button class="nmod-mini" data-install="${i}">${has ? "Aktualisieren" : "Installieren"}</button>
+          ${installed ? `<button class="nmod-mini ghost" data-uninstall="${it.id}">Entfernen</button>` : ""}
+        </div>
       </div>`;
     }).join("");
   }
@@ -2571,6 +2575,8 @@ class NeoCardEditor extends HTMLElement {
         const items = (this._storeItems || []).filter((it) => NeoModules.matches(it.target, type));
         this._installFromStore(items[+b.getAttribute("data-install")]);
       }));
+    this._modPanel.querySelectorAll("[data-uninstall]").forEach((b) =>
+      b.addEventListener("click", () => this._removeInstalled(b.getAttribute("data-uninstall"))));
   }
 
   _msg(text, err) {
@@ -2687,8 +2693,11 @@ class NeoCardEditor extends HTMLElement {
         .nmod textarea { width:100%; box-sizing:border-box; min-height:100px; resize:vertical; border-radius:10px;
           border:1px solid var(--divider-color,rgba(255,255,255,.15)); background:var(--secondary-background-color,#0d1020);
           color:var(--primary-text-color); font-family:ui-monospace,monospace; font-size:12px; padding:10px; }
+        .nmod-badge.ok { color:#5EDCB8; background:rgba(94,220,184,.16); border-color:rgba(94,220,184,.4); }
+        .nmod-store-row { display:flex; gap:8px; }
         .nmod-mini { margin-top:8px; padding:7px 12px; border-radius:9px; cursor:pointer; border:none;
           background:var(--primary-color,#7C9CFF); color:#fff; font-size:12.5px; font-weight:600; }
+        .nmod-mini.ghost { background:transparent; border:1px solid var(--neo-line2,rgba(255,255,255,.12)); color:var(--primary-text-color); }
         .nmod-msg { font-size:12px; margin-top:8px; min-height:14px; }
       </style>`;
   }
@@ -3052,7 +3061,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.37 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.38 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
