@@ -7,6 +7,7 @@ import "./core/theme-fallback.js";
 
 // 2. Registry first — defines window.NeoDashboard before anything uses it
 import "./core/registry.js";
+import "./core/modules.js";
 
 // 3. Core building blocks (pure definitions, imported by cards/wrapper)
 import "./core/tokens.js";
@@ -30,6 +31,10 @@ import "./cards/neo-light-card.js";
 import "./cards/neo-scene-card.js";
 import "./cards/neo-quick-action-card.js";
 
+// 4b. Built-in example modules (card-scoped extensions)
+import "./modules/neo-badge.js";
+import "./modules/neo-glow.js";
+
 // 5. Module store (server-side persistence via Neo Dashboard Tools)
 import "./store/module-loader.js";
 import "./store/module-store.js";
@@ -41,7 +46,7 @@ import "./wrapper/neo-card.js";
 import "./core/public-api.js";
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.26 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.27 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
