@@ -1,5 +1,9 @@
 # Premium-Module & externe Karten
 
+> Hinweis: Dieses Dokument beschreibt **eigenständige Karten** (`registerCard`).
+> Für **karten-gebundene Module** (`registerModule` — Status-Badge, Glow, eigene
+> Tap-Aktion …) und den Store siehe **[modules.md](modules.md)**.
+
 Das Neo Dashboard Kit ist so gebaut, dass Karten **nicht** alle im Core-Repo liegen
 müssen. Karten können als **eigenständige JS-Dateien** ausgeliefert werden, die an
 den Core andocken und automatisch im `neo-card`-Dropdown erscheinen.

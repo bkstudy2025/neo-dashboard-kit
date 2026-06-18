@@ -67,34 +67,35 @@ im **visuellen Editor** über das Dropdown **„Kartentyp"** — oder per YAML m
 Beispiel (YAML):
 ```yaml
 type: custom:neo-card
-card_type: neo-light-card
+card_type: neo-button-card
 entity: light.wohnzimmer
+button_type: light
 accent: amber
 ```
 
 ### Verfügbare Karten
 
-| Kartentyp | Beschreibung | Doku |
-|---|---|---|
-| `neo-hero-card` | Begrüßung, Anwesenheitsstatus, Action-Buttons | [Doku](docs/cards/hero.md) |
-| `neo-status-card` | Scrollbare Status-Pills (Karussell) | [Doku](docs/cards/status.md) |
-| `neo-light-card` | Licht mit Helligkeits-Slider | [Doku](docs/cards/light.md) |
-| `neo-sensor-card` | Sensorwert mit Icon | [Doku](docs/cards/sensor.md) |
-| `neo-scene-card` | Szene per Tap aktivieren | [Doku](docs/cards/scene.md) |
-| `neo-quick-action-card` | Schalter-Kachel mit Toggle | [Doku](docs/cards/quick-action.md) |
+| Kartentyp | Beschreibung |
+|---|---|
+| `neo-button-card` | Universelle Kachel: Schalter · Licht · Szene · Skript |
+| `neo-sensor-card` | Sensorwert als Glas-Kachel |
+| `neo-climate-card` | Thermostat mit − / + Temperatursteuerung |
+| `neo-cover-card` | Rollladen mit Auf / Stopp / Zu |
+| `neo-media-card` | Media-Player mit Transport (⏮ ⏯ ⏭) |
+| `neo-header-card` | Überschrift / Trenner (Layout-Baustein) |
 
-→ Vollständige Übersicht: **[docs/cards/](docs/cards/README.md)**
+→ Details & gemeinsame Optionen: **[docs/cards/](docs/cards/README.md)**
 
-### Premium-/Zusatzkarten
+> **Prinzip:** Nur die wichtigste Steuerung liegt direkt auf der Karte — der
+> **volle** Funktionsumfang ist per **Tap → More-Info** erreichbar. So bleibt
+> jede Karte schlank.
 
-Manche Karten werden als eigenständige Module verteilt (z.B. über Patreon) und sind
-nicht im Core enthalten. Sie werden über **„🧩 Modul einfügen"** im `neo-card`-Editor
-geladen und erscheinen dann im Kartentyp-Dropdown. Mehr: **[docs/premium-modules.md](docs/premium-modules.md)**.
+### Module & Store
 
-- **Neo Wetter (Premium)** — animierter, wetterabhängiger Hintergrund (Regen, Schnee, Wolken, Blitz …) · exklusiv über Patreon
-
-> Fortgeschrittene können die Karten auch direkt verwenden (`type: custom:neo-light-card` …),
-> dann erscheinen sie aber nicht im Karten-Picker.
+Karten lassen sich mit **Modulen** erweitern — kleine Bausteine, die eine Karte um
+Funktionen/Optik ergänzen (z. B. Status-Badge, Glow, eigene Tap-Aktion). Im Editor:
+**Module → ➕ Modul hinzufügen → Store** (kuratierter Katalog, nach Karte gefiltert)
+oder **Code einfügen** (z. B. Patreon). Mehr: **[docs/modules.md](docs/modules.md)**.
 
 ---
 
