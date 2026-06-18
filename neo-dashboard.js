@@ -1871,6 +1871,7 @@ class NeoCardEditor extends HTMLElement {
     if (!this._modPanel) return;
     this._modForms = [];
     const type = this._config.card_type;
+    this._renderedModType = type; // merken, um unnötige Rebuilds zu vermeiden
     const available = type ? NeoModules.forCard(type) : [];
 
     this._modPanel.innerHTML = `
@@ -2028,7 +2029,10 @@ class NeoCardEditor extends HTMLElement {
 
   _syncTypeForm() {
     if (this._typeBox) this._renderTypePicker();
-    this._renderModulesSection();
+    // Modul-Sektion nur neu aufbauen, wenn sich der Kartentyp geändert hat —
+    // sonst verliert das Tippen in Modul-Einstellungen den Fokus, weil HA
+    // setConfig nach jeder Änderung zurück-echot.
+    if (this._renderedModType !== this._config.card_type) this._renderModulesSection();
     this._updateGuidedState();
   }
 
@@ -2323,7 +2327,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.27 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.28 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

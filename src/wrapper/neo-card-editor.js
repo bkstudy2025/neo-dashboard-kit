@@ -131,6 +131,7 @@ class NeoCardEditor extends HTMLElement {
     if (!this._modPanel) return;
     this._modForms = [];
     const type = this._config.card_type;
+    this._renderedModType = type; // merken, um unnötige Rebuilds zu vermeiden
     const available = type ? NeoModules.forCard(type) : [];
 
     this._modPanel.innerHTML = `
@@ -288,7 +289,10 @@ class NeoCardEditor extends HTMLElement {
 
   _syncTypeForm() {
     if (this._typeBox) this._renderTypePicker();
-    this._renderModulesSection();
+    // Modul-Sektion nur neu aufbauen, wenn sich der Kartentyp geändert hat —
+    // sonst verliert das Tippen in Modul-Einstellungen den Fokus, weil HA
+    // setConfig nach jeder Änderung zurück-echot.
+    if (this._renderedModType !== this._config.card_type) this._renderModulesSection();
     this._updateGuidedState();
   }
 
