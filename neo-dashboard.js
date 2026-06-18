@@ -2809,6 +2809,10 @@ class NeoCardEditor extends HTMLElement {
     const curCat = catOf(m.author);
     const curName = m.name || cur || "Kartentyp wählen …";
     const groups = this._typeGroups();
+    // Aufklapp-Zustand je Kategorie (Standard + die aktuelle Kategorie offen,
+    // Rest eingeklappt). Nutzer-Klicks werden in this._typeOpen gemerkt.
+    if (!this._typeOpen) this._typeOpen = {};
+    const open = (g) => (g in this._typeOpen ? this._typeOpen[g] : (g === "Standard" || g === curCat));
     this._typeBox.innerHTML = `
       <style>
         .nt { position:relative; }
@@ -2824,10 +2828,15 @@ class NeoCardEditor extends HTMLElement {
         .nt-panel { position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:30; max-height:330px; overflow:auto;
           border-radius:10px; background:var(--card-background-color,#1b2030);
           border:1px solid var(--divider-color,rgba(255,255,255,.15)); box-shadow:0 14px 34px rgba(0,0,0,.45); }
-        .nt-grp { font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
-          color:var(--secondary-text-color); padding:10px 12px 4px; position:sticky; top:0;
-          background:var(--card-background-color,#1b2030); }
-        .nt-opt { display:flex; align-items:center; gap:9px; padding:9px 12px; cursor:pointer; font-size:14px;
+        .nt-grp { display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; letter-spacing:.6px;
+          text-transform:uppercase; color:var(--secondary-text-color); padding:11px 12px; cursor:pointer; position:sticky;
+          top:0; background:var(--card-background-color,#1b2030); }
+        .nt-grp:hover { color:var(--primary-text-color); }
+        .nt-gcv { display:inline-block; transition:transform .2s; opacity:.7; margin-left:auto; }
+        .nt-section:not(.collapsed) .nt-gcv { transform:rotate(90deg); }
+        .nt-section.collapsed .nt-opts { display:none; }
+        .nt-gcount { font-weight:600; opacity:.6; }
+        .nt-opt { display:flex; align-items:center; gap:9px; padding:9px 12px 9px 22px; cursor:pointer; font-size:14px;
           color:var(--primary-text-color); }
         .nt-opt:hover { background:var(--neo-fill2,rgba(255,255,255,.06)); }
         .nt-opt.sel { color:var(--primary-color,#7C9CFF); font-weight:600; }
@@ -2849,11 +2858,13 @@ class NeoCardEditor extends HTMLElement {
           <div class="nt-search"><input id="nt-search" type="text" placeholder="🔍 Karte suchen …" /></div>
           <div id="nt-list">
           ${groups.map((grp) => `
-            <div class="nt-section">
-              <div class="nt-grp"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};margin-right:6px;"></span>${grp.group}</div>
+            <div class="nt-section ${open(grp.group) ? "" : "collapsed"}" data-grp="${grp.group}">
+              <div class="nt-grp" data-grp="${grp.group}"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};"></span>${grp.group}<span class="nt-gcount">${grp.items.length}</span><span class="nt-gcv">›</span></div>
+              <div class="nt-opts">
               ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}" data-s="${(it.name + " " + it.value + " " + grp.group).toLowerCase()}">
                 <span class="nt-ic">${it.icon}</span><span class="nt-nm">${it.name}</span>
               </div>`).join("")}
+              </div>
             </div>`).join("")}
           <div class="nt-empty" id="nt-empty" style="display:none;">Keine Treffer.</div>
           </div>
@@ -2871,17 +2882,29 @@ class NeoCardEditor extends HTMLElement {
       document.addEventListener("click", onDoc, true);
       setTimeout(() => search?.focus(), 30);
     });
+    // Kategorie auf-/zuklappen (Akkordeon).
+    this._typeBox.querySelectorAll(".nt-grp").forEach((h) =>
+      h.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const g = h.getAttribute("data-grp");
+        const sec = h.closest(".nt-section");
+        const collapsed = sec.classList.toggle("collapsed");
+        this._typeOpen[g] = !collapsed;
+      }));
     search?.addEventListener("click", (e) => e.stopPropagation());
     search?.addEventListener("input", () => {
       const q = search.value.trim().toLowerCase();
       let any = false;
       this._typeBox.querySelectorAll(".nt-section").forEach((sec) => {
+        const g = sec.getAttribute("data-grp");
         let vis = 0;
         sec.querySelectorAll(".nt-opt").forEach((o) => {
           const hit = !q || o.getAttribute("data-s").includes(q);
           o.style.display = hit ? "" : "none"; if (hit) vis++;
         });
-        sec.style.display = vis ? "" : "none"; if (vis) any = true;
+        if (q) { sec.classList.remove("collapsed"); sec.style.display = vis ? "" : "none"; }
+        else { sec.style.display = ""; sec.classList.toggle("collapsed", !open(g)); }
+        if (vis) any = true;
       });
       const empty = this._typeBox.querySelector("#nt-empty");
       if (empty) empty.style.display = any ? "none" : "block";
@@ -3064,7 +3087,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.47 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.48 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
