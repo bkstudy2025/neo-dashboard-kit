@@ -6,6 +6,7 @@ import { neoLoadModule } from "../store/module-loader.js";
 import { NeoStore } from "../store/module-store.js";
 import { neoIcon } from "../core/icons.js";
 import { NEO_LINKS } from "../core/links.js";
+import { neoLogo } from "../core/branding.js";
 
 class NeoCardEditor extends HTMLElement {
   setConfig(config) {
@@ -91,11 +92,18 @@ class NeoCardEditor extends HTMLElement {
         font-size:11.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
         color:var(--secondary-text-color,rgba(244,246,251,.72)); }
       .neo-ed-sec-ic { display:flex; color:var(--primary-color,#7C9CFF); }
-      .neo-ed-hint { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:14px;
-        background:linear-gradient(135deg, rgba(124,156,255,.16), rgba(124,156,255,.04));
-        border:1px solid rgba(124,156,255,.28); font-size:13px; line-height:1.45;
-        color:var(--primary-text-color,#F4F6FB); }
-      .neo-ed-hint-ic { font-size:20px; line-height:1.1; flex-shrink:0; }
+      .neo-ed-landing { display:flex; flex-direction:column; align-items:center; text-align:center;
+        gap:8px; padding:22px 18px; border-radius:16px;
+        background:linear-gradient(160deg, rgba(124,156,255,.14) 0%, var(--neo-fill1,rgba(255,255,255,.03)) 70%);
+        border:1px solid rgba(124,156,255,.24); }
+      .neo-ed-landing-logo { line-height:0; filter:drop-shadow(0 6px 16px rgba(124,156,255,.35)); }
+      .neo-ed-landing-title { font-size:17px; font-weight:700; color:var(--primary-text-color,#F4F6FB);
+        letter-spacing:-.2px; }
+      .neo-ed-landing-ver { font-size:11.5px; font-weight:700; letter-spacing:.4px; padding:2px 9px;
+        border-radius:999px; color:#7C9CFF; background:rgba(124,156,255,.14); border:1px solid rgba(124,156,255,.34); }
+      .neo-ed-landing-desc { font-size:13px; line-height:1.5; max-width:300px;
+        color:var(--secondary-text-color,rgba(244,246,251,.72)); }
+      .neo-ed-landing-desc b { color:var(--primary-text-color,#F4F6FB); }
     </style>`;
   }
 
@@ -104,12 +112,17 @@ class NeoCardEditor extends HTMLElement {
     const hasType = !!this._config.card_type;
     if (this._settingsSec) this._settingsSec.style.display = hasType ? "" : "none";
     if (this._hintBox) {
+      const ver = (window.NeoDashboard && window.NeoDashboard.version) || "";
       this._hintBox.innerHTML = hasType ? "" : `
-        <div class="neo-ed-hint">
-          <span class="neo-ed-hint-ic">✨</span>
-          <div><b>Schritt 1 — Kartentyp wählen</b><br>
-          Öffne oben das Dropdown und wähle eine Karte (Licht, Sensor, Szene …).
-          Danach erscheinen hier ihre Einstellungen und rechts die Live-Vorschau.</div>
+        <div class="neo-ed-landing">
+          <div class="neo-ed-landing-logo">${neoLogo({ size: 60, radius: 18 })}</div>
+          <div class="neo-ed-landing-title">Neo Dashboard Kit</div>
+          ${ver ? `<div class="neo-ed-landing-ver">v${ver}</div>` : ""}
+          <div class="neo-ed-landing-desc">
+            Glassmorphism-Karten für dein Dashboard. Wähle oben einen
+            <b>Kartentyp</b> — danach erscheinen hier die Einstellungen und
+            rechts die Live-Vorschau.
+          </div>
         </div>`;
     }
   }
