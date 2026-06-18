@@ -6,6 +6,7 @@
 import { NeoDashboardRegistry } from "../core/registry.js";
 import { neoLoadModule } from "../store/module-loader.js";
 import { NeoStore } from "../store/module-store.js";
+import { neoLogo } from "../core/branding.js";
 import "./neo-card-editor.js";
 
 class NeoCard extends HTMLElement {
@@ -26,12 +27,7 @@ class NeoCard extends HTMLElement {
           padding:28px 24px;border-radius:24px;text-align:center;
           display:flex;flex-direction:column;align-items:center;gap:10px;
         ">
-          <div style="
-            width:52px;height:52px;border-radius:15px;
-            display:flex;align-items:center;justify-content:center;font-size:26px;
-            background:linear-gradient(160deg,#7C9CFF 0%,#7C9CFFcc 100%);
-            box-shadow:0 4px 14px rgba(124,156,255,0.35);
-          ">✨</div>
+          ${neoLogo({ size: 56, radius: 16 })}
           <div style="font-size:16px;font-weight:600;color:var(--primary-text-color);">Neo Card</div>
           <div style="font-size:13px;color:var(--secondary-text-color);max-width:240px;line-height:1.4;">
             Wähle im Editor unter <b>Kartentyp</b> die gewünschte Karte (Licht, Sensor, Szene …).
