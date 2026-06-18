@@ -67,16 +67,10 @@ class NeoCardEditor extends HTMLElement {
     this._renderModPanel();
     if (NeoStore.available()) NeoStore.list().then((m) => { this._mods = m; this._renderModPanel(); });
 
-    // ── Info & Support panel (collapsed) ──
+    // ── Info & Support panel (immer sichtbar — kein Aufklappen) ──
     const info = document.createElement("div");
     info.innerHTML = this._infoPanelHtml();
     this._root.appendChild(info);
-    info.querySelector("#ni-toggle")?.addEventListener("click", () => {
-      const body = info.querySelector("#ni-body");
-      const open = body.style.display !== "none";
-      body.style.display = open ? "none" : "block";
-      info.querySelector(".ni").classList.toggle("open", !open);
-    });
 
     this._mountSub();
     this._updateGuidedState();
@@ -140,7 +134,8 @@ class NeoCardEditor extends HTMLElement {
           font-size:14px; font-weight:600; color:var(--primary-text-color); }
         .ni-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
         .ni.open .chev { transform:rotate(90deg); }
-        .ni-c { padding:4px 12px 14px; }
+        .ni-head { padding:12px 12px 0; font-size:14px; font-weight:700; color:var(--primary-text-color); }
+        .ni-c { padding:8px 12px 14px; }
         .ni-sec { font-size:13px; font-weight:700; color:var(--primary-text-color); margin:14px 0 8px; }
         .ni-txt { font-size:12.5px; color:var(--secondary-text-color); line-height:1.55; }
         .ni-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
@@ -159,12 +154,9 @@ class NeoCardEditor extends HTMLElement {
           font-size:12.5px; color:var(--secondary-text-color); line-height:1.4; }
         .ni-ava { line-height:0; flex-shrink:0; filter:drop-shadow(0 3px 8px rgba(124,156,255,.35)); }
       </style>
-      <div class="ni ${this._infoOpen ? "open" : ""}">
-        <div class="ni-h" id="ni-toggle">
-          <span class="chev">${neoIcon("chevR", { size: 16, color: "currentColor" })}</span>
-          <span>ℹ️ Info &amp; Support${v ? ` · v${v}` : ""}</span>
-        </div>
-        <div class="ni-c" id="ni-body" style="display:${this._infoOpen ? "block" : "none"}">
+      <div class="ni open">
+        <div class="ni-head">ℹ️ Info &amp; Support${v ? ` · v${v}` : ""}</div>
+        <div class="ni-c">
           <div class="ni-sec">Ressourcen &amp; Hilfe</div>
           <div class="ni-txt">Fragen oder ein Problem? Die Doku und die Community helfen weiter.</div>
           <div class="ni-chips">

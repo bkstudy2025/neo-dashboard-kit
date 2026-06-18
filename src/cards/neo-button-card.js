@@ -14,11 +14,10 @@ const BUTTON_TYPES = [
   { value: "light",  label: "Licht (mit Helligkeit)" },
   { value: "scene",  label: "Szene" },
   { value: "script", label: "Skript" },
-  { value: "action", label: "Aktion (Tap-Aktion)" },
 ];
 
 // Standard-Icon je Button-Typ, falls keins gesetzt ist.
-const DEFAULT_ICON = { switch: "toggle", light: "lightbulb", scene: "sparkle", script: "robot", action: "sparkle" };
+const DEFAULT_ICON = { switch: "toggle", light: "lightbulb", scene: "sparkle", script: "robot" };
 
 class NeoButtonCard extends NeoBaseCard {
   getCardSize() { return this._type() === "light" ? 3 : 2; }
@@ -27,11 +26,8 @@ class NeoButtonCard extends NeoBaseCard {
 
   // "Aktiv" = farbiger Glow-Zustand der Kachel.
   _isActive(s) {
-    switch (this._type()) {
-      case "scene":  return false;            // Szenen sind zustandslos
-      case "action": return false;
-      default:       return s?.state === "on"; // switch/light/script
-    }
+    if (this._type() === "scene") return false; // Szenen sind zustandslos
+    return s?.state === "on";                    // switch/light/script
   }
 
   _hasToggle() { return this._type() === "switch" || this._type() === "light"; }
@@ -127,57 +123,23 @@ class NeoButtonCard extends NeoBaseCard {
   }
 
   _onTap(id, on, type) {
-    // Konfigurierte Tap-Aktion hat Vorrang (außer "default").
-    const ta = this._config?.tap_action;
-    if (ta && ta.action && ta.action !== "default") return this._runAction(ta);
-
-    // Standardverhalten je Typ
+    // Schlankes Standardverhalten je Typ (erweiterte Tap-Aktionen → Premium-Modul).
     switch (type) {
-      case "scene":  this._callService("scene", "turn_on", { entity_id: id }); break;
-      case "script": id?.startsWith("script.")
-        ? this._callService("script", "turn_on", { entity_id: id })
-        : this._callService("script", id, {}); break;
-      case "action": /* nur konfigurierte Aktion */ break;
-      default:       this._toggleEntity(id, on, type); // switch/light
-    }
-  }
-
-  // Führt eine HA-ui_action aus (navigate/url/more-info/toggle/perform-action/none).
-  _runAction(a) {
-    const entity = a.entity || this._config?.entity;
-    switch (a.action) {
-      case "navigate":
-        if (a.navigation_path) {
-          history.pushState(null, "", a.navigation_path);
-          window.dispatchEvent(new CustomEvent("location-changed"));
-        }
+      case "scene":
+        this._callService("scene", "turn_on", { entity_id: id });
         break;
-      case "url":
-        if (a.url_path) window.open(a.url_path, "_blank");
+      case "script":
+        id?.startsWith("script.")
+          ? this._callService("script", "turn_on", { entity_id: id })
+          : this._callService("script", id, {});
         break;
-      case "toggle":
-        if (entity) this._callService(entity.split(".")[0], "toggle", { entity_id: entity });
-        break;
-      case "more-info":
-        if (entity) this.dispatchEvent(new CustomEvent("hass-more-info", {
-          bubbles: true, composed: true, detail: { entityId: entity },
-        }));
-        break;
-      case "perform-action":
-      case "call-service": {
-        const svc = a.perform_action || a.service;
-        if (svc && svc.includes(".")) {
-          const [domain, service] = svc.split(".");
-          this._callService(domain, service, { ...(a.data || a.service_data || {}), ...(a.target || {}) });
-        }
-        break;
-      }
-      default: /* none */ break;
+      default:
+        this._toggleEntity(id, on, type); // switch/light
     }
   }
 
   static getConfigElement() { return document.createElement("neo-button-card-editor"); }
-  static getStubConfig() { return { button_type: "switch", entity: "switch.living_room", accent: "blue" }; }
+  static getStubConfig() { return {}; } // keine Voreinstellungen — leerer Start
 }
 
 // ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung/Aktion) ──
@@ -200,14 +162,7 @@ customElements.define("neo-button-card-editor", makeNeoEditor([
       NEO_LAYOUT_FIELD,
     ],
   },
-  {
-    type: "expandable", title: "Aktion", icon: "mdi:gesture-tap",
-    schema: [
-      { name: "tap_action", label: "Tap-Aktion", selector: { ui_action: {} } },
-      { name: "hold_action", label: "Hold-Aktion", selector: { ui_action: {} } },
-    ],
-  },
-], { name: "Neo Button", description: "Schalter · Licht · Szene · Skript · Aktion", icon: "⚡" }));
+], { name: "Neo Button", description: "Schalter · Licht · Szene · Skript", icon: "⚡" }));
 
 NeoDashboardRegistry.registerCard("neo-button-card", NeoButtonCard, {
   name: "Neo Button",
