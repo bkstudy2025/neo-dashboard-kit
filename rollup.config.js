@@ -1,4 +1,14 @@
 import resolve from "@rollup/plugin-node-resolve";
+import { readFileSync } from "fs";
+
+// Single source of truth for the shown version: package.json. The token
+// __NEO_VERSION__ in the source is replaced with it at build time, so the
+// editor (landing + Info) always reports the actually installed build.
+const NEO_VERSION = JSON.parse(readFileSync("./package.json", "utf8")).version;
+const injectVersion = {
+  name: "neo-version",
+  renderChunk(code) { return code.replace(/__NEO_VERSION__/g, NEO_VERSION); },
+};
 
 // Bundles the modular src/ tree into the single file HACS serves.
 // hacs.json has content_in_root:true + filename:neo-dashboard.js, so the
@@ -14,5 +24,6 @@ export default {
   },
   plugins: [
     resolve(),
+    injectVersion,
   ],
 };
