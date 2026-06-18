@@ -29,29 +29,47 @@ class NeoCardEditor extends HTMLElement {
     this._built = true;
     this.innerHTML = "";
 
-    // Kartentyp-Picker — eigener, nach Kategorie gruppierter Auswahldialog
-    // (ha-form kann keine echten Gruppen/Überschriften).
+    // Neo-Editor-Shell: geführte Sektionen im Glas-Design (USP — der Editor
+    // trägt dieselbe Designsprache wie die Karten, nicht das generische HA-Grau).
+    this._root = document.createElement("div");
+    this._root.className = "neo-ed";
+    this._root.innerHTML = this._shellStyles();
+    this.appendChild(this._root);
+
+    // ── Sektion 1: Kartentyp (eigener, gruppierter & suchbarer Picker) ──
+    const typeSec = document.createElement("div");
+    typeSec.className = "neo-ed-sec";
+    typeSec.innerHTML =
+      `<div class="neo-ed-sec-h"><span class="neo-ed-sec-ic">${neoIcon("grid", { size: 15, color: "currentColor" })}</span>Kartentyp</div>`;
     this._typeBox = document.createElement("div");
-    this.appendChild(this._typeBox);
+    typeSec.appendChild(this._typeBox);
+    this._root.appendChild(typeSec);
     this._renderTypePicker();
 
-    this._subContainer = document.createElement("div");
-    this._subContainer.style.marginTop = "8px";
-    this.appendChild(this._subContainer);
+    // ── Geführter Hinweis (nur ohne Auswahl sichtbar) ──
+    this._hintBox = document.createElement("div");
+    this._root.appendChild(this._hintBox);
 
-    // Module manager (collapsed). Uses a plain textarea (reliable, unlike the
-    // settings-dialog one) and stores to the server via Neo Dashboard Tools.
+    // ── Sektion 2: Einstellungen der gewählten Karte (nur mit Auswahl) ──
+    this._settingsSec = document.createElement("div");
+    this._settingsSec.className = "neo-ed-sec";
+    this._settingsSec.innerHTML =
+      `<div class="neo-ed-sec-h"><span class="neo-ed-sec-ic">${neoIcon("settings", { size: 15, color: "currentColor" })}</span>Einstellungen</div>`;
+    this._subContainer = document.createElement("div");
+    this._settingsSec.appendChild(this._subContainer);
+    this._root.appendChild(this._settingsSec);
+
+    // ── Module manager (collapsed). Uses a plain textarea (reliable, unlike the
+    // settings-dialog one) and stores to the server via Neo Dashboard Tools. ──
     this._modPanel = document.createElement("div");
-    this._modPanel.style.marginTop = "12px";
-    this.appendChild(this._modPanel);
+    this._root.appendChild(this._modPanel);
     this._renderModPanel();
     if (NeoStore.available()) NeoStore.list().then((m) => { this._mods = m; this._renderModPanel(); });
 
-    // Info & Support panel (collapsed)
+    // ── Info & Support panel (collapsed) ──
     const info = document.createElement("div");
-    info.style.marginTop = "10px";
     info.innerHTML = this._infoPanelHtml();
-    this.appendChild(info);
+    this._root.appendChild(info);
     info.querySelector("#ni-toggle")?.addEventListener("click", () => {
       const body = info.querySelector("#ni-body");
       const open = body.style.display !== "none";
@@ -60,6 +78,40 @@ class NeoCardEditor extends HTMLElement {
     });
 
     this._mountSub();
+    this._updateGuidedState();
+  }
+
+  // Einheitliche Glas-Optik für die Editor-Sektionen (Neo-Designsprache).
+  _shellStyles() {
+    return `<style>
+      .neo-ed { display:flex; flex-direction:column; gap:12px; }
+      .neo-ed-sec { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:14px;
+        padding:12px 14px 14px; background:var(--neo-fill1,rgba(255,255,255,.03)); }
+      .neo-ed-sec-h { display:flex; align-items:center; gap:8px; margin:0 0 10px;
+        font-size:11.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+        color:var(--secondary-text-color,rgba(244,246,251,.72)); }
+      .neo-ed-sec-ic { display:flex; color:var(--primary-color,#7C9CFF); }
+      .neo-ed-hint { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:14px;
+        background:linear-gradient(135deg, rgba(124,156,255,.16), rgba(124,156,255,.04));
+        border:1px solid rgba(124,156,255,.28); font-size:13px; line-height:1.45;
+        color:var(--primary-text-color,#F4F6FB); }
+      .neo-ed-hint-ic { font-size:20px; line-height:1.1; flex-shrink:0; }
+    </style>`;
+  }
+
+  // Zeigt/versteckt Hinweis + Einstellungs-Sektion je nach Auswahl (geführter Flow).
+  _updateGuidedState() {
+    const hasType = !!this._config.card_type;
+    if (this._settingsSec) this._settingsSec.style.display = hasType ? "" : "none";
+    if (this._hintBox) {
+      this._hintBox.innerHTML = hasType ? "" : `
+        <div class="neo-ed-hint">
+          <span class="neo-ed-hint-ic">✨</span>
+          <div><b>Schritt 1 — Kartentyp wählen</b><br>
+          Öffne oben das Dropdown und wähle eine Karte (Licht, Sensor, Szene …).
+          Danach erscheinen hier ihre Einstellungen und rechts die Live-Vorschau.</div>
+        </div>`;
+    }
   }
 
   _infoPanelHtml() {
@@ -436,6 +488,7 @@ class NeoCardEditor extends HTMLElement {
 
   _syncTypeForm() {
     if (this._typeBox) this._renderTypePicker();
+    this._updateGuidedState();
   }
 
   _refreshTypeOptions() {
@@ -462,6 +515,7 @@ class NeoCardEditor extends HTMLElement {
     this._config = { type: this._config.type, card_type: newType, ...(mods ? { modules: mods } : {}), ...stub };
     this._renderTypePicker();
     this._mountSub();
+    this._updateGuidedState();
     this._fire();
   }
 
@@ -506,7 +560,6 @@ class NeoCardEditor extends HTMLElement {
           border:1px solid var(--divider-color,rgba(255,255,255,.15)); }
         .nt-empty { padding:14px 12px; font-size:13px; color:var(--secondary-text-color); }
       </style>
-      <div class="nt-h">Kartentyp</div>
       <div class="nt">
         <div class="nt-btn" id="nt-btn">
           <span class="nt-lbl"><span class="nt-dot" style="background:${DOT[curCat]};"></span>
