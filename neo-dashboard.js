@@ -698,155 +698,319 @@ class NeoBaseCard extends HTMLElement {
   _callService(domain, service, data = {}) { this._hass?.callService(domain, service, data); }
 }
 
-// Neo Dashboard Kit — Button Card (universal)
-// Vereint Schalter / Licht+Slider / Szene / Skript / Aktion in EINER Karte
-// (BubbleCard-Stil). Ersetzt die früheren Einzelkarten light/scene/quick-action.
-// Der Editor nutzt das geteilte Sektions-Muster (Allgemein/Darstellung/Aktion).
+// Neo Dashboard Kit — Control Card ("Neo Steuerung")
+// EINE universelle Steuerungs-Karte: erkennt die Domain der gewählten Entität
+// und zeigt automatisch die passende Bedienung (Toggle, +/-, Auf/Stopp/Zu,
+// Transport, Scharf/Unscharf …). So bleibt der Picker kurz; alles Weitere
+// kommt über Module. Aufgebaut mit einem gemeinsamen Shell-Helper, nach
+// Domain gegliedert.
 
-const BUTTON_TYPES = [
-  { value: "switch", label: "Schalter (Toggle)" },
-  { value: "light",  label: "Licht (mit Helligkeit)" },
-  { value: "scene",  label: "Szene" },
-  { value: "script", label: "Skript" },
-];
+const DEFAULT_ICON = {
+  light: "lightbulb", switch: "toggle", input_boolean: "toggle", fan: "fan",
+  cover: "blinds", climate: "thermo", media_player: "speaker", lock: "lock",
+  scene: "scenes", script: "robot", button: "robot", lightgroup: "lightbulb",
+};
+const ALARM_STATES = {
+  disarmed: { label: "Unscharf", accent: "mint", icon: "unlock" },
+  armed_home: { label: "Scharf · Zuhause", accent: "amber", icon: "lock" },
+  armed_away: { label: "Scharf · Abwesend", accent: "amber", icon: "lock" },
+  armed_night: { label: "Scharf · Nacht", accent: "amber", icon: "lock" },
+  armed_vacation: { label: "Scharf · Urlaub", accent: "amber", icon: "lock" },
+  arming: { label: "Aktiviert …", accent: "amber", icon: "lock" },
+  pending: { label: "Eingang …", accent: "amber", icon: "lock" },
+  triggered: { label: "ALARM", accent: "rose", icon: "bell" },
+};
+const MEDIA_LABEL = { playing: "Spielt", paused: "Pausiert", idle: "Bereit", off: "Aus", standby: "Standby", buffering: "Puffert", unavailable: "—" };
+const COVER_LABEL = { open: "Offen", closed: "Geschlossen", opening: "Öffnet", closing: "Schließt", unavailable: "—" };
 
-// Standard-Icon je Button-Typ, falls keins gesetzt ist.
-const DEFAULT_ICON = { switch: "toggle", light: "lightbulb", scene: "sparkle", script: "robot" };
+class NeoControlCard extends NeoBaseCard {
+  getCardSize() { return this._domain() === "media_player" ? 3 : 2; }
 
-class NeoButtonCard extends NeoBaseCard {
-  getCardSize() { return this._type() === "light" ? 3 : 2; }
-
-  _type() { return this._config?.button_type || "switch"; }
-
-  // "Aktiv" = farbiger Glow-Zustand der Kachel.
-  _isActive(s) {
-    if (this._type() === "scene") return false; // Szenen sind zustandslos
-    return s?.state === "on";                    // switch/light/script
-  }
-
-  _hasToggle() { return this._type() === "switch" || this._type() === "light"; }
-
-  render() {
-    const type = this._type();
+  _domain() {
+    if (Array.isArray(this._config?.entities) && this._config.entities.length) return "lightgroup";
     const id = this._config?.entity;
-    const s = this._state(id);
-    const on = this._isActive(s);
-    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
-    const icon = this._config?.icon || DEFAULT_ICON[type] || "dot";
-    const name = this._config?.name || s?.attributes?.friendly_name || id || "Button";
+    return id ? id.split(".")[0] : "";
+  }
+  _acc() { return NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue; }
+  _name(s, fallback) { return this._config?.name || s?.attributes?.friendly_name || this._config?.entity || fallback; }
 
-    // Licht: echte RGB-Farbe + Helligkeit
-    let color = acc.c, bri = 0;
-    if (type === "light" && on) {
-      color = s?.attributes?.rgb_color ? `rgb(${s.attributes.rgb_color})` : acc.c;
-      bri = s?.attributes?.brightness ? Math.round((s.attributes.brightness / 255) * 100) : 0;
-    }
-    const glow = `${color}55`;
-
-    const sub = this._config?.sub ?? (type === "switch" ? (on ? "An" : "Aus") : "");
-
-    const toggleHtml = this._hasToggle() ? `
-      <div id="toggle" style="width:36px;height:22px;border-radius:11px;padding:2px;flex-shrink:0;
-        background:${on ? acc.c : "var(--neo-line5)"};transition:background 200ms;cursor:pointer;">
-        <div style="width:18px;height:18px;border-radius:9px;background:#fff;
-          transform:translateX(${on ? "14px" : "0px"});
-          transition:transform 220ms cubic-bezier(.2,.8,.2,1);box-shadow:0 1px 2px rgba(0,0,0,0.3);"></div>
-      </div>` : "";
-
-    const sliderHtml = (type === "light") ? `
-      <div style="margin-top:8px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--neo-text3);">
-          <span>Helligkeit</span><span style="font-weight:600;">${on ? bri : 0}%</span>
-        </div>
-        <input type="range" id="bri" min="1" max="100" value="${on ? bri : 1}" style="
-          width:100%;height:26px;border-radius:9px;-webkit-appearance:none;appearance:none;cursor:pointer;
-          background:linear-gradient(90deg,${color}cc 0%,${color} ${on ? bri : 0}%,var(--neo-line2) ${on ? bri : 0}%);
-          border:1px solid var(--neo-line1);" />
-      </div>` : "";
-
-    const minH = type === "light" ? 180 : 160;
-
+  // ── gemeinsame Bausteine ───────────────────────────────────
+  _shell(acc, active, headerRight, icon, body, minH) {
+    const glow = `${acc.c}55`;
+    const iconBg = active ? `linear-gradient(160deg,${acc.c} 0%,${acc.c}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`;
     return `
       <div class="neo-card" id="card" role="button" style="
-        padding:16px;min-height:${minH}px;display:flex;flex-direction:column;cursor:pointer;
-        background:${on ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
+        padding:16px;min-height:${minH || 160}px;display:flex;flex-direction:column;cursor:pointer;
+        background:${active ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
         backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid ${on ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${on ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};
-      ">
+        border:1px solid ${active ? "var(--neo-line6)" : "var(--neo-line2)"};
+        box-shadow:${active ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
           <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
-            background:${on ? `linear-gradient(160deg,${color} 0%,${color}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
-            border:1px solid ${on ? "rgba(255,255,255,0.25)" : acc.c + "33"};
-            box-shadow:${on ? `0 4px 14px ${glow}` : "none"};">${neoIcon(icon, { size: 19, color: on ? "#fff" : acc.c })}</div>
-          ${toggleHtml}
+            background:${iconBg};border:1px solid ${active ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: active ? "#fff" : acc.c })}</div>
+          ${headerRight || ""}
         </div>
-        <div style="margin-top:auto;">
-          <div style="font-size:16px;font-weight:600;">${name}</div>
-          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
-          ${sliderHtml}
-        </div>
+        <div style="margin-top:auto;">${body}</div>
       </div>`;
   }
-
-  _bindEvents() {
-    const type = this._type();
-    const id = this._config?.entity;
-    const s = this._state(id);
-    const on = this._isActive(s);
-
-    // Toggle-Schalter (nur switch/light)
-    this.shadowRoot.getElementById("toggle")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this._toggleEntity(id, on, type);
-    });
-
-    // Helligkeits-Slider (nur light)
-    this.shadowRoot.getElementById("bri")?.addEventListener("change", (e) => {
-      this._callService("light", "turn_on", { entity_id: id, brightness: Math.round((+e.target.value / 100) * 255) });
-    });
-
-    // Tap auf die Karte — ein Modul-tapAction-Hook hat Vorrang (Override).
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      this._onTap(id, on, type);
-    });
+  _toggleEl(acc, on) {
+    return `<div id="toggle" style="width:36px;height:22px;border-radius:11px;padding:2px;flex-shrink:0;
+      background:${on ? acc.c : "var(--neo-line5)"};transition:background 200ms;cursor:pointer;">
+      <div style="width:18px;height:18px;border-radius:9px;background:#fff;transform:translateX(${on ? "14px" : "0px"});
+        transition:transform 220ms cubic-bezier(.2,.8,.2,1);box-shadow:0 1px 2px rgba(0,0,0,0.3);"></div></div>`;
+  }
+  _badge(acc, active, text) {
+    return `<span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;
+      color:${active ? acc.c : "var(--neo-text2)"};background:${active ? acc.c + "1f" : "var(--neo-fill2)"};
+      border:1px solid ${active ? acc.c + "55" : "var(--neo-line2)"};">${text}</span>`;
+  }
+  _title(name, sub, extra) {
+    return `<div style="font-size:16px;font-weight:600;">${name}</div>
+      ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}${extra || ""}`;
+  }
+  _slider(idAttr, acc, pct, label) {
+    return `<div style="margin-top:8px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--neo-text3);">
+        <span>${label}</span><span style="font-weight:600;">${pct}%</span></div>
+      <input type="range" id="${idAttr}" min="1" max="100" value="${pct || 1}" style="
+        width:100%;height:26px;border-radius:9px;-webkit-appearance:none;appearance:none;cursor:pointer;
+        background:linear-gradient(90deg,${acc.c}cc 0%,${acc.c} ${pct}%,var(--neo-line2) ${pct}%);
+        border:1px solid var(--neo-line1);" /></div>`;
+  }
+  _flatBtn(attr, val, label, acc, primary) {
+    return `<button ${attr}="${val}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;
+      display:flex;align-items:center;justify-content:center;color:#fff;
+      background:${primary ? acc.c : "var(--neo-fill2,rgba(255,255,255,.06))"};
+      border:1px solid ${primary ? "transparent" : "var(--neo-line2)"};">${label}</button>`;
+  }
+  _iconBtn(attr, val, sym, acc) {
+    return `<button ${attr}="${val}" style="width:44px;height:44px;flex-shrink:0;border-radius:22px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;color:var(--neo-text1,#fff);
+      background:var(--neo-fill2,rgba(255,255,255,.06));border:1px solid var(--neo-line2);">${neoIcon(sym, { size: 18, color: "currentColor" })}</button>`;
   }
 
-  _toggleEntity(id, on, type) {
-    if (!id) return;
-    const domain = type === "light" ? "light" : (id.split(".")[0] || "homeassistant");
-    this._callService(domain, on ? "turn_off" : "turn_on", { entity_id: id });
-  }
+  _icon(d, fb) { return this._config?.icon || DEFAULT_ICON[d] || fb || "dot"; }
 
-  _onTap(id, on, type) {
-    // Schlankes Standardverhalten je Typ (erweiterte Tap-Aktionen → Premium-Modul).
-    switch (type) {
-      case "scene":
-        this._callService("scene", "turn_on", { entity_id: id });
-        break;
-      case "script":
-        id?.startsWith("script.")
-          ? this._callService("script", "turn_on", { entity_id: id })
-          : this._callService("script", id, {});
-        break;
-      default:
-        this._toggleEntity(id, on, type); // switch/light
+  // ── Render-Dispatch ────────────────────────────────────────
+  render() {
+    const d = this._domain();
+    switch (d) {
+      case "fan": return this._renderFan();
+      case "cover": return this._renderCover();
+      case "climate": return this._renderClimate();
+      case "media_player": return this._renderMedia();
+      case "alarm_control_panel": return this._renderAlarm();
+      case "lock": return this._renderLock();
+      case "scene": case "script": case "button": return this._renderAction(d);
+      case "lightgroup": return this._renderLightGroup();
+      default: return this._renderToggle(d); // light/switch/input_boolean/…
     }
   }
 
-  static getConfigElement() { return document.createElement("neo-button-card-editor"); }
-  static getStubConfig() { return {}; } // keine Voreinstellungen — leerer Start
+  // light / switch / input_boolean
+  _renderToggle(d) {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const on = s?.state === "on";
+    const acc = this._acc();
+    const isLight = d === "light";
+    let pct = 0;
+    if (isLight && on) pct = s?.attributes?.brightness ? Math.round((s.attributes.brightness / 255) * 100) : 0;
+    const sub = this._config?.sub ?? (on ? (isLight ? `${pct}%` : "An") : "Aus");
+    const body = this._title(this._name(s, "Schalter"), sub, isLight && on ? this._slider("bri", acc, pct, "Helligkeit") : "");
+    return this._shell(acc, on, this._toggleEl(acc, on), this._icon(d), body, isLight ? 180 : 160);
+  }
+
+  _renderLock() {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const locked = s?.state === "locked";
+    const acc = NEO_ACCENTS[this._config?.accent] || (locked ? NEO_ACCENTS.mint : NEO_ACCENTS.amber);
+    const sub = this._config?.sub ?? (locked ? "Verriegelt" : "Entriegelt");
+    const right = this._badge(acc, true, locked ? "🔒" : "🔓");
+    const body = this._title(this._name(s, "Schloss"), sub);
+    return this._shell(acc, locked, right, this._config?.icon || (locked ? "lock" : "unlock"), body);
+  }
+
+  _renderFan() {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const a = s?.attributes || {};
+    const on = s?.state === "on";
+    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.mint;
+    const pct = typeof a.percentage === "number" ? a.percentage : (on ? 100 : 0);
+    const sub = this._config?.sub ?? (on ? `${pct}%` : "Aus");
+    const body = this._title(this._name(s, "Ventilator"), sub, on ? this._slider("pct", acc, pct, "Stufe") : "");
+    return this._shell(acc, on, this._toggleEl(acc, on), this._icon("fan"), body, 180);
+  }
+
+  _renderCover() {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const a = s?.attributes || {};
+    const state = s?.state || "unavailable";
+    const acc = this._acc();
+    const pos = typeof a.current_position === "number" ? a.current_position : null;
+    const active = state === "open" || state === "opening" || (pos != null && pos > 0);
+    const right = this._badge(acc, false, pos != null ? `${pos}% offen` : (COVER_LABEL[state] || state));
+    const row = `<div style="display:flex;gap:8px;margin-top:10px;">
+      ${this._iconBtnTxt("up", "▲", "Öffnen")}${this._iconBtnTxt("stop", "■", "Stopp")}${this._iconBtnTxt("down", "▼", "Schließen")}</div>`;
+    return this._shell(acc, active, right, this._icon("cover"), this._title(this._name(s, "Rollladen"), "", row), 200);
+  }
+  _iconBtnTxt(val, glyph, title) {
+    return `<button data-cover="${val}" title="${title}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:16px;
+      display:flex;align-items:center;justify-content:center;color:var(--neo-text1,#fff);
+      background:var(--neo-fill2,rgba(255,255,255,.06));border:1px solid var(--neo-line2);">${glyph}</button>`;
+  }
+
+  _renderClimate() {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const a = s?.attributes || {};
+    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.amber;
+    const unit = this._hass?.config?.unit_system?.temperature || "°";
+    const target = a.temperature;
+    const action = a.hvac_action;
+    const mode = s?.state || "off";
+    const actCol = action === "cooling" ? NEO_ACCENTS.blue.c : action === "heating" ? NEO_ACCENTS.amber.c : acc.c;
+    const active = (action && action !== "idle" && action !== "off") || (!action && mode !== "off" && mode !== "unavailable");
+    const accE = { c: actCol, glow: actCol + "55" };
+    const badge = action ? ({ heating: "Heizt", cooling: "Kühlt", drying: "Entfeuchtet", fan: "Lüftet", idle: "Bereit", off: "Aus" }[action] || action)
+      : ({ heat: "Heizen", cool: "Kühlen", auto: "Auto", heat_cool: "Auto", off: "Aus" }[mode] || mode);
+    const cur = a.current_temperature;
+    const row = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;">
+        ${this._iconBtn("data-temp", "dec", "minus", accE)}
+        <div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${target != null ? target : "—"}</span><span style="font-size:15px;color:var(--neo-text2);">${unit}</span></div>
+        ${this._iconBtn("data-temp", "inc", "plus", accE)}
+      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">Aktuell ${cur}${unit}</div>` : ""}`;
+    return this._shell(accE, active, this._badge(accE, active, badge), this._icon("climate"), this._title(this._name(s, "Klima"), "", row), 200);
+  }
+
+  _renderMedia() {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const a = s?.attributes || {};
+    const state = s?.state || "unavailable";
+    const playing = state === "playing";
+    const active = playing || state === "paused" || state === "buffering";
+    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.violet;
+    const title = a.media_title || "";
+    const artist = a.media_artist || a.app_name || "";
+    const name = this._name(s, "Media");
+    const line2 = title ? (artist || name) : (MEDIA_LABEL[state] || state);
+    const transport = `<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;">
+        ${this._iconBtn("data-media", "media_previous_track", "prev", acc)}
+        ${this._iconBtn("data-media", "media_play_pause", playing ? "pause" : "play", acc)}
+        ${this._iconBtn("data-media", "media_next_track", "next", acc)}</div>`;
+    const body = `<div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || name}</div>
+      ${line2 ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${line2}</div>` : ""}${transport}`;
+    return this._shell(acc, active, this._badge(acc, false, MEDIA_LABEL[state] || state), this._icon("media_player"), body, 200);
+  }
+
+  _renderAlarm() {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const state = s?.state || "unavailable";
+    const meta = ALARM_STATES[state] || { label: state, accent: "blue", icon: "lock" };
+    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS[meta.accent] || NEO_ACCENTS.blue;
+    const armed = state !== "disarmed" && state !== "unavailable";
+    const controls = state === "disarmed"
+      ? `${this._flatBtn("data-alarm", "alarm_arm_home", "Zuhause", acc)}${this._flatBtn("data-alarm", "alarm_arm_away", "Abwesend", acc)}`
+      : `${this._flatBtn("data-alarm", "alarm_disarm", "Unscharf", acc, true)}`;
+    const row = `<div style="display:flex;gap:8px;margin-top:10px;">${controls}</div>`;
+    return this._shell(acc, armed, this._badge(acc, armed, meta.label), this._config?.icon || meta.icon, this._title(this._name(s, "Alarm"), "", row), 190);
+  }
+
+  _renderAction(d) {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const acc = this._acc();
+    const sub = this._config?.sub ?? (d === "scene" ? "Szene" : d === "button" ? "Taster" : "Skript");
+    return this._shell(acc, false, "", this._icon(d), this._title(this._name(s, "Aktion"), sub), 160);
+  }
+
+  _renderLightGroup() {
+    const ids = this._config.entities.filter(Boolean);
+    let onCount = 0, briSum = 0, briN = 0;
+    ids.forEach((id) => { const s = this._state(id); if (s?.state === "on") { onCount++; const b = s.attributes?.brightness; if (typeof b === "number") { briSum += b; briN++; } } });
+    const bri = briN ? Math.round((briSum / briN / 255) * 100) : 0;
+    const on = onCount > 0;
+    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.amber;
+    const sub = this._config?.sub ?? `${onCount}/${ids.length} an`;
+    const body = this._title(this._config?.name || "Licht-Gruppe", sub, on ? this._slider("bri", acc, bri, "Helligkeit") : "");
+    return this._shell(acc, on, this._toggleEl(acc, on), this._config?.icon || "lightbulb", body);
+  }
+
+  // ── Events ────────────────────────────────────────────────
+  _bindEvents() {
+    const d = this._domain();
+    const id = this._config?.entity;
+    const sr = this.shadowRoot;
+
+    sr.getElementById("toggle")?.addEventListener("click", (e) => { e.stopPropagation(); this._primaryToggle(d); });
+    sr.getElementById("bri")?.addEventListener("change", (e) => {
+      const ids = d === "lightgroup" ? this._config.entities.filter(Boolean) : id;
+      if (ids) this._callService("light", "turn_on", { entity_id: ids, brightness_pct: +e.target.value });
+    });
+    sr.getElementById("pct")?.addEventListener("change", (e) => { if (id) this._callService("fan", "set_percentage", { entity_id: id, percentage: +e.target.value }); });
+    sr.querySelectorAll("[data-cover]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("cover", { up: "open_cover", stop: "stop_cover", down: "close_cover" }[b.getAttribute("data-cover")], { entity_id: id }); }));
+    sr.querySelectorAll("[data-temp]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); this._stepTemp(b.getAttribute("data-temp") === "inc" ? 1 : -1); }));
+    sr.querySelectorAll("[data-media]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("media_player", b.getAttribute("data-media"), { entity_id: id }); }));
+    sr.querySelectorAll("[data-alarm]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); this._alarm(b.getAttribute("data-alarm")); }));
+
+    sr.getElementById("card")?.addEventListener("click", (e) => {
+      if (this._moduleTap(e)) return;
+      if (d === "scene") this._callService("scene", "turn_on", { entity_id: id });
+      else if (d === "button") this._callService("button", "press", { entity_id: id });
+      else if (d === "script") id?.startsWith("script.") ? this._callService("script", "turn_on", { entity_id: id }) : this._callService("script", id, {});
+      else if (d === "lightgroup") this._primaryToggle(d);
+      else if (id) this._modCtx().moreInfo(id);
+    });
+  }
+
+  _primaryToggle(d) {
+    const id = this._config?.entity;
+    if (d === "lightgroup") {
+      const ids = this._config.entities.filter(Boolean);
+      const anyOn = ids.some((x) => this._state(x)?.state === "on");
+      if (ids.length) this._callService("light", anyOn ? "turn_off" : "turn_on", { entity_id: ids });
+      return;
+    }
+    if (!id) return;
+    const s = this._state(id);
+    if (d === "lock") { this._callService("lock", s?.state === "locked" ? "unlock" : "lock", { entity_id: id }); return; }
+    if (d === "fan") { this._callService("fan", s?.state === "on" ? "turn_off" : "turn_on", { entity_id: id }); return; }
+    const domain = d === "light" ? "light" : (id.split(".")[0] || "homeassistant");
+    this._callService(domain, s?.state === "on" ? "turn_off" : "turn_on", { entity_id: id });
+  }
+  _stepTemp(dir) {
+    const id = this._config?.entity;
+    const a = this._state(id)?.attributes || {};
+    const step = this._config?.step || a.target_temp_step || 0.5;
+    if (a.temperature == null) return;
+    let v = Math.round((a.temperature + dir * step) * 10) / 10;
+    if (a.min_temp != null) v = Math.max(a.min_temp, v);
+    if (a.max_temp != null) v = Math.min(a.max_temp, v);
+    this._callService("climate", "set_temperature", { entity_id: id, temperature: v });
+  }
+  _alarm(service) {
+    const id = this._config?.entity;
+    if (!id) return;
+    const data = { entity_id: id };
+    if (this._config?.code) data.code = String(this._config.code);
+    this._callService("alarm_control_panel", service, data);
+  }
+
+  static getConfigElement() { return document.createElement("neo-control-card-editor"); }
+  static getStubConfig() { return {}; }
 }
 
-// ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung/Aktion) ──
-// expandable OHNE name → die Felder bleiben flach in der Config (kein Nesting).
-customElements.define("neo-button-card-editor", makeNeoEditor([
-  { name: "button_type", label: "Button-Typ", selector: { select: { mode: "dropdown", options: BUTTON_TYPES } } },
+// ── Editor: bewusst minimal (Laien-tauglich) — Entität wählen, fertig. ──
+customElements.define("neo-control-card-editor", makeNeoEditor([
   {
     type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
     schema: [
-      { name: "entity", label: "Entity", selector: { entity: {} } },
+      { name: "entity", label: "Entität (Gerät)", selector: { entity: {} } },
       { name: "name", label: "Name (optional)", selector: { text: {} } },
       { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
     ],
@@ -854,36 +1018,45 @@ customElements.define("neo-button-card-editor", makeNeoEditor([
   {
     type: "expandable", title: "Darstellung", icon: "mdi:palette",
     schema: [
-      { name: "icon", label: "Icon", selector: { icon: {} } },
+      { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
       { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
       NEO_LAYOUT_FIELD,
     ],
   },
-], { name: "Neo Button", description: "Schalter · Licht · Szene · Skript", icon: "⚡" }));
+], { name: "Neo Steuerung", description: "Eine Karte für alle Geräte — passt sich an", icon: "🎛️" }));
 
-NeoDashboardRegistry.registerCard("neo-button-card", NeoButtonCard, {
-  name: "Neo Button",
-  description: "Universelle Tasten-/Kachel-Karte",
+NeoDashboardRegistry.registerCard("neo-control-card", NeoControlCard, {
+  name: "Neo Steuerung",
+  description: "Eine Karte für alle Geräte — passt sich automatisch an die Entität an",
 });
 
-// Neo Dashboard Kit — Sensor Card
-// Zeigt einen Sensorwert als Glas-Kachel. Folgt dem geteilten Sektions-Muster
-// (Allgemein/Darstellung) wie die Button-Karte; Tap öffnet More-Info, kann
-// aber von einem Modul-tapAction überschrieben werden.
+// Neo Dashboard Kit — Display Card ("Neo Anzeige")
+// EINE universelle Anzeige-Karte: erkennt die Domain und zeigt Sensorwert,
+// Kamera-Snapshot oder Status. Reine Darstellung; Tap → More-Info.
 
-class NeoSensorCard extends NeoBaseCard {
-  getCardSize() { return 2; }
+class NeoDisplayCard extends NeoBaseCard {
+  getCardSize() { return this._domain() === "camera" ? 3 : 2; }
+
+  _domain() {
+    const id = this._config?.entity;
+    return id ? id.split(".")[0] : "";
+  }
+  _acc() { return NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.mint; }
 
   render() {
+    return this._domain() === "camera" ? this._renderCamera() : this._renderSensor();
+  }
+
+  _renderSensor() {
     const id = this._config?.entity;
     const s = this._state(id);
+    const a = s?.attributes || {};
     const value = s?.state ?? "—";
-    const unit = this._config?.unit ?? s?.attributes?.unit_of_measurement ?? "";
-    const name = this._config?.name || s?.attributes?.friendly_name || id || "Sensor";
+    const unit = this._config?.unit ?? a.unit_of_measurement ?? "";
+    const name = this._config?.name || a.friendly_name || id || "Wert";
     const icon = this._config?.icon || "thermo";
-    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.mint;
+    const acc = this._acc();
     const sub = this._config?.sub || "";
-
     return `
       <div class="neo-card" id="card" role="button" style="
         padding:16px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;
@@ -904,391 +1077,7 @@ class NeoSensorCard extends NeoBaseCard {
       </div>`;
   }
 
-  _bindEvents() {
-    const id = this._config?.entity;
-    // Tap → More-Info; ein Modul-tapAction-Hook hat Vorrang (Override).
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      if (id) this._modCtx().moreInfo(id);
-    });
-  }
-
-  static getConfigElement() { return document.createElement("neo-sensor-card-editor"); }
-  static getStubConfig() { return {}; } // leerer Start
-}
-
-// ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung) ──
-customElements.define("neo-sensor-card-editor", makeNeoEditor([
-  {
-    type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "entity", label: "Sensor-Entity", selector: { entity: { domain: ["sensor", "binary_sensor", "input_number", "number"] } } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-      { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon", selector: { icon: {} } },
-      { name: "unit", label: "Einheit (optional)", selector: { text: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-      NEO_LAYOUT_FIELD,
-    ],
-  },
-], { name: "Neo Sensor", description: "Sensorwert als Glas-Kachel", icon: "📊" }));
-
-NeoDashboardRegistry.registerCard("neo-sensor-card", NeoSensorCard, {
-  name: "Neo Sensor",
-  description: "Sensorwert als Glas-Kachel",
-});
-
-// Neo Dashboard Kit — Climate Card (Thermostat)
-// Soll-/Ist-Temperatur als Glas-Kachel mit +/- Steuerung. Folgt dem geteilten
-// Sektions-Muster (Allgemein/Darstellung). Tap öffnet More-Info, überschreibbar
-// per Modul-tapAction; die +/- Tasten stellen die Zieltemperatur.
-
-const MODE_LABEL = {
-  heat: "Heizen", cool: "Kühlen", auto: "Auto", heat_cool: "Auto",
-  dry: "Entfeuchten", fan_only: "Lüften", off: "Aus", unavailable: "—",
-};
-const ACTION_LABEL = {
-  heating: "Heizt", cooling: "Kühlt", drying: "Entfeuchtet",
-  fan: "Lüftet", idle: "Bereit", off: "Aus",
-};
-
-class NeoClimateCard extends NeoBaseCard {
-  getCardSize() { return 3; }
-
-  _step() {
-    const s = this._state(this._config?.entity);
-    return this._config?.step || s?.attributes?.target_temp_step || 0.5;
-  }
-
-  render() {
-    const id = this._config?.entity;
-    const s = this._state(id);
-    const a = s?.attributes || {};
-    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.amber;
-    const name = this._config?.name || a.friendly_name || id || "Klima";
-    const icon = this._config?.icon || "thermo";
-    const unit = this._hass?.config?.unit_system?.temperature || "°";
-    const cur = a.current_temperature;
-    const target = a.temperature;
-    const mode = s?.state || "off";
-    const action = a.hvac_action;
-
-    // Farbe/Glow nach aktueller Aktion (heizen=amber, kühlen=blau).
-    const actCol = action === "cooling" ? NEO_ACCENTS.blue.c
-      : action === "heating" ? NEO_ACCENTS.amber.c : acc.c;
-    const active = (action && action !== "idle" && action !== "off") ||
-      (!action && mode !== "off" && mode !== "unavailable");
-    const glow = `${actCol}55`;
-
-    const badge = action ? (ACTION_LABEL[action] || action) : (MODE_LABEL[mode] || mode);
-    const targetTxt = target != null ? target : "—";
-    const curTxt = cur != null ? `Aktuell ${cur}${unit}` : "";
-
-    const btn = (which, sym) => `
-      <button id="${which}" style="width:42px;height:42px;flex-shrink:0;border-radius:21px;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;color:var(--neo-text1,#fff);
-        background:var(--neo-fill2,rgba(255,255,255,.06));border:1px solid var(--neo-line2);">
-        ${neoIcon(sym, { size: 20, color: "currentColor" })}</button>`;
-
-    return `
-      <div class="neo-card" id="card" role="button" style="
-        padding:16px;min-height:200px;display:flex;flex-direction:column;cursor:pointer;
-        background:${active ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
-        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid ${active ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${active ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-          <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
-            background:${active ? `linear-gradient(160deg,${actCol} 0%,${actCol}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
-            border:1px solid ${active ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: active ? "#fff" : acc.c })}</div>
-          <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;
-            color:${active ? actCol : "var(--neo-text2)"};background:${active ? actCol + "1f" : "var(--neo-fill2)"};
-            border:1px solid ${active ? actCol + "55" : "var(--neo-line2)"};">${badge}</span>
-        </div>
-        <div style="margin-top:auto;">
-          <div style="font-size:13px;color:var(--neo-text2);">${name}</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;">
-            ${btn("dec", "minus")}
-            <div style="display:flex;align-items:baseline;gap:2px;">
-              <span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${targetTxt}</span>
-              <span style="font-size:15px;color:var(--neo-text2);">${unit}</span>
-            </div>
-            ${btn("inc", "plus")}
-          </div>
-          ${curTxt ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">${curTxt}</div>` : ""}
-        </div>
-      </div>`;
-  }
-
-  _bindEvents() {
-    const id = this._config?.entity;
-    const target = this._state(id)?.attributes?.temperature;
-    const step = this._step();
-
-    this.shadowRoot.getElementById("dec")?.addEventListener("click", (e) => {
-      e.stopPropagation(); this._setTemp(id, target, -step);
-    });
-    this.shadowRoot.getElementById("inc")?.addEventListener("click", (e) => {
-      e.stopPropagation(); this._setTemp(id, target, step);
-    });
-    // Tap auf die Karte → More-Info; Modul-tapAction hat Vorrang.
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      if (id) this._modCtx().moreInfo(id);
-    });
-  }
-
-  _setTemp(id, cur, delta) {
-    if (!id || cur == null) return;
-    const a = this._state(id)?.attributes || {};
-    let v = Math.round((cur + delta) * 10) / 10;
-    if (a.min_temp != null) v = Math.max(a.min_temp, v);
-    if (a.max_temp != null) v = Math.min(a.max_temp, v);
-    this._callService("climate", "set_temperature", { entity_id: id, temperature: v });
-  }
-
-  static getConfigElement() { return document.createElement("neo-climate-card-editor"); }
-  static getStubConfig() { return {}; }
-}
-
-// ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung) ──
-customElements.define("neo-climate-card-editor", makeNeoEditor([
-  {
-    type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "entity", label: "Klima-Entity", selector: { entity: { domain: "climate" } } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon", selector: { icon: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-      { name: "step", label: "Schrittweite (optional)", selector: { number: { min: 0.1, max: 5, step: 0.1, mode: "box" } } },
-      NEO_LAYOUT_FIELD,
-    ],
-  },
-], { name: "Neo Klima", description: "Thermostat mit +/- Steuerung", icon: "🌡️" }));
-
-NeoDashboardRegistry.registerCard("neo-climate-card", NeoClimateCard, {
-  name: "Neo Klima",
-  description: "Thermostat mit +/- Steuerung",
-});
-
-// Neo Dashboard Kit — Cover Card (Rollladen/Jalousie)
-// Glas-Kachel mit Auf / Stopp / Zu als Kern-Steuerung; Detail (Position,
-// Lamellen/Tilt) über Tap → More-Info. Folgt dem Sektions-Muster.
-
-const STATE_LABEL$1 = {
-  open: "Offen", closed: "Geschlossen", opening: "Öffnet", closing: "Schließt",
-  unavailable: "—",
-};
-
-class NeoCoverCard extends NeoBaseCard {
-  getCardSize() { return 3; }
-
-  render() {
-    const id = this._config?.entity;
-    const s = this._state(id);
-    const a = s?.attributes || {};
-    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
-    const name = this._config?.name || a.friendly_name || id || "Rollladen";
-    const icon = this._config?.icon || "blinds";
-    const state = s?.state || "unavailable";
-    const pos = typeof a.current_position === "number" ? a.current_position : null;
-    const active = state === "open" || state === "opening" || (pos != null && pos > 0);
-    const glow = `${acc.c}55`;
-
-    const statusTxt = pos != null ? `${pos}% offen` : (STATE_LABEL$1[state] || state);
-
-    const ctl = (which, glyph, title) => `
-      <button id="${which}" title="${title}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--neo-text1,#fff);
-        background:var(--neo-fill2,rgba(255,255,255,.06));border:1px solid var(--neo-line2);">${glyph}</button>`;
-
-    return `
-      <div class="neo-card" id="card" role="button" style="
-        padding:16px;min-height:200px;display:flex;flex-direction:column;cursor:pointer;
-        background:${active ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
-        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid ${active ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${active ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-          <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
-            background:${active ? `linear-gradient(160deg,${acc.c} 0%,${acc.c}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
-            border:1px solid ${active ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: active ? "#fff" : acc.c })}</div>
-          <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;
-            color:var(--neo-text2);background:var(--neo-fill2);border:1px solid var(--neo-line2);">${statusTxt}</span>
-        </div>
-        <div style="margin-top:auto;">
-          <div style="font-size:16px;font-weight:600;">${name}</div>
-          <div style="display:flex;gap:8px;margin-top:10px;">
-            ${ctl("up", "▲", "Öffnen")}
-            ${ctl("stop", "■", "Stopp")}
-            ${ctl("down", "▼", "Schließen")}
-          </div>
-        </div>
-      </div>`;
-  }
-
-  _bindEvents() {
-    const id = this._config?.entity;
-    const svc = (service) => (e) => { e.stopPropagation(); if (id) this._callService("cover", service, { entity_id: id }); };
-    this.shadowRoot.getElementById("up")?.addEventListener("click", svc("open_cover"));
-    this.shadowRoot.getElementById("stop")?.addEventListener("click", svc("stop_cover"));
-    this.shadowRoot.getElementById("down")?.addEventListener("click", svc("close_cover"));
-    // Tap auf die Karte → More-Info; Modul-tapAction hat Vorrang.
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      if (id) this._modCtx().moreInfo(id);
-    });
-  }
-
-  static getConfigElement() { return document.createElement("neo-cover-card-editor"); }
-  static getStubConfig() { return {}; }
-}
-
-// ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung) ──
-customElements.define("neo-cover-card-editor", makeNeoEditor([
-  {
-    type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "entity", label: "Cover-Entity", selector: { entity: { domain: "cover" } } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon", selector: { icon: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-      NEO_LAYOUT_FIELD,
-    ],
-  },
-], { name: "Neo Cover", description: "Rollladen mit Auf/Stopp/Zu", icon: "🪟" }));
-
-NeoDashboardRegistry.registerCard("neo-cover-card", NeoCoverCard, {
-  name: "Neo Cover",
-  description: "Rollladen mit Auf/Stopp/Zu",
-});
-
-// Neo Dashboard Kit — Media Player Card
-// Glas-Kachel mit Transport (⏮ ⏯ ⏭) als Kern-Steuerung; Quelle, Lautstärke
-// & Details über Tap → More-Info. Folgt dem Sektions-Muster.
-
-const STATE_LABEL = {
-  playing: "Spielt", paused: "Pausiert", idle: "Bereit", off: "Aus",
-  standby: "Standby", buffering: "Puffert", unavailable: "—",
-};
-
-class NeoMediaCard extends NeoBaseCard {
-  getCardSize() { return 3; }
-
-  render() {
-    const id = this._config?.entity;
-    const s = this._state(id);
-    const a = s?.attributes || {};
-    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.violet;
-    const state = s?.state || "unavailable";
-    const playing = state === "playing";
-    const active = playing || state === "paused" || state === "buffering";
-    const glow = `${acc.c}55`;
-
-    const name = this._config?.name || a.friendly_name || id || "Media";
-    const icon = this._config?.icon || "speaker";
-    const title = a.media_title || "";
-    const artist = a.media_artist || a.app_name || "";
-    const line2 = title ? (artist || name) : (STATE_LABEL[state] || state);
-
-    const ctl = (which, sym, title2) => `
-      <button id="${which}" title="${title2}" style="width:44px;height:44px;flex-shrink:0;border-radius:22px;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;color:var(--neo-text1,#fff);
-        background:var(--neo-fill2,rgba(255,255,255,.06));border:1px solid var(--neo-line2);">
-        ${neoIcon(sym, { size: 18, color: "currentColor" })}</button>`;
-
-    const playSym = playing ? "pause" : "play";
-
-    return `
-      <div class="neo-card" id="card" role="button" style="
-        padding:16px;min-height:200px;display:flex;flex-direction:column;cursor:pointer;
-        background:${active ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
-        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid ${active ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${active ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-          <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
-            background:${active ? `linear-gradient(160deg,${acc.c} 0%,${acc.c}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
-            border:1px solid ${active ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: active ? "#fff" : acc.c })}</div>
-          <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;
-            color:var(--neo-text2);background:var(--neo-fill2);border:1px solid var(--neo-line2);">${STATE_LABEL[state] || state}</span>
-        </div>
-        <div style="margin-top:auto;min-width:0;">
-          <div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || name}</div>
-          ${`<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${line2}</div>` }
-          <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;">
-            ${ctl("prev", "prev", "Zurück")}
-            ${ctl("play", playSym, "Play/Pause")}
-            ${ctl("next", "next", "Weiter")}
-          </div>
-        </div>
-      </div>`;
-  }
-
-  _bindEvents() {
-    const id = this._config?.entity;
-    const svc = (service) => (e) => { e.stopPropagation(); if (id) this._callService("media_player", service, { entity_id: id }); };
-    this.shadowRoot.getElementById("prev")?.addEventListener("click", svc("media_previous_track"));
-    this.shadowRoot.getElementById("play")?.addEventListener("click", svc("media_play_pause"));
-    this.shadowRoot.getElementById("next")?.addEventListener("click", svc("media_next_track"));
-    // Tap auf die Karte → More-Info; Modul-tapAction hat Vorrang.
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      if (id) this._modCtx().moreInfo(id);
-    });
-  }
-
-  static getConfigElement() { return document.createElement("neo-media-card-editor"); }
-  static getStubConfig() { return {}; }
-}
-
-// ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung) ──
-customElements.define("neo-media-card-editor", makeNeoEditor([
-  {
-    type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "entity", label: "Media-Player-Entity", selector: { entity: { domain: "media_player" } } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon", selector: { icon: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-      NEO_LAYOUT_FIELD,
-    ],
-  },
-], { name: "Neo Media", description: "Media-Player mit Transport", icon: "🎵" }));
-
-NeoDashboardRegistry.registerCard("neo-media-card", NeoMediaCard, {
-  name: "Neo Media",
-  description: "Media-Player mit Transport",
-});
-
-// Neo Dashboard Kit — Camera Card
-// Kamera-Snapshot als Glas-Kachel; Tap → Live-Ansicht (More-Info). Folgt dem
-// Sektions-Muster. Bewusst schlank — der volle Stream läuft über More-Info.
-
-class NeoCameraCard extends NeoBaseCard {
-  getCardSize() { return 3; }
-
-  render() {
+  _renderCamera() {
     const id = this._config?.entity;
     const s = this._state(id);
     const a = s?.attributes || {};
@@ -1296,12 +1085,10 @@ class NeoCameraCard extends NeoBaseCard {
     const name = this._config?.name || a.friendly_name || id || "Kamera";
     const icon = this._config?.icon || "camera";
     const pic = a.entity_picture;
-
     const image = pic
       ? `<img src="${pic}" alt="${name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" />`
       : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
            background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);">${neoIcon(icon, { size: 40, color: acc.c })}</div>`;
-
     return `
       <div class="neo-card" id="card" role="button" style="
         position:relative;overflow:hidden;min-height:190px;display:flex;cursor:pointer;
@@ -1318,128 +1105,21 @@ class NeoCameraCard extends NeoBaseCard {
 
   _bindEvents() {
     const id = this._config?.entity;
-    // Tap → More-Info (Live-Stream); Modul-tapAction hat Vorrang.
     this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
       if (this._moduleTap(e)) return;
       if (id) this._modCtx().moreInfo(id);
     });
   }
 
-  static getConfigElement() { return document.createElement("neo-camera-card-editor"); }
+  static getConfigElement() { return document.createElement("neo-display-card-editor"); }
   static getStubConfig() { return {}; }
 }
 
-// ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung) ──
-customElements.define("neo-camera-card-editor", makeNeoEditor([
+customElements.define("neo-display-card-editor", makeNeoEditor([
   {
     type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
     schema: [
-      { name: "entity", label: "Kamera-Entity", selector: { entity: { domain: "camera" } } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon", selector: { icon: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-      NEO_LAYOUT_FIELD,
-    ],
-  },
-], { name: "Neo Kamera", description: "Kamera-Snapshot mit Live über More-Info", icon: "📷" }));
-
-NeoDashboardRegistry.registerCard("neo-camera-card", NeoCameraCard, {
-  name: "Neo Kamera",
-  description: "Kamera-Snapshot, Live über More-Info",
-});
-
-// Neo Dashboard Kit — Fan Card (Ventilator)
-// Glas-Kachel mit An/Aus + Stufen-Slider (Prozent) als Kern-Steuerung;
-// Oszillation/Modus/Richtung über Tap → More-Info. Folgt dem Sektions-Muster.
-
-class NeoFanCard extends NeoBaseCard {
-  getCardSize() { return 3; }
-
-  render() {
-    const id = this._config?.entity;
-    const s = this._state(id);
-    const a = s?.attributes || {};
-    const on = s?.state === "on";
-    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.mint;
-    const name = this._config?.name || a.friendly_name || id || "Ventilator";
-    const icon = this._config?.icon || "fan";
-    const pct = typeof a.percentage === "number" ? a.percentage : (on ? 100 : 0);
-    const glow = `${acc.c}55`;
-    const sub = this._config?.sub ?? (on ? `${pct}%` : "Aus");
-
-    const toggleHtml = `
-      <div id="toggle" style="width:36px;height:22px;border-radius:11px;padding:2px;flex-shrink:0;
-        background:${on ? acc.c : "var(--neo-line5)"};transition:background 200ms;cursor:pointer;">
-        <div style="width:18px;height:18px;border-radius:9px;background:#fff;
-          transform:translateX(${on ? "14px" : "0px"});
-          transition:transform 220ms cubic-bezier(.2,.8,.2,1);box-shadow:0 1px 2px rgba(0,0,0,0.3);"></div>
-      </div>`;
-
-    const sliderHtml = on ? `
-      <div style="margin-top:8px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--neo-text3);">
-          <span>Stufe</span><span style="font-weight:600;">${pct}%</span>
-        </div>
-        <input type="range" id="pct" min="1" max="100" value="${pct}" style="
-          width:100%;height:26px;border-radius:9px;-webkit-appearance:none;appearance:none;cursor:pointer;
-          background:linear-gradient(90deg,${acc.c}cc 0%,${acc.c} ${pct}%,var(--neo-line2) ${pct}%);
-          border:1px solid var(--neo-line1);" />
-      </div>` : "";
-
-    return `
-      <div class="neo-card" id="card" role="button" style="
-        padding:16px;min-height:180px;display:flex;flex-direction:column;cursor:pointer;
-        background:${on ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
-        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid ${on ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${on ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-          <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
-            background:${on ? `linear-gradient(160deg,${acc.c} 0%,${acc.c}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
-            border:1px solid ${on ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: on ? "#fff" : acc.c })}</div>
-          ${toggleHtml}
-        </div>
-        <div style="margin-top:auto;">
-          <div style="font-size:16px;font-weight:600;">${name}</div>
-          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
-          ${sliderHtml}
-        </div>
-      </div>`;
-  }
-
-  _bindEvents() {
-    const id = this._config?.entity;
-    const on = this._state(id)?.state === "on";
-
-    this.shadowRoot.getElementById("toggle")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (id) this._callService("fan", on ? "turn_off" : "turn_on", { entity_id: id });
-    });
-    this.shadowRoot.getElementById("pct")?.addEventListener("change", (e) => {
-      if (id) this._callService("fan", "set_percentage", { entity_id: id, percentage: +e.target.value });
-    });
-    // Tap auf die Karte → More-Info; Modul-tapAction hat Vorrang.
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      if (id) this._modCtx().moreInfo(id);
-    });
-  }
-
-  static getConfigElement() { return document.createElement("neo-fan-card-editor"); }
-  static getStubConfig() { return {}; }
-}
-
-// ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung) ──
-customElements.define("neo-fan-card-editor", makeNeoEditor([
-  {
-    type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "entity", label: "Ventilator-Entity", selector: { entity: { domain: "fan" } } },
+      { name: "entity", label: "Entität", selector: { entity: { domain: ["sensor", "binary_sensor", "input_number", "number", "camera"] } } },
       { name: "name", label: "Name (optional)", selector: { text: {} } },
       { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
     ],
@@ -1448,248 +1128,16 @@ customElements.define("neo-fan-card-editor", makeNeoEditor([
     type: "expandable", title: "Darstellung", icon: "mdi:palette",
     schema: [
       { name: "icon", label: "Icon", selector: { icon: {} } },
+      { name: "unit", label: "Einheit (optional)", selector: { text: {} } },
       { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
       NEO_LAYOUT_FIELD,
     ],
   },
-], { name: "Neo Ventilator", description: "Ventilator mit An/Aus + Stufe", icon: "🌀" }));
+], { name: "Neo Anzeige", description: "Sensor · Kamera · Status", icon: "📊" }));
 
-NeoDashboardRegistry.registerCard("neo-fan-card", NeoFanCard, {
-  name: "Neo Ventilator",
-  description: "Ventilator mit An/Aus + Stufe",
-});
-
-// Neo Dashboard Kit — Alarm Card (alarm_control_panel)
-// Glas-Kachel: Status + Scharf (Zuhause/Abwesend) bzw. Unscharf als Kern;
-// Code-Eingabe / weitere Modi über Tap → More-Info. Folgt dem Sektions-Muster.
-
-const STATES = {
-  disarmed:        { label: "Unscharf",          accent: "mint",  icon: "unlock" },
-  armed_home:      { label: "Scharf · Zuhause",  accent: "amber", icon: "lock" },
-  armed_away:      { label: "Scharf · Abwesend", accent: "amber", icon: "lock" },
-  armed_night:     { label: "Scharf · Nacht",    accent: "amber", icon: "lock" },
-  armed_vacation:  { label: "Scharf · Urlaub",   accent: "amber", icon: "lock" },
-  arming:          { label: "Aktiviert …",       accent: "amber", icon: "lock" },
-  pending:         { label: "Eingang …",         accent: "amber", icon: "lock" },
-  triggered:       { label: "ALARM",             accent: "rose",  icon: "bell" },
-};
-
-class NeoAlarmCard extends NeoBaseCard {
-  getCardSize() { return 3; }
-
-  _svc(service) {
-    const id = this._config?.entity;
-    if (!id) return;
-    const data = { entity_id: id };
-    if (this._config?.code) data.code = String(this._config.code);
-    this._callService("alarm_control_panel", service, data);
-  }
-
-  render() {
-    const id = this._config?.entity;
-    const s = this._state(id);
-    const a = s?.attributes || {};
-    const state = s?.state || "unavailable";
-    const meta = STATES[state] || { label: state, accent: "blue", icon: "lock" };
-    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS[meta.accent] || NEO_ACCENTS.blue;
-    const name = this._config?.name || a.friendly_name || id || "Alarm";
-    const icon = this._config?.icon || meta.icon;
-    const armed = state !== "disarmed" && state !== "unavailable";
-    const glow = `${acc.c}55`;
-
-    const ctl = (svc, label, primary) => `
-      <button data-svc="${svc}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;
-        display:flex;align-items:center;justify-content:center;
-        color:${primary ? "#fff" : "var(--neo-text1,#fff)"};
-        background:${primary ? acc.c : "var(--neo-fill2,rgba(255,255,255,.06))"};
-        border:1px solid ${primary ? "transparent" : "var(--neo-line2)"};">${label}</button>`;
-
-    const controls = state === "disarmed"
-      ? `${ctl("alarm_arm_home", "Zuhause")}${ctl("alarm_arm_away", "Abwesend")}`
-      : `${ctl("alarm_disarm", "Unscharf", true)}`;
-
-    return `
-      <div class="neo-card" id="card" role="button" style="
-        padding:16px;min-height:190px;display:flex;flex-direction:column;cursor:pointer;
-        background:${armed ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
-        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid ${armed ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${armed ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-          <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
-            background:${armed ? `linear-gradient(160deg,${acc.c} 0%,${acc.c}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
-            border:1px solid ${armed ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: armed ? "#fff" : acc.c })}</div>
-          <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;
-            color:${armed ? acc.c : "var(--neo-text2)"};background:${armed ? acc.c + "1f" : "var(--neo-fill2)"};
-            border:1px solid ${armed ? acc.c + "55" : "var(--neo-line2)"};">${meta.label}</span>
-        </div>
-        <div style="margin-top:auto;">
-          <div style="font-size:16px;font-weight:600;">${name}</div>
-          <div style="display:flex;gap:8px;margin-top:10px;">${controls}</div>
-        </div>
-      </div>`;
-  }
-
-  _bindEvents() {
-    const id = this._config?.entity;
-    this.shadowRoot.querySelectorAll("[data-svc]").forEach((b) =>
-      b.addEventListener("click", (e) => { e.stopPropagation(); this._svc(b.getAttribute("data-svc")); }));
-    // Tap auf die Karte → More-Info (Code-Eingabe, weitere Modi); Modul-tapAction hat Vorrang.
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      if (id) this._modCtx().moreInfo(id);
-    });
-  }
-
-  static getConfigElement() { return document.createElement("neo-alarm-card-editor"); }
-  static getStubConfig() { return {}; }
-}
-
-// ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung) ──
-customElements.define("neo-alarm-card-editor", makeNeoEditor([
-  {
-    type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "entity", label: "Alarm-Entity", selector: { entity: { domain: "alarm_control_panel" } } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-      { name: "code", label: "Code (optional, falls erforderlich)", selector: { text: { type: "password" } } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
-      { name: "accent", label: "Akzentfarbe (optional)", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-      NEO_LAYOUT_FIELD,
-    ],
-  },
-], { name: "Neo Alarm", description: "Alarmanlage scharf/unscharf", icon: "🛡️" }));
-
-NeoDashboardRegistry.registerCard("neo-alarm-card", NeoAlarmCard, {
-  name: "Neo Alarm",
-  description: "Alarmanlage scharf/unscharf",
-});
-
-// Neo Dashboard Kit — Light Group Card
-// Schaltet/dimmt mehrere Lichter gemeinsam (eine Kachel). Sammel-Toggle +
-// Gruppen-Helligkeit als Kern; pro-Licht-Steuerung über die jeweilige Karte.
-
-class NeoLightGroupCard extends NeoBaseCard {
-  getCardSize() { return 2; }
-
-  _entities() {
-    const e = this._config?.entities;
-    return Array.isArray(e) ? e.filter(Boolean) : (e ? [e] : []);
-  }
-
-  // Zustand der Gruppe: Anzahl an, Ø-Helligkeit der eingeschalteten Lichter.
-  _group() {
-    const ids = this._entities();
-    let onCount = 0, briSum = 0, briN = 0;
-    ids.forEach((id) => {
-      const s = this._state(id);
-      if (s?.state === "on") {
-        onCount++;
-        const b = s.attributes?.brightness;
-        if (typeof b === "number") { briSum += b; briN++; }
-      }
-    });
-    const bri = briN ? Math.round((briSum / briN / 255) * 100) : 0;
-    return { total: ids.length, onCount, anyOn: onCount > 0, bri };
-  }
-
-  render() {
-    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.amber;
-    const name = this._config?.name || "Licht-Gruppe";
-    const icon = this._config?.icon || "lightbulb";
-    const g = this._group();
-    const on = g.anyOn;
-    const glow = `${acc.c}55`;
-    const sub = this._config?.sub ?? `${g.onCount}/${g.total} an`;
-
-    const toggleHtml = `
-      <div id="toggle" style="width:36px;height:22px;border-radius:11px;padding:2px;flex-shrink:0;
-        background:${on ? acc.c : "var(--neo-line5)"};transition:background 200ms;cursor:pointer;">
-        <div style="width:18px;height:18px;border-radius:9px;background:#fff;
-          transform:translateX(${on ? "14px" : "0px"});
-          transition:transform 220ms cubic-bezier(.2,.8,.2,1);box-shadow:0 1px 2px rgba(0,0,0,0.3);"></div>
-      </div>`;
-
-    const sliderHtml = on ? `
-      <div style="margin-top:8px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--neo-text3);">
-          <span>Helligkeit</span><span style="font-weight:600;">${g.bri}%</span>
-        </div>
-        <input type="range" id="bri" min="1" max="100" value="${g.bri || 1}" style="
-          width:100%;height:26px;border-radius:9px;-webkit-appearance:none;appearance:none;cursor:pointer;
-          background:linear-gradient(90deg,${acc.c}cc 0%,${acc.c} ${g.bri}%,var(--neo-line2) ${g.bri}%);
-          border:1px solid var(--neo-line1);" />
-      </div>` : "";
-
-    return `
-      <div class="neo-card" id="card" role="button" style="
-        padding:16px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;
-        background:${on ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
-        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid ${on ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${on ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-          <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
-            background:${on ? `linear-gradient(160deg,${acc.c} 0%,${acc.c}cc 100%)` : `linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%)`};
-            border:1px solid ${on ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: on ? "#fff" : acc.c })}</div>
-          ${toggleHtml}
-        </div>
-        <div style="margin-top:auto;">
-          <div style="font-size:16px;font-weight:600;">${name}</div>
-          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
-          ${sliderHtml}
-        </div>
-      </div>`;
-  }
-
-  _bindEvents() {
-    const ids = this._entities();
-    const on = this._group().anyOn;
-    const toggle = () => { if (ids.length) this._callService("light", on ? "turn_off" : "turn_on", { entity_id: ids }); };
-
-    this.shadowRoot.getElementById("toggle")?.addEventListener("click", (e) => { e.stopPropagation(); toggle(); });
-    this.shadowRoot.getElementById("bri")?.addEventListener("change", (e) => {
-      if (ids.length) this._callService("light", "turn_on", { entity_id: ids, brightness_pct: +e.target.value });
-    });
-    // Tap auf die Karte: Gruppe schalten (kein einzelnes More-Info bei mehreren).
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      toggle();
-    });
-  }
-
-  static getConfigElement() { return document.createElement("neo-light-group-card-editor"); }
-  static getStubConfig() { return {}; }
-}
-
-// ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung) ──
-customElements.define("neo-light-group-card-editor", makeNeoEditor([
-  {
-    type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "entities", label: "Lichter", selector: { entity: { domain: "light", multiple: true } } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-      { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon", selector: { icon: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-      NEO_LAYOUT_FIELD,
-    ],
-  },
-], { name: "Neo Licht-Gruppe", description: "Mehrere Lichter gemeinsam schalten/dimmen", icon: "💡" }));
-
-NeoDashboardRegistry.registerCard("neo-light-group-card", NeoLightGroupCard, {
-  name: "Neo Licht-Gruppe",
-  description: "Mehrere Lichter gemeinsam schalten/dimmen",
+NeoDashboardRegistry.registerCard("neo-display-card", NeoDisplayCard, {
+  name: "Neo Anzeige",
+  description: "Sensorwert, Kamera oder Status — passt sich an die Entität an",
 });
 
 // Neo Dashboard Kit — Header / Divider Card
@@ -1760,6 +1208,107 @@ customElements.define("neo-header-card-editor", makeNeoEditor([
 NeoDashboardRegistry.registerCard("neo-header-card", NeoHeaderCard, {
   name: "Neo Header",
   description: "Überschrift / Trenner zum Strukturieren",
+});
+
+// Neo Dashboard Kit — Button Card (Legacy-Alias)
+// Ersetzt durch die universelle "Neo Steuerung" (neo-control-card). Bleibt als
+// versteckter Typ erhalten, damit bestehende Dashboards weiter rendern.
+
+class NeoButtonCard extends NeoControlCard {}
+
+NeoDashboardRegistry.registerCard("neo-button-card", NeoButtonCard, {
+  name: "Neo Button",
+  description: "(ersetzt durch Neo Steuerung)",
+  hidden: true,
+});
+
+// Neo Dashboard Kit — Sensor Card (Legacy-Alias)
+// Ersetzt durch "Neo Anzeige" (neo-display-card). Versteckt für Kompatibilität.
+
+class NeoSensorCard extends NeoDisplayCard {}
+
+NeoDashboardRegistry.registerCard("neo-sensor-card", NeoSensorCard, {
+  name: "Neo Sensor",
+  description: "(ersetzt durch Neo Anzeige)",
+  hidden: true,
+});
+
+// Neo Dashboard Kit — Climate Card (Legacy-Alias)
+// Ersetzt durch "Neo Steuerung" (neo-control-card). Versteckt für Kompatibilität.
+
+class NeoClimateCard extends NeoControlCard {}
+
+NeoDashboardRegistry.registerCard("neo-climate-card", NeoClimateCard, {
+  name: "Neo Klima",
+  description: "(ersetzt durch Neo Steuerung)",
+  hidden: true,
+});
+
+// Neo Dashboard Kit — Cover Card (Legacy-Alias)
+// Ersetzt durch "Neo Steuerung" (neo-control-card). Versteckt für Kompatibilität.
+
+class NeoCoverCard extends NeoControlCard {}
+
+NeoDashboardRegistry.registerCard("neo-cover-card", NeoCoverCard, {
+  name: "Neo Cover",
+  description: "(ersetzt durch Neo Steuerung)",
+  hidden: true,
+});
+
+// Neo Dashboard Kit — Media Card (Legacy-Alias)
+// Ersetzt durch "Neo Steuerung" (neo-control-card). Versteckt für Kompatibilität.
+
+class NeoMediaCard extends NeoControlCard {}
+
+NeoDashboardRegistry.registerCard("neo-media-card", NeoMediaCard, {
+  name: "Neo Media",
+  description: "(ersetzt durch Neo Steuerung)",
+  hidden: true,
+});
+
+// Neo Dashboard Kit — Camera Card (Legacy-Alias)
+// Ersetzt durch "Neo Anzeige" (neo-display-card). Versteckt für Kompatibilität.
+
+class NeoCameraCard extends NeoDisplayCard {}
+
+NeoDashboardRegistry.registerCard("neo-camera-card", NeoCameraCard, {
+  name: "Neo Kamera",
+  description: "(ersetzt durch Neo Anzeige)",
+  hidden: true,
+});
+
+// Neo Dashboard Kit — Fan Card (Legacy-Alias)
+// Ersetzt durch "Neo Steuerung" (neo-control-card). Versteckt für Kompatibilität.
+
+class NeoFanCard extends NeoControlCard {}
+
+NeoDashboardRegistry.registerCard("neo-fan-card", NeoFanCard, {
+  name: "Neo Ventilator",
+  description: "(ersetzt durch Neo Steuerung)",
+  hidden: true,
+});
+
+// Neo Dashboard Kit — Alarm Card (Legacy-Alias)
+// Ersetzt durch "Neo Steuerung" (neo-control-card). Versteckt für Kompatibilität.
+
+class NeoAlarmCard extends NeoControlCard {}
+
+NeoDashboardRegistry.registerCard("neo-alarm-card", NeoAlarmCard, {
+  name: "Neo Alarm",
+  description: "(ersetzt durch Neo Steuerung)",
+  hidden: true,
+});
+
+// Neo Dashboard Kit — Light Group Card (Legacy-Alias)
+// Ersetzt durch "Neo Steuerung" (neo-control-card); diese erkennt mehrere
+// Lichter über das Feld `entities`. Versteckt für Kompatibilität.
+
+class NeoLightGroupCard extends NeoControlCard {}
+
+NeoDashboardRegistry.registerCard("neo-light-group-card", NeoLightGroupCard, {
+  name: "Neo Licht-Gruppe",
+  description: "(ersetzt durch Neo Steuerung)",
+  hidden: true,
 });
 
 // Neo Dashboard Kit — Hero Card
@@ -3472,7 +3021,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.42 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.43 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

@@ -1,77 +1,71 @@
 # Neo Dashboard Kit — Karten
 
 Alle Karten laufen über **eine** Wrapper-Karte: `custom:neo-card`. Im visuellen
-Editor wählst du den **Kartentyp** über ein Dropdown; per YAML über `card_type`.
+Editor wählst du den **Kartentyp**; per YAML über `card_type`.
 
 ```yaml
 type: custom:neo-card
-card_type: <kartentyp>
-# ... kartenspezifische Optionen
+card_type: neo-control-card
+entity: climate.wohnzimmer
 ```
 
-> **Prinzip:** Die Karte hält die Oberfläche schlank — nur die wichtigste
-> Steuerung liegt direkt auf der Karte. Der **volle** Funktionsumfang ist über
-> **Tap → More-Info** (HA-Dialog) erreichbar. Zusätzliches kommt über **Module**
-> (siehe [../modules.md](../modules.md)) oder Premium (Patreon).
+> **Prinzip:** Drei Karten statt vieler Typen — du wählst eine, suchst deine
+> **Entität**, die Karte passt sich an. Nur die wichtigste Steuerung liegt auf der
+> Karte; der **volle** Funktionsumfang ist über **Tap → More-Info** erreichbar.
+> Alles Weitere kommt über **Module** ([../modules.md](../modules.md)).
 
-## Karten
+## Die drei Karten
 
-| Karte | Kartentyp | Kern-Steuerung (inline) |
-|---|---|---|
-| Button | `neo-button-card` | Toggle / Helligkeits-Slider / Aktion |
-| Sensor | `neo-sensor-card` | Wert-Anzeige (Tap → More-Info) |
-| Klima | `neo-climate-card` | Zieltemperatur − / + |
-| Cover | `neo-cover-card` | Auf / Stopp / Zu |
-| Media | `neo-media-card` | ⏮ ⏯ ⏭ Transport |
-| Header | `neo-header-card` | Überschrift / Trenner (kein Entity) |
+### Neo Steuerung — `neo-control-card`
+Eine Karte für **alle steuerbaren Geräte**. Erkennt die Domain der Entität und
+zeigt automatisch die passende Bedienung:
 
-### Button — `neo-button-card`
-Universelle Tasten-/Kachel-Karte. `button_type`: `switch` · `light` · `scene` · `script`.
-Bei `light` mit Helligkeits-Slider. Optionen: `entity`, `name`, `sub`, `icon`,
-`accent`, `layout`.
+| Domain | Inline-Steuerung |
+|---|---|
+| `light` / `switch` / `input_boolean` | Toggle (Licht zusätzlich Helligkeit) |
+| `fan` | Toggle + Stufe |
+| `cover` | Auf / Stopp / Zu |
+| `climate` | Zieltemperatur − / + |
+| `media_player` | ⏮ ⏯ ⏭ |
+| `lock` | Ver-/Entriegeln |
+| `alarm_control_panel` | Zuhause / Abwesend ↔ Unscharf |
+| `scene` / `script` / `button` | Tap löst aus |
+| mehrere Lichter (`entities`) | Gruppen-Toggle + Sammel-Helligkeit |
 
-### Sensor — `neo-sensor-card`
-Sensorwert als Glas-Kachel. Optionen: `entity`, `name`, `sub`, `icon`, `unit`,
-`accent`, `layout`. Tap öffnet More-Info.
+Optionen: `entity` (oder `entities` für Licht-Gruppe), `name`, `sub`, `icon`,
+`accent`, `layout`. Erweitert (YAML): `step` (Klima), `code` (Alarm).
 
-### Klima — `neo-climate-card`
-Thermostat mit − / + (`climate.set_temperature`, auf min/max begrenzt). Zeigt
-Ist-Temperatur + Modus/Aktion. Optionen: `entity`, `name`, `icon`, `accent`,
-`step`, `layout`.
+### Neo Anzeige — `neo-display-card`
+Reine Darstellung; Tap → More-Info.
 
-### Cover — `neo-cover-card`
-Rollladen/Jalousie mit Auf / Stopp / Zu und Positions-Anzeige. Optionen:
-`entity`, `name`, `icon`, `accent`, `layout`. Detail (Position/Tilt) über More-Info.
+| Domain | Anzeige |
+|---|---|
+| `sensor` / `binary_sensor` / `number` / `input_number` | Wert + Einheit |
+| `camera` | Snapshot-Kachel (Live über More-Info) |
 
-### Media — `neo-media-card`
-Media-Player mit Transport (⏮ ⏯ ⏭), Titel + Interpret. Optionen: `entity`,
-`name`, `icon`, `accent`, `layout`. Quelle/Lautstärke über More-Info.
+Optionen: `entity`, `name`, `sub`, `icon`, `unit`, `accent`, `layout`.
 
-### Header — `neo-header-card`
-Reiner Layout-Baustein (ohne Entity). `variant`: `header` (Icon + Titel +
-Untertitel) oder `divider` (Linie mit optionalem Label). Optionen: `title`,
-`subtitle`, `icon`, `accent`.
+### Neo Header — `neo-header-card`
+Layout-Baustein (ohne Entity). `variant`: `header` (Icon + Titel + Untertitel)
+oder `divider` (Linie mit Label). Optionen: `title`, `subtitle`, `icon`, `accent`.
 
 ## Gemeinsame Konzepte
 
 ### Akzentfarben (`accent`)
 `blue` · `amber` · `mint` · `violet` · `rose`
 
-### Icons (`icon`)
-Eingebautes SVG-Icon-Set (im Editor als Dropdown). Beispiele: `lightbulb`,
-`thermo`, `lock`, `blinds`, `speaker`, `bell`, `sun`, `snowflake` …
-
 ### Layout / Gerät (`layout`)
-Jede Karte (außer Header) hat **Layout / Gerät**: `auto · mobil · tablet · desktop`.
-
-- `auto` (Standard) richtet sich nach der Bildschirmbreite — Mobil ≤640 px,
-  Tablet ≤1024 px, sonst Desktop — und passt sich automatisch an.
-- Feste Werte erzwingen ein Layout, z. B. `layout: tablet`.
+`auto · mobil · tablet · desktop` — `auto` richtet sich nach der Bildschirmbreite.
 
 ### Module
-Jede Karte kann mit **Modulen** erweitert werden (Status-Badge, Glow, eigene
-Tap-Aktion …). Im Editor unter **Module**. Siehe [../modules.md](../modules.md).
+Jede Karte ist mit **Modulen** erweiterbar (Badge, Glow, eigene Tap-Aktion …).
+Siehe [../modules.md](../modules.md).
+
+## Kompatibilität
+Ältere Einzeltypen (`neo-button-card`, `neo-sensor-card`, `neo-climate-card`,
+`neo-cover-card`, `neo-media-card`, `neo-camera-card`, `neo-fan-card`,
+`neo-alarm-card`, `neo-light-group-card`) bleiben als **versteckte Aliasse**
+erhalten und rendern bestehende Dashboards weiter.
 
 ## Eigene Karten (Community)
-Eigene Karten lassen sich registrieren und erscheinen automatisch im Dropdown —
-siehe [../plugin-development.md](../plugin-development.md).
+Eigene Karten registrieren — siehe [../plugin-development.md](../plugin-development.md).
