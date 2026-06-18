@@ -2293,12 +2293,12 @@ class NeoCardEditor extends HTMLElement {
     </style>`;
   }
 
-  // Zeigt/versteckt Hinweis + Einstellungs- + Modul-Sektion je nach Auswahl.
+  // Zeigt/versteckt Hinweis + Einstellungs-Sektion je nach Auswahl.
   _updateGuidedState() {
     const hasType = !!this._config.card_type;
     if (this._settingsSec) this._settingsSec.style.display = hasType ? "" : "none";
-    // Module-Sektion erst zeigen, wenn ein Typ gewählt ist (ruhige Startseite).
-    if (this._modPanel) this._modPanel.style.display = hasType ? "" : "none";
+    // Die Modul-/Erweiterungs-Sektion bleibt IMMER sichtbar — so erreicht man
+    // den Store / "Code einfügen" auch ohne vorher einen Kartentyp zu wählen.
     if (this._hintBox) {
       const ver = (window.NeoDashboard && window.NeoDashboard.version) || "";
       this._hintBox.innerHTML = hasType ? "" : `
@@ -2332,23 +2332,27 @@ class NeoCardEditor extends HTMLElement {
     this._renderedModType = type; // merken, um unnötige Rebuilds zu vermeiden
     const available = type ? NeoModules.forCard(type) : [];
 
+    // Ohne Kartentyp = globale "Erweiterungen" (Karten & Module installieren,
+    // direkt von der Startseite). Mit Kartentyp = "Module" für diese Karte.
+    const heading = type ? `Module${available.length ? ` (${available.length})` : ""}` : "Erweiterungen";
+    const emptyText = type
+      ? `Für diese Karte sind noch keine Module aktiv. Über <b>➕ Modul hinzufügen</b> kommst du zum Store.`
+      : `<b>Karten</b> &amp; <b>Module</b> installieren (Store oder Code einfügen) — oder oben einen <b>Kartentyp</b> wählen, um Module für eine Karte zu aktivieren.`;
+
     this._modPanel.innerHTML = `
       ${this._modStyles()}
       <div class="nmod">
-        <div class="nmod-h"><span>🧩</span> Module${available.length ? ` (${available.length})` : ""}</div>
-        ${available.length ? `<div class="nmod-list"></div>`
-          : `<div class="nmod-empty">Für diese Karte sind noch keine Module aktiv.
-             Über <b>➕ Modul hinzufügen</b> kommst du zum Store.</div>`}
+        <div class="nmod-h"><span>🧩</span> ${heading}</div>
+        ${type && available.length ? `<div class="nmod-list"></div>` : `<div class="nmod-empty">${emptyText}</div>`}
         <div class="nmod-add" id="nmod-add"></div>
       </div>`;
 
     // Aktive Module zuerst (in Layer-Reihenfolge = config.modules), dann inaktive.
-    const byId = new Map(available.map((m) => [m.id, m]));
-    const active = this._enabledList().map((e) => byId.get(e.id)).filter(Boolean);
-    const inactive = available.filter((m) => !this._isModEnabled(m.id));
-
     const list = this._modPanel.querySelector(".nmod-list");
     if (list) {
+      const byId = new Map(available.map((m) => [m.id, m]));
+      const active = this._enabledList().map((e) => byId.get(e.id)).filter(Boolean);
+      const inactive = available.filter((m) => !this._isModEnabled(m.id));
       active.forEach((mod, i) => this._renderModItem(list, mod, {
         active: true, reorder: active.length > 1, canUp: i > 0, canDown: i < active.length - 1,
       }));
@@ -2453,10 +2457,13 @@ class NeoCardEditor extends HTMLElement {
   _renderAddArea() {
     const host = this._modPanel.querySelector("#nmod-add");
     if (!host) return;
-    const open = !!this._addOpen;
+    // Auf der Startseite (kein Kartentyp) standardmäßig aufgeklappt — der
+    // Installations-Weg soll sofort sichtbar sein, nicht versteckt.
+    const open = this._addOpen ?? !this._config.card_type;
     const tab = this._addTab || "store";
+    const label = this._config.card_type ? "Modul hinzufügen" : "Karte oder Modul installieren";
     host.innerHTML = `
-      <button class="nmod-addbtn" id="nmod-addbtn">${open ? "▾" : "➕"} Modul hinzufügen</button>
+      <button class="nmod-addbtn" id="nmod-addbtn">${open ? "▾" : "➕"} ${label}</button>
       <div class="nmod-addbody" style="display:${open ? "block" : "none"}">
         <div class="nmod-tabs">
           <div class="nmod-tab ${tab === "store" ? "active" : ""}" data-tab="store">Store</div>
@@ -2467,7 +2474,7 @@ class NeoCardEditor extends HTMLElement {
       </div>`;
 
     host.querySelector("#nmod-addbtn").addEventListener("click", () => {
-      this._addOpen = !this._addOpen;
+      this._addOpen = !open;
       this._renderAddArea();
       if (this._addOpen && (this._addTab || "store") === "store" && !this._storeItems) this._loadStoreIndex();
     });
@@ -2478,6 +2485,8 @@ class NeoCardEditor extends HTMLElement {
         if (this._addTab === "store" && !this._storeItems) this._loadStoreIndex();
       }));
     this._wireAddArea();
+    // Auto-Laden, wenn die Add-Area (z. B. auf der Startseite) offen startet.
+    if (open && tab === "store" && !this._storeItems && !this._storeLoading) this._loadStoreIndex();
   }
 
   _storeHtml() {
@@ -2486,11 +2495,12 @@ class NeoCardEditor extends HTMLElement {
     }
     if (this._storeLoading) return `<div class="nmod-note">Lade Store …</div>`;
     if (this._storeErr) return `<div class="nmod-note">${this._storeErr} <button class="nmod-mini" id="nmod-reload">Erneut</button></div>`;
+    // Ohne Kartentyp (Startseite) alles zeigen; mit Kartentyp nach target filtern.
     const type = this._config.card_type;
-    const items = (this._storeItems || []).filter((it) => NeoModules.matches(it.target, type));
+    const items = (this._storeItems || []).filter((it) => !type || NeoModules.matches(it.target, type));
     if (!items.length) {
-      return `<div class="nmod-note">Für diese Karte sind aktuell keine Store-Module verfügbar.
-        Eigenes Modul teilen? Siehe <a href="${NEO_LINKS.modulesRepo}" target="_blank" rel="noopener">neo-modules</a>.</div>`;
+      return `<div class="nmod-note">${type ? "Für diese Karte sind aktuell keine Store-Module verfügbar." : "Aktuell keine Store-Module verfügbar."}
+        Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.</div>`;
     }
     return items.map((it, i) => {
       const has = !!NeoModules.get(it.id);
@@ -3030,7 +3040,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.45 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.46 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
