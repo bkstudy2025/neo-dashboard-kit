@@ -1,7 +1,7 @@
 # Neo Dashboard Kit — Karten
 
-Alle Karten werden über die Wrapper-Karte `custom:neo-card` verwendet. Im visuellen
-Editor wählst du den **Kartentyp** über ein Dropdown; per YAML über das Feld `card_type`.
+Alle Karten laufen über **eine** Wrapper-Karte: `custom:neo-card`. Im visuellen
+Editor wählst du den **Kartentyp** über ein Dropdown; per YAML über `card_type`.
 
 ```yaml
 type: custom:neo-card
@@ -9,43 +9,69 @@ card_type: <kartentyp>
 # ... kartenspezifische Optionen
 ```
 
-## Übersicht
+> **Prinzip:** Die Karte hält die Oberfläche schlank — nur die wichtigste
+> Steuerung liegt direkt auf der Karte. Der **volle** Funktionsumfang ist über
+> **Tap → More-Info** (HA-Dialog) erreichbar. Zusätzliches kommt über **Module**
+> (siehe [../modules.md](../modules.md)) oder Premium (Patreon).
 
-| Karte | Kartentyp | Doku |
+## Karten
+
+| Karte | Kartentyp | Kern-Steuerung (inline) |
 |---|---|---|
-| Hero / Begrüßung | `neo-hero-card` | [hero.md](hero.md) |
-| Status-Leiste | `neo-status-card` | [status.md](status.md) |
-| Wetter *(Premium-Modul)* | `neo-weather-card` | [weather.md](weather.md) |
-| Quick Actions *(Premium-Modul)* | `neo-quick-actions-card` | [quick-actions.md](quick-actions.md) |
-| Licht | `neo-light-card` | [light.md](light.md) |
-| Sensor | `neo-sensor-card` | [sensor.md](sensor.md) |
-| Szene | `neo-scene-card` | [scene.md](scene.md) |
-| Schnellaktion | `neo-quick-action-card` | [quick-action.md](quick-action.md) |
+| Button | `neo-button-card` | Toggle / Helligkeits-Slider / Aktion |
+| Sensor | `neo-sensor-card` | Wert-Anzeige (Tap → More-Info) |
+| Klima | `neo-climate-card` | Zieltemperatur − / + |
+| Cover | `neo-cover-card` | Auf / Stopp / Zu |
+| Media | `neo-media-card` | ⏮ ⏯ ⏭ Transport |
+| Header | `neo-header-card` | Überschrift / Trenner (kein Entity) |
+
+### Button — `neo-button-card`
+Universelle Tasten-/Kachel-Karte. `button_type`: `switch` · `light` · `scene` · `script`.
+Bei `light` mit Helligkeits-Slider. Optionen: `entity`, `name`, `sub`, `icon`,
+`accent`, `layout`.
+
+### Sensor — `neo-sensor-card`
+Sensorwert als Glas-Kachel. Optionen: `entity`, `name`, `sub`, `icon`, `unit`,
+`accent`, `layout`. Tap öffnet More-Info.
+
+### Klima — `neo-climate-card`
+Thermostat mit − / + (`climate.set_temperature`, auf min/max begrenzt). Zeigt
+Ist-Temperatur + Modus/Aktion. Optionen: `entity`, `name`, `icon`, `accent`,
+`step`, `layout`.
+
+### Cover — `neo-cover-card`
+Rollladen/Jalousie mit Auf / Stopp / Zu und Positions-Anzeige. Optionen:
+`entity`, `name`, `icon`, `accent`, `layout`. Detail (Position/Tilt) über More-Info.
+
+### Media — `neo-media-card`
+Media-Player mit Transport (⏮ ⏯ ⏭), Titel + Interpret. Optionen: `entity`,
+`name`, `icon`, `accent`, `layout`. Quelle/Lautstärke über More-Info.
+
+### Header — `neo-header-card`
+Reiner Layout-Baustein (ohne Entity). `variant`: `header` (Icon + Titel +
+Untertitel) oder `divider` (Linie mit optionalem Label). Optionen: `title`,
+`subtitle`, `icon`, `accent`.
 
 ## Gemeinsame Konzepte
 
-### Akzentfarben
-Viele Karten haben eine Option `accent`:
-
+### Akzentfarben (`accent`)
 `blue` · `amber` · `mint` · `violet` · `rose`
 
-### Icons
-Karten mit Icon-Auswahl nutzen das eingebaute SVG-Icon-Set (im Editor als Dropdown).
-Beispiele: `lightbulb`, `thermo`, `lock`, `blinds`, `calendar`, `bell`, `sun`, `leaf` …
+### Icons (`icon`)
+Eingebautes SVG-Icon-Set (im Editor als Dropdown). Beispiele: `lightbulb`,
+`thermo`, `lock`, `blinds`, `speaker`, `bell`, `sun`, `snowflake` …
 
-### Layout / Gerät
-**Jede** Karte hat im Editor die Auswahl **Layout / Gerät**: `auto · mobil · tablet · desktop`.
+### Layout / Gerät (`layout`)
+Jede Karte (außer Header) hat **Layout / Gerät**: `auto · mobil · tablet · desktop`.
 
 - `auto` (Standard) richtet sich nach der Bildschirmbreite — Mobil ≤640 px,
-  Tablet ≤1024 px, sonst Desktop — und passt sich automatisch an, wenn ein
-  Breakpoint überschritten wird.
-- Feste Werte erzwingen ein Layout, z. B. `layout: tablet` für ein dediziertes
-  Tablet-Dashboard.
+  Tablet ≤1024 px, sonst Desktop — und passt sich automatisch an.
+- Feste Werte erzwingen ein Layout, z. B. `layout: tablet`.
 
-In den kompakten Stufen werden die Karten enger dargestellt. Einzelne Karten
-nutzen das Layout zusätzlich inhaltlich (z. B. zeigt **Wetter** ab Tablet eine
-Mehrtages-Vorhersage, **Quick Actions** wird mobil zum Icon-Raster).
+### Module
+Jede Karte kann mit **Modulen** erweitert werden (Status-Badge, Glow, eigene
+Tap-Aktion …). Im Editor unter **Module**. Siehe [../modules.md](../modules.md).
 
-### Eigene Karten (Community)
+## Eigene Karten (Community)
 Eigene Karten lassen sich registrieren und erscheinen automatisch im Dropdown —
 siehe [../plugin-development.md](../plugin-development.md).
