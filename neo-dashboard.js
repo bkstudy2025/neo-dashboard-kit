@@ -2518,7 +2518,7 @@ class NeoCardEditor extends HTMLElement {
       ? ""
       : `<div class="nmod-note">ℹ️ Ohne <b>Neo Dashboard Tools</b> wird das Modul nur für diese Sitzung geladen (nicht dauerhaft gespeichert).</div>`;
     return `${note}
-      <textarea id="nmod-code" placeholder="Modul-Code hier einfügen (window.NeoDashboard.registerModule({ … })) …"></textarea>
+      <textarea id="nmod-code" placeholder="Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …"></textarea>
       <button class="nmod-mini" id="nmod-paste-add">Hinzufügen</button>`;
   }
 
@@ -2579,12 +2579,21 @@ class NeoCardEditor extends HTMLElement {
     const before = new Set(NeoModules.list().map((m) => m.id));
     const res = neoLoadModule(code);
     if (!res.ok) return this._msg("Code konnte nicht geladen werden.", true);
-    const added = NeoModules.list().filter((m) => !before.has(m.id));
-    if (!added.length) return this._msg("Kein Modul erkannt (registerModule fehlt?).", true);
+    // Erkennt BEIDES: Layer-Module (registerModule) und eigenständige Karten
+    // (registerCard, z. B. Premium-Karten wie Neo Wetter).
+    const addedMods = NeoModules.list().filter((m) => !before.has(m.id));
+    const addedCards = res.cards || [];
+    if (!addedMods.length && !addedCards.length) {
+      return this._msg("Kein Modul/Karte erkannt (registerModule/registerCard fehlt?).", true);
+    }
+    const id = addedMods[0]?.id || addedCards[0]?.type || `neo-${Date.now()}`;
     try {
-      if (NeoStore.available()) await NeoStore.save(added[0].id, code);
+      if (NeoStore.available()) await NeoStore.save(id, code);
       await this._refreshInstalled();
-      this._msg(`✓ „${added[0].name || added[0].id}" hinzugefügt.`);
+      this._renderTypePicker(); // neue Karten sofort im Kartentyp-Dropdown
+      this._msg(addedCards.length
+        ? `✓ Karte „${addedCards[0].name || addedCards[0].type}" hinzugefügt — oben im Kartentyp wählbar.`
+        : `✓ Modul „${addedMods[0].name || addedMods[0].id}" hinzugefügt.`);
     } catch (e) {
       this._msg(`Speichern fehlgeschlagen: ${e?.message || e}`, true);
     }
@@ -3021,7 +3030,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.43 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.44 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
