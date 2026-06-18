@@ -18,13 +18,17 @@ import "./core/editor-factory.js";
 import "./core/reorder.js";
 import "./core/base-card.js";
 
-// 4. Core cards — each registers itself into the dropdown on import
-import "./cards/neo-light-card.js";
+// 4. Core cards — each registers itself into the dropdown on import.
+//    Universal Button card replaces light/scene/quick-action (kept hidden
+//    below for backward compatibility with existing dashboards).
+import "./cards/neo-button-card.js";
 import "./cards/neo-sensor-card.js";
-import "./cards/neo-scene-card.js";
-import "./cards/neo-quick-action-card.js";
 import "./cards/neo-hero-card.js";
 import "./cards/neo-status-card.js";
+// Legacy (hidden, render-only for existing configs)
+import "./cards/neo-light-card.js";
+import "./cards/neo-scene-card.js";
+import "./cards/neo-quick-action-card.js";
 
 // 5. Module store (server-side persistence via Neo Dashboard Tools)
 import "./store/module-loader.js";
@@ -37,7 +41,7 @@ import "./wrapper/neo-card.js";
 import "./core/public-api.js";
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.23 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.24 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

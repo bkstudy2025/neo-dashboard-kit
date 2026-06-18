@@ -74,7 +74,10 @@ customElements.define("neo-light-card-editor", makeNeoEditor([
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Licht", description: "Licht mit Helligkeits-Slider", icon: "💡" }));
 
+// Legacy: durch die universelle neo-button-card (button_type: light) ersetzt.
+// hidden → nicht mehr im Dropdown, rendert aber bestehende Dashboards weiter.
 NeoDashboardRegistry.registerCard("neo-light-card", NeoLightCard, {
   name: "Neo Licht",
   description: "Licht mit Helligkeits-Slider",
+  hidden: true,
 });

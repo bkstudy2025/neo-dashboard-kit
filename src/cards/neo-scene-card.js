@@ -51,7 +51,10 @@ customElements.define("neo-scene-card-editor", makeNeoEditor([
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Szene", description: "Szene per Tap aktivieren", icon: "🎬" }));
 
+// Legacy: durch die universelle neo-button-card (button_type: scene) ersetzt.
+// hidden → nicht mehr im Dropdown, rendert aber bestehende Dashboards weiter.
 NeoDashboardRegistry.registerCard("neo-scene-card", NeoSceneCard, {
   name: "Neo Szene",
   description: "Szene per Tap aktivieren",
+  hidden: true,
 });

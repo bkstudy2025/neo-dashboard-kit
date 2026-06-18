@@ -61,7 +61,10 @@ customElements.define("neo-quick-action-card-editor", makeNeoEditor([
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Schnellaktion", description: "Schalter-Kachel mit Toggle", icon: "⚡" }));
 
+// Legacy: durch die universelle neo-button-card (button_type: switch) ersetzt.
+// hidden → nicht mehr im Dropdown, rendert aber bestehende Dashboards weiter.
 NeoDashboardRegistry.registerCard("neo-quick-action-card", NeoQuickActionCard, {
   name: "Neo Schnellaktion",
   description: "Schalter-Kachel mit Toggle",
+  hidden: true,
 });
