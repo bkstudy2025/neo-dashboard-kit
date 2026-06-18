@@ -2152,7 +2152,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.20 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.21 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
