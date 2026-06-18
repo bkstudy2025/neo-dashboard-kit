@@ -161,21 +161,39 @@ class NeoCardEditor extends HTMLElement {
         <div class="nmod-add" id="nmod-add"></div>
       </div>`;
 
+    // Aktive Module zuerst (in Layer-Reihenfolge = config.modules), dann inaktive.
+    const byId = new Map(available.map((m) => [m.id, m]));
+    const active = this._enabledList().map((e) => byId.get(e.id)).filter(Boolean);
+    const inactive = available.filter((m) => !this._isModEnabled(m.id));
+
     const list = this._modPanel.querySelector(".nmod-list");
-    if (list) available.forEach((mod) => this._renderModItem(list, mod));
+    if (list) {
+      active.forEach((mod, i) => this._renderModItem(list, mod, {
+        active: true, reorder: active.length > 1, canUp: i > 0, canDown: i < active.length - 1,
+      }));
+      inactive.forEach((mod) => this._renderModItem(list, mod, { active: false }));
+    }
     this._renderAddArea();
   }
 
-  _renderModItem(list, mod) {
-    const on = this._isModEnabled(mod.id);
+  _renderModItem(list, mod, opts) {
+    opts = opts || {};
+    const on = !!opts.active;
     const item = document.createElement("div");
     item.className = "nmod-item";
     const badge = mod.author ? `<span class="nmod-badge">${mod.author}</span>` : "";
     const rm = this._isInstalled(mod.id)
       ? `<button class="nmod-rm" title="Modul entfernen" data-rm="${mod.id}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
       : "";
+    const move = opts.reorder
+      ? `<div class="nmod-move">
+           <button data-up title="Layer nach oben" ${opts.canUp ? "" : "disabled"}>▲</button>
+           <button data-down title="Layer nach unten" ${opts.canDown ? "" : "disabled"}>▼</button>
+         </div>`
+      : "";
     item.innerHTML = `
       <div class="nmod-row">
+        ${move}
         <span class="nmod-ic">${mod.icon || "🧩"}</span>
         <div class="nmod-meta">
           <div class="nmod-name">${mod.name || mod.id}${badge}</div>
@@ -193,6 +211,8 @@ class NeoCardEditor extends HTMLElement {
     item.querySelector("input[type=checkbox]")
       .addEventListener("change", (e) => this._toggleModule(mod, e.target.checked));
     item.querySelector("[data-rm]")?.addEventListener("click", () => this._removeInstalled(mod.id));
+    item.querySelector("[data-up]")?.addEventListener("click", () => this._moveModule(mod.id, -1));
+    item.querySelector("[data-down]")?.addEventListener("click", () => this._moveModule(mod.id, 1));
 
     if (on && Array.isArray(mod.config) && mod.config.length) {
       const form = document.createElement("ha-form");
@@ -225,6 +245,18 @@ class NeoCardEditor extends HTMLElement {
     const list = this._enabledList().map((m) => (m.id === id ? { ...m, settings } : m));
     this._config = { ...this._config, modules: list };
     this._fire(); // kein Re-Render → Eingabefokus bleibt erhalten
+  }
+
+  // Layer-Reihenfolge per ▲▼ ändern (Reihenfolge = Anwendungsreihenfolge).
+  _moveModule(id, dir) {
+    const list = this._enabledList().slice();
+    const i = list.findIndex((m) => m.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    const tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    this._config = { ...this._config, modules: list };
+    this._renderModulesSection();
+    this._fire();
   }
 
   // ── Modul hinzufügen: Store (CDN-Index, kartengefiltert) + Code einfügen ──
@@ -413,6 +445,10 @@ class NeoCardEditor extends HTMLElement {
         .nmod-sw input:checked ~ .nmod-knob { transform:translateX(16px); }
         .nmod-rm { width:28px; height:28px; flex-shrink:0; border:none; cursor:pointer; border-radius:8px;
           display:flex; align-items:center; justify-content:center; background:transparent; color:var(--error-color,#F87171); }
+        .nmod-move { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
+        .nmod-move button { width:22px; height:15px; line-height:1; padding:0; border:none; cursor:pointer; border-radius:5px;
+          font-size:9px; color:var(--secondary-text-color); background:var(--neo-fill2,rgba(255,255,255,.06)); }
+        .nmod-move button:disabled { opacity:.3; cursor:default; }
         .nmod-cfg { margin-top:8px; }
         .nmod-add { border-top:1px solid var(--divider-color,rgba(255,255,255,.08)); margin-top:6px; padding-top:8px; }
         .nmod-addbtn { width:100%; padding:9px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600;
