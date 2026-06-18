@@ -1,7 +1,6 @@
-// Neo Dashboard Kit v0.2.0-beta.20
-// https://github.com/bkstudy2025/neo-dashboard-kit
-
-// ── Token fallback (one-time, lightweight) ───────────────────
+// Neo Dashboard Kit — built from src/ (npm run build). Do not edit directly.
+// Neo Dashboard Kit — Token-Fallback
+// ----------------------------------------------------------------
 // Stellt nur die --neo-*-Design-Tokens als Fallback bereit, falls das
 // offizielle Theme (themes/neo-dashboard.yaml) nicht aktiv ist. CSS-Custom-
 // Properties auf :root vererben sich in alle Shadow-Roots – kein Polling,
@@ -86,6 +85,52 @@
   document.head.appendChild(style);
 })();
 
+// Neo Dashboard Kit — Registry
+// Cards register here (core + community). They appear in the
+// neo-card dropdown automatically — only the single "neo-card"
+// wrapper is exposed in HA's native card picker.
+
+const _registry = new Map();
+let _tagSeq = 0;
+
+const NeoDashboardRegistry = {
+  // Each card is defined under an internal, versioned tag so UPDATES work
+  // live (a custom element can't be re-defined under the same name). The
+  // public `type` maps to the current concrete tag — neo-card uses that.
+  registerCard(type, cls, meta = {}) {
+    const tag = `${type}--neo${++_tagSeq}`;
+    try { customElements.define(tag, cls); } catch (e) { console.error("[Neo Dashboard]", e); return; }
+    _registry.set(type, { cls, meta, tag }); // overwrite on update
+    console.info(`[Neo Dashboard] Registered: ${type} (${tag})`);
+  },
+  getCard(type) {
+    return _registry.get(type)?.cls;
+  },
+  getTag(type) {
+    return _registry.get(type)?.tag;
+  },
+  getMeta(type) {
+    return _registry.get(type)?.meta || {};
+  },
+  // [{ type, name, description, icon, version, author }] for the dropdown/module list
+  list() {
+    return Array.from(_registry.entries()).map(([type, { meta }]) => ({
+      type,
+      name: meta.name || type,
+      description: meta.description || "",
+      icon: meta.icon || "✨",
+      version: meta.version || "",
+      author: meta.author || "",
+      hidden: !!meta.hidden,
+    }));
+  },
+};
+
+window.NeoDashboard = NeoDashboardRegistry;
+
+// Neo Dashboard Kit — Design-Tokens
+// Akzentfarben, geteiltes Karten-CSS (Shadow-DOM) und Editor-Optionen.
+
 const NEO_ACCENTS = {
   blue:   { c: "#7C9CFF", glow: "rgba(124,156,255,0.35)" },
   amber:  { c: "#FFB26B", glow: "rgba(255,178,107,0.35)" },
@@ -94,6 +139,7 @@ const NEO_ACCENTS = {
   rose:   { c: "#F87171", glow: "rgba(248,113,113,0.35)" },
 };
 
+// Geteiltes CSS, das jede Karte in ihren Shadow-Root spiegelt.
 const NEO_CSS = `
   :host {
     --neo-fill0: rgba(255,255,255,0.02);
@@ -137,47 +183,17 @@ const NEO_CSS = `
   :host([data-neo-layout="mobile"]) .neo-card { padding:12px !important; min-height:118px !important; }
 `;
 
-// ── Registry ──────────────────────────────────────────────────
-// Cards register here (core + community). They appear in the
-// neo-card dropdown automatically — only the single "neo-card"
-// wrapper is exposed in HA's native card picker.
-const _registry = new Map();
-let _tagSeq = 0;
-const NeoDashboardRegistry = {
-  // Each card is defined under an internal, versioned tag so UPDATES work
-  // live (a custom element can't be re-defined under the same name). The
-  // public `type` maps to the current concrete tag — neo-card uses that.
-  registerCard(type, cls, meta = {}) {
-    const tag = `${type}--neo${++_tagSeq}`;
-    try { customElements.define(tag, cls); } catch (e) { console.error("[Neo Dashboard]", e); return; }
-    _registry.set(type, { cls, meta, tag }); // overwrite on update
-    console.info(`[Neo Dashboard] Registered: ${type} (${tag})`);
-  },
-  getCard(type) {
-    return _registry.get(type)?.cls;
-  },
-  getTag(type) {
-    return _registry.get(type)?.tag;
-  },
-  getMeta(type) {
-    return _registry.get(type)?.meta || {};
-  },
-  // [{ type, name, description, icon, version, author }] for the dropdown/module list
-  list() {
-    return Array.from(_registry.entries()).map(([type, { meta }]) => ({
-      type,
-      name: meta.name || type,
-      description: meta.description || "",
-      icon: meta.icon || "✨",
-      version: meta.version || "",
-      author: meta.author || "",
-      hidden: !!meta.hidden,
-    }));
-  },
-};
-window.NeoDashboard = NeoDashboardRegistry;
+// Akzent-Dropdown, von allen Karten-Editoren geteilt.
+const NEO_ACCENT_OPTIONS = [
+  { value: "blue", label: "Blau" },
+  { value: "amber", label: "Amber" },
+  { value: "mint", label: "Mint" },
+  { value: "violet", label: "Violett" },
+  { value: "rose", label: "Rosé" },
+];
 
-// Links shown in the editor's "Info & Support" panel.
+// Neo Dashboard Kit — Externe Links
+// Im Editor unter "Info & Support" und vom Modul-Store genutzt.
 // TODO: trage hier deine echte Patreon-/PayPal-/Ko-fi-URL ein.
 const NEO_LINKS = {
   repo: "https://github.com/bkstudy2025/neo-dashboard-kit",
@@ -190,8 +206,9 @@ const NEO_LINKS = {
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
 };
 
-// ── Icon set (SF-symbol style SVG, ported from prototype) ──────
+// Neo Dashboard Kit — Icon-Set (SF-symbol style SVG, ported from prototype)
 // Returned as strings so cards can inline them via innerHTML.
+
 const NEO_ICON_FILLED = new Set(["play", "pause", "next", "prev", "more", "starF", "dot"]);
 const NEO_ICON_PATHS = {
   home: `<path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2v-9z"/>`,
@@ -299,6 +316,7 @@ const NEO_ICON_PATHS = {
   flag: `<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>`,
   router_wifi: `<rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 17h.01M11 17h.01M12 6a6 6 0 0 1 6 6M12 9a3 3 0 0 1 3 3"/>`,
 };
+
 function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 } = {}) {
   // Name mit Doppelpunkt → HA-Icon (mdi:…, hue:… oder andere registrierte Sets).
   // So lassen sich Standard-MDI und installierte Custom-Icon-Sets nutzen.
@@ -311,23 +329,47 @@ function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 } = {})
     : `fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"`;
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color};display:block" ${paint}>${inner}</svg>`;
 }
+
 // Icon dropdown options for editors
 const NEO_ICON_OPTIONS = Object.keys(NEO_ICON_PATHS).map((k) => ({ value: k, label: k }));
 
-// Accent dropdown options shared by all card editors
-const NEO_ACCENT_OPTIONS = [
-  { value: "blue", label: "Blau" },
-  { value: "amber", label: "Amber" },
-  { value: "mint", label: "Mint" },
-  { value: "violet", label: "Violett" },
-  { value: "rose", label: "Rosé" },
+// Neo Dashboard Kit — Responsives Layout (geteilt von ALLEN Karten)
+// Jede Karte erhält eine "layout"-Option: auto | mobile | tablet | desktop.
+// "auto" richtet sich nach der Bildschirmbreite (Mobil-/Tablet-Dashboard),
+// die festen Werte erzwingen ein Layout (z.B. Tablet-Ansicht am Desktop).
+
+const NEO_BP = { mobile: 640, tablet: 1024 }; // max. Breite je Stufe (px)
+
+const NEO_LAYOUT_OPTS = [
+  { value: "auto", label: "Automatisch (Bildschirmbreite)" },
+  { value: "mobile", label: "Mobil (kompakt)" },
+  { value: "tablet", label: "Tablet" },
+  { value: "desktop", label: "Desktop (groß)" },
 ];
 
-// ── Shared ha-form editor factory ─────────────────────────────
+function normalizeLayout(v) {
+  return ["mobile", "tablet", "desktop", "auto"].includes(v) ? v : "auto";
+}
+
+// Wiederverwendbares Editor-Feld für die Layout-Auswahl (alle Karten).
+const NEO_LAYOUT_FIELD = {
+  name: "layout", label: "Layout / Gerät",
+  selector: { select: { mode: "dropdown", options: NEO_LAYOUT_OPTS } },
+};
+
+function neoViewportLayout() {
+  const w = window.innerWidth || 1024;
+  if (w <= NEO_BP.mobile) return "mobile";
+  if (w <= NEO_BP.tablet) return "tablet";
+  return "desktop";
+}
+
+// Neo Dashboard Kit — Shared ha-form editor factory
 // HA's <ha-form> needs real JS properties (.schema/.data) — they
 // cannot be passed as stringified HTML attributes. This helper
 // creates the element and binds properties correctly.
 // meta: { name, description, icon } renders a Bubble-style header.
+
 function makeNeoEditor(schema, meta = {}) {
   return class extends HTMLElement {
     setConfig(config) {
@@ -393,11 +435,12 @@ function makeNeoEditor(schema, meta = {}) {
   };
 }
 
-// ── Reorder-Liste für Editoren (▲ ▼ 🗑) ───────────────────────
+// Neo Dashboard Kit — Reorder-Liste für Editoren (▲ ▼ 🗑)
 // Rendert eine sortierbare Liste in `container`. labelFn(item,i) liefert den
 // Text; onChange(newItems) wird mit der neuen Reihenfolge / nach Löschen
 // aufgerufen. Erneut aufrufbar (re-rendert). Up/Down statt Drag = robust,
 // auch auf Touch / im HA-Dialog.
+
 function neoRenderReorder(container, items, labelFn, onChange) {
   const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const move = (from, to) => {
@@ -436,32 +479,10 @@ function neoRenderReorder(container, items, labelFn, onChange) {
   container.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => del(+b.dataset.del)));
 }
 
-// ── Base Card ─────────────────────────────────────────────────
-// ── Responsives Layout (geteilt von ALLEN Karten) ─────────────
-// Jede Karte erhält eine "layout"-Option: auto | mobile | tablet | desktop.
-// "auto" richtet sich nach der Bildschirmbreite (Mobil-/Tablet-Dashboard),
-// die festen Werte erzwingen ein Layout (z.B. Tablet-Ansicht am Desktop).
-const NEO_BP = { mobile: 640, tablet: 1024 }; // max. Breite je Stufe (px)
-const NEO_LAYOUT_OPTS = [
-  { value: "auto", label: "Automatisch (Bildschirmbreite)" },
-  { value: "mobile", label: "Mobil (kompakt)" },
-  { value: "tablet", label: "Tablet" },
-  { value: "desktop", label: "Desktop (groß)" },
-];
-function normalizeLayout(v) {
-  return ["mobile", "tablet", "desktop", "auto"].includes(v) ? v : "auto";
-}
-// Wiederverwendbares Editor-Feld für die Layout-Auswahl (alle Karten).
-const NEO_LAYOUT_FIELD = {
-  name: "layout", label: "Layout / Gerät",
-  selector: { select: { mode: "dropdown", options: NEO_LAYOUT_OPTS } },
-};
-function neoViewportLayout() {
-  const w = window.innerWidth || 1024;
-  if (w <= NEO_BP.mobile) return "mobile";
-  if (w <= NEO_BP.tablet) return "tablet";
-  return "desktop";
-}
+// Neo Dashboard Kit — Base Card
+// All Neo cards (core + community) extend this class. Handles the shared
+// shadow-root styling, responsive layout and performance-gated re-renders.
+
 
 class NeoBaseCard extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: "open" }); }
@@ -542,7 +563,8 @@ class NeoBaseCard extends HTMLElement {
   _callService(domain, service, data = {}) { this._hass?.callService(domain, service, data); }
 }
 
-// ── Light Card ────────────────────────────────────────────────
+// Neo Dashboard Kit — Light Card
+
 class NeoLightCard extends NeoBaseCard {
   getCardSize() { return 3; }
   render() {
@@ -603,18 +625,21 @@ class NeoLightCard extends NeoBaseCard {
   static getConfigElement() { return document.createElement("neo-light-card-editor"); }
   static getStubConfig() { return { entity: "light.living_room", accent: "amber" }; }
 }
+
 customElements.define("neo-light-card-editor", makeNeoEditor([
   { name: "entity", label: "Licht-Entity", selector: { entity: { domain: "light" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Licht", description: "Licht mit Helligkeits-Slider", icon: "💡" }));
+
 NeoDashboardRegistry.registerCard("neo-light-card", NeoLightCard, {
   name: "Neo Licht",
   description: "Licht mit Helligkeits-Slider",
 });
 
-// ── Sensor Card ───────────────────────────────────────────────
+// Neo Dashboard Kit — Sensor Card
+
 class NeoSensorCard extends NeoBaseCard {
   getCardSize() { return 2; }
   render() {
@@ -645,6 +670,7 @@ class NeoSensorCard extends NeoBaseCard {
   static getConfigElement() { return document.createElement("neo-sensor-card-editor"); }
   static getStubConfig() { return { entity: "sensor.temperature", icon: "thermo", accent: "mint" }; }
 }
+
 customElements.define("neo-sensor-card-editor", makeNeoEditor([
   { name: "entity", label: "Sensor-Entity", selector: { entity: { domain: "sensor" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
@@ -653,12 +679,14 @@ customElements.define("neo-sensor-card-editor", makeNeoEditor([
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Sensor", description: "Sensorwert mit Icon", icon: "📊" }));
+
 NeoDashboardRegistry.registerCard("neo-sensor-card", NeoSensorCard, {
   name: "Neo Sensor",
   description: "Sensorwert mit Icon",
 });
 
-// ── Scene Card ────────────────────────────────────────────────
+// Neo Dashboard Kit — Scene Card
+
 class NeoSceneCard extends NeoBaseCard {
   getCardSize() { return 2; }
   render() {
@@ -694,6 +722,7 @@ class NeoSceneCard extends NeoBaseCard {
   static getConfigElement() { return document.createElement("neo-scene-card-editor"); }
   static getStubConfig() { return { entity: "scene.movie_night", name: "Movie Night", icon: "sparkle", accent: "violet" }; }
 }
+
 customElements.define("neo-scene-card-editor", makeNeoEditor([
   { name: "entity", label: "Szenen-Entity", selector: { entity: { domain: "scene" } } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
@@ -702,12 +731,14 @@ customElements.define("neo-scene-card-editor", makeNeoEditor([
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Szene", description: "Szene per Tap aktivieren", icon: "🎬" }));
+
 NeoDashboardRegistry.registerCard("neo-scene-card", NeoSceneCard, {
   name: "Neo Szene",
   description: "Szene per Tap aktivieren",
 });
 
-// ── Quick Action Card ─────────────────────────────────────────
+// Neo Dashboard Kit — Quick Action Card
+
 class NeoQuickActionCard extends NeoBaseCard {
   getCardSize() { return 2; }
   render() {
@@ -753,6 +784,7 @@ class NeoQuickActionCard extends NeoBaseCard {
   static getConfigElement() { return document.createElement("neo-quick-action-card-editor"); }
   static getStubConfig() { return { entity: "switch.living_room", icon: "plug", accent: "blue" }; }
 }
+
 customElements.define("neo-quick-action-card-editor", makeNeoEditor([
   { name: "entity", label: "Entity (switch, light, etc.)", selector: { entity: {} } },
   { name: "name", label: "Name (optional)", selector: { text: {} } },
@@ -761,12 +793,15 @@ customElements.define("neo-quick-action-card-editor", makeNeoEditor([
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Schnellaktion", description: "Schalter-Kachel mit Toggle", icon: "⚡" }));
+
 NeoDashboardRegistry.registerCard("neo-quick-action-card", NeoQuickActionCard, {
   name: "Neo Schnellaktion",
   description: "Schalter-Kachel mit Toggle",
 });
 
-// ── Hero Card ─────────────────────────────────────────────────
+// Neo Dashboard Kit — Hero Card
+// Begrüßung mit Name, Präsenz-Status, Müll-Badge und Action-Buttons.
+
 class NeoHeroCard extends NeoBaseCard {
   getCardSize() { return 1; }
 
@@ -884,7 +919,7 @@ class NeoHeroCard extends NeoBaseCard {
     if (c1 && c2) nameStyle += `background:linear-gradient(90deg,${c1},${c2});-webkit-background-clip:text;background-clip:text;color:transparent;`;
     else if (c1) nameStyle += `color:${c1};`;
     const nameHtml = `<span style="${nameStyle}">${name}</span>`;
-    const greetLine = name && name !== "Home" ? `${greeting}, ${nameHtml}` : greeting;
+    const greetLine = name !== "Home" ? `${greeting}, ${nameHtml}` : greeting;
 
     const waste = this._waste();
     const wcfg = this._config?.waste || {};
@@ -1013,6 +1048,7 @@ const _heroButtonSchema = (slot, title) => ({
     { name: "highlight", label: "Button bei Meldung einfärben", selector: { boolean: {} } },
   ],
 });
+
 customElements.define("neo-hero-card-editor", makeNeoEditor([
   { name: "name", label: "Name (leer = angemeldeter Benutzer)", selector: { text: {} } },
   { name: "greeting_text", label: "Begrüßungstext (leer = automatisch nach Uhrzeit)", selector: { text: {} } },
@@ -1038,12 +1074,14 @@ customElements.define("neo-hero-card-editor", makeNeoEditor([
   },
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Hero / Begrüßung", description: "Begrüßung mit Name und Action-Buttons", icon: "👋" }));
+
 NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
   name: "Neo Hero / Begrüßung",
   description: "Begrüßung mit Name und Action-Buttons",
 });
 
-// ── Status Card — horizontal carousel of status pills ─────────
+// Neo Dashboard Kit — Status Card (horizontal carousel of status pills)
+
 const NEO_STATUS_CSS = `
   .neo-pills-wrap { position:relative; }
   .neo-pills-scroll {
@@ -1173,6 +1211,7 @@ const NEO_PILL_FIELDS = [
   { name: "entity", label: "Entity (optional)", selector: { entity: {} } },
   { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
 ];
+
 class NeoStatusCardEditor extends HTMLElement {
   setConfig(config) {
     // Editor owns the model; ignore HA's config echoes after first build.
@@ -1247,8 +1286,8 @@ class NeoStatusCardEditor extends HTMLElement {
   }
 
   _renderReorder() {
-    if (!this._reorderEl || !window.NeoDashboard?.renderReorder) return;
-    window.NeoDashboard.renderReorder(this._reorderEl, this._pills,
+    if (!this._reorderEl) return;
+    neoRenderReorder(this._reorderEl, this._pills,
       (p, i) => p.name || p.entity || `Pill ${i + 1}`,
       (next) => {
         this._pills = next;
@@ -1285,15 +1324,18 @@ class NeoStatusCardEditor extends HTMLElement {
     }));
   }
 }
+
 customElements.define("neo-status-card-editor", NeoStatusCardEditor);
 NeoDashboardRegistry.registerCard("neo-status-card", NeoStatusCard, {
   name: "Neo Status-Leiste",
   description: "Scrollbare Status-Pills mit Pfeilen",
 });
 
+// Neo Dashboard Kit — Module loader
 // Loads pasted module code (script injection, deduped). Used by the
 // neo-card wrapper at runtime and by its editor's "Modul einfügen" area.
 // Returns { ok, cards } where cards = metadata of newly registered cards.
+
 function neoLoadModule(code) {
   if (!code || !code.trim()) return { ok: false, cards: [] };
   window.__neoModules = window.__neoModules || new Set();
@@ -1315,9 +1357,11 @@ function neoLoadModule(code) {
   }
 }
 
-// ── Module Store — talks to the "Neo Dashboard Tools" integration ──
-// Persists modules server-side (file-based) so the dashboard config stays
-// clean. Falls back gracefully (available=false) when not installed.
+// Neo Dashboard Kit — Module Store
+// Talks to the "Neo Dashboard Tools" integration. Persists modules
+// server-side (file-based) so the dashboard config stays clean.
+// Falls back gracefully (available=false) when not installed.
+
 const NeoStore = {
   _hass: null, _initStarted: false, _available: false, _loaded: false, _cache: [],
 
@@ -1366,128 +1410,13 @@ const NeoStore = {
     return res.content;
   },
 };
+
 window.NeoDashboard.store = NeoStore;
 
+// Neo Card Editor — type dropdown + selected card's own editor.
+// Also hosts the module manager (My Modules + Module Store) and the
+// "Info & Support" panel.
 
-// ══════════════════════════════════════════════════════════════
-// NEO CARD — single wrapper card with a type dropdown.
-// This is the ONLY card shown in HA's picker. The dropdown lists
-// every registered Neo card (core + community plugins).
-// ══════════════════════════════════════════════════════════════
-class NeoCard extends HTMLElement {
-  setConfig(config) {
-    this._config = config || {};
-
-    // Load any pasted modules first so their card types are available.
-    // Modules may be code strings (legacy) or { code, cards } objects.
-    if (Array.isArray(this._config.modules)) {
-      this._config.modules.forEach((m) => neoLoadModule(typeof m === "string" ? m : m?.code));
-    }
-
-    const type = this._config.card_type;
-
-    if (!type) {
-      this.innerHTML = `
-        <ha-card style="
-          padding:28px 24px;border-radius:24px;text-align:center;
-          display:flex;flex-direction:column;align-items:center;gap:10px;
-        ">
-          <div style="
-            width:52px;height:52px;border-radius:15px;
-            display:flex;align-items:center;justify-content:center;font-size:26px;
-            background:linear-gradient(160deg,#7C9CFF 0%,#7C9CFFcc 100%);
-            box-shadow:0 4px 14px rgba(124,156,255,0.35);
-          ">✨</div>
-          <div style="font-size:16px;font-weight:600;color:var(--primary-text-color);">Neo Card</div>
-          <div style="font-size:13px;color:var(--secondary-text-color);max-width:240px;line-height:1.4;">
-            Wähle im Editor unter <b>Kartentyp</b> die gewünschte Karte (Licht, Sensor, Szene …).
-          </div>
-        </ha-card>`;
-      this._child = null;
-      this._childType = null;
-      return;
-    }
-
-    if (!NeoDashboardRegistry.getCard(type)) {
-      // Module may still be loading from the backend store — retry once ready
-      this.innerHTML = `
-        <ha-card style="padding:24px;text-align:center;color:var(--secondary-text-color);">
-          ${NeoStore._loaded ? `Unbekannter Neo-Kartentyp: ${type}` : "Modul wird geladen …"}
-        </ha-card>`;
-      if (!NeoStore._loaded && !this._waitingModules) {
-        this._waitingModules = true;
-        window.addEventListener("neo-modules-loaded", () => {
-          this._waitingModules = false;
-          this.setConfig(this._config);
-        }, { once: true });
-      }
-      return;
-    }
-
-    // (Re)create child when the type OR its concrete tag changes. The tag
-    // changes when a module is updated → the new version goes live without
-    // a page reload.
-    const tag = NeoDashboardRegistry.getTag(type) || type;
-    if (!this._child || this._childTag !== tag) {
-      this.innerHTML = "";
-      this._child = document.createElement(tag);
-      this._childType = type;
-      this._childTag = tag;
-      this.appendChild(this._child);
-    }
-
-    const childConfig = { ...this._config };
-    delete childConfig.card_type;
-    this._child.setConfig(childConfig);
-    if (this._hass) this._child.hass = this._hass;
-  }
-
-  set hass(h) {
-    this._hass = h;
-    NeoStore.setHass(h);
-    if (this._child) this._child.hass = h;
-  }
-  get hass() { return this._hass; }
-
-  connectedCallback() {
-    // Live-Swap: wenn ein Modul (neu) geladen/aktualisiert wird, Kind mit
-    // aktuellem versioniertem Tag neu aufbauen – ohne Browser-Reload.
-    this._onModChange = () => { if (this._config) this.setConfig(this._config); };
-    window.addEventListener("neo-module-changed", this._onModChange);
-  }
-
-  disconnectedCallback() {
-    if (this._onModChange) window.removeEventListener("neo-module-changed", this._onModChange);
-  }
-
-  getCardSize() {
-    return this._child?.getCardSize?.() ?? 2;
-  }
-
-  static getConfigElement() {
-    return document.createElement("neo-card-editor");
-  }
-
-  static getStubConfig() {
-    // Empty stub → picker shows the placeholder, not a specific card
-    return {};
-  }
-}
-customElements.define("neo-card", NeoCard);
-
-// Expose ONLY neo-card in HA's native picker
-window.customCards = window.customCards || [];
-if (!window.customCards.find((c) => c.type === "neo-card")) {
-  window.customCards.push({
-    type: "neo-card",
-    name: "Neo Card",
-    description: "Glassmorphism-Karten — Typ im Editor wählen",
-    preview: true,
-    documentationURL: "https://github.com/bkstudy2025/neo-dashboard-kit",
-  });
-}
-
-// ── Neo Card Editor — type dropdown + selected card's own editor ─
 class NeoCardEditor extends HTMLElement {
   setConfig(config) {
     const incoming = { ...config };
@@ -2072,13 +2001,134 @@ class NeoCardEditor extends HTMLElement {
     }));
   }
 }
+
 customElements.define("neo-card-editor", NeoCardEditor);
+
+// ══════════════════════════════════════════════════════════════
+// NEO CARD — single wrapper card with a type dropdown.
+// This is the ONLY card shown in HA's picker. The dropdown lists
+// every registered Neo card (core + community plugins).
+// ══════════════════════════════════════════════════════════════
+
+class NeoCard extends HTMLElement {
+  setConfig(config) {
+    this._config = config || {};
+
+    // Load any pasted modules first so their card types are available.
+    // Modules may be code strings (legacy) or { code, cards } objects.
+    if (Array.isArray(this._config.modules)) {
+      this._config.modules.forEach((m) => neoLoadModule(typeof m === "string" ? m : m?.code));
+    }
+
+    const type = this._config.card_type;
+
+    if (!type) {
+      this.innerHTML = `
+        <ha-card style="
+          padding:28px 24px;border-radius:24px;text-align:center;
+          display:flex;flex-direction:column;align-items:center;gap:10px;
+        ">
+          <div style="
+            width:52px;height:52px;border-radius:15px;
+            display:flex;align-items:center;justify-content:center;font-size:26px;
+            background:linear-gradient(160deg,#7C9CFF 0%,#7C9CFFcc 100%);
+            box-shadow:0 4px 14px rgba(124,156,255,0.35);
+          ">✨</div>
+          <div style="font-size:16px;font-weight:600;color:var(--primary-text-color);">Neo Card</div>
+          <div style="font-size:13px;color:var(--secondary-text-color);max-width:240px;line-height:1.4;">
+            Wähle im Editor unter <b>Kartentyp</b> die gewünschte Karte (Licht, Sensor, Szene …).
+          </div>
+        </ha-card>`;
+      this._child = null;
+      this._childType = null;
+      return;
+    }
+
+    if (!NeoDashboardRegistry.getCard(type)) {
+      // Module may still be loading from the backend store — retry once ready
+      this.innerHTML = `
+        <ha-card style="padding:24px;text-align:center;color:var(--secondary-text-color);">
+          ${NeoStore._loaded ? `Unbekannter Neo-Kartentyp: ${type}` : "Modul wird geladen …"}
+        </ha-card>`;
+      if (!NeoStore._loaded && !this._waitingModules) {
+        this._waitingModules = true;
+        window.addEventListener("neo-modules-loaded", () => {
+          this._waitingModules = false;
+          this.setConfig(this._config);
+        }, { once: true });
+      }
+      return;
+    }
+
+    // (Re)create child when the type OR its concrete tag changes. The tag
+    // changes when a module is updated → the new version goes live without
+    // a page reload.
+    const tag = NeoDashboardRegistry.getTag(type) || type;
+    if (!this._child || this._childTag !== tag) {
+      this.innerHTML = "";
+      this._child = document.createElement(tag);
+      this._childType = type;
+      this._childTag = tag;
+      this.appendChild(this._child);
+    }
+
+    const childConfig = { ...this._config };
+    delete childConfig.card_type;
+    this._child.setConfig(childConfig);
+    if (this._hass) this._child.hass = this._hass;
+  }
+
+  set hass(h) {
+    this._hass = h;
+    NeoStore.setHass(h);
+    if (this._child) this._child.hass = h;
+  }
+  get hass() { return this._hass; }
+
+  connectedCallback() {
+    // Live-Swap: wenn ein Modul (neu) geladen/aktualisiert wird, Kind mit
+    // aktuellem versioniertem Tag neu aufbauen – ohne Browser-Reload.
+    this._onModChange = () => { if (this._config) this.setConfig(this._config); };
+    window.addEventListener("neo-module-changed", this._onModChange);
+  }
+
+  disconnectedCallback() {
+    if (this._onModChange) window.removeEventListener("neo-module-changed", this._onModChange);
+  }
+
+  getCardSize() {
+    return this._child?.getCardSize?.() ?? 2;
+  }
+
+  static getConfigElement() {
+    return document.createElement("neo-card-editor");
+  }
+
+  static getStubConfig() {
+    // Empty stub → picker shows the placeholder, not a specific card
+    return {};
+  }
+}
+customElements.define("neo-card", NeoCard);
+
+// Expose ONLY neo-card in HA's native picker
+window.customCards = window.customCards || [];
+if (!window.customCards.find((c) => c.type === "neo-card")) {
+  window.customCards.push({
+    type: "neo-card",
+    name: "Neo Card",
+    description: "Glassmorphism-Karten — Typ im Editor wählen",
+    preview: true,
+    documentationURL: "https://github.com/bkstudy2025/neo-dashboard-kit",
+  });
+}
 
 // ══════════════════════════════════════════════════════════════
 // PUBLIC API — external/premium cards (separate JS files) use this
 // to build cards that plug into the neo-card dropdown automatically.
 //   const { BaseCard, icon, accents, registerCard, makeEditor } = window.NeoDashboard;
 // ══════════════════════════════════════════════════════════════
+
 Object.assign(window.NeoDashboard, {
   BaseCard: NeoBaseCard,
   icon: neoIcon,
@@ -2095,6 +2145,11 @@ Object.assign(window.NeoDashboard, {
 });
 // Let external files that loaded first know the API is now available
 window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
+
+// Neo Dashboard Kit — Entry point
+// Imports run in dependency order; the bundled output is shipped as the
+// single root `neo-dashboard.js` that HACS loads (see rollup.config.js).
+
 
 console.info(
   "%c NEO DASHBOARD KIT %c v0.2.0-beta.20 ",
