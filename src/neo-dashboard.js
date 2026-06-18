@@ -28,6 +28,7 @@ import "./cards/neo-climate-card.js";
 import "./cards/neo-cover-card.js";
 import "./cards/neo-media-card.js";
 import "./cards/neo-camera-card.js";
+import "./cards/neo-fan-card.js";
 import "./cards/neo-header-card.js";
 import "./cards/neo-hero-card.js";
 import "./cards/neo-status-card.js";
@@ -51,7 +52,7 @@ import "./wrapper/neo-card.js";
 import "./core/public-api.js";
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.39 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.40 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
