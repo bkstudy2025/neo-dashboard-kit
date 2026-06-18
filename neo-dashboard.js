@@ -256,10 +256,11 @@ const NEO_LINKS = {
   // Module Store reads community modules from GitHub Discussions
   discussions: "https://api.github.com/repos/bkstudy2025/neo-dashboard-kit/discussions?per_page=100",
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
-  // Neo Module Store — kuratiertes Index-Repo, ausgeliefert über jsDelivr-CDN.
-  // index.json = [{ id, name, description, target, author, version, icon, image, url }]
-  modulesIndex: "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-modules@main/index.json",
-  modulesRepo: "https://github.com/bkstudy2025/neo-modules",
+  // Neo Module Store — Katalog liegt im Repo unter store/, ausgeliefert über
+  // jsDelivr-CDN. index.json = [{ id, name, description, target, author, version, icon, image, url }]
+  // (Lässt sich später ohne Code-Änderung in ein eigenes neo-modules-Repo auslagern.)
+  modulesIndex: "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/index.json",
+  modulesRepo: "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store",
 };
 
 // Neo Dashboard Kit — Branding
@@ -2541,7 +2542,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.29 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.30 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
