@@ -4,6 +4,7 @@
 
 import { NEO_CSS } from "./tokens.js";
 import { NEO_BP, normalizeLayout, neoViewportLayout } from "./layout.js";
+import { NeoModules } from "./modules.js";
 
 export class NeoBaseCard extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: "open" }); }
@@ -56,9 +57,39 @@ export class NeoBaseCard extends HTMLElement {
   getCardSize() { return 2; }
   render() { return `<div style="padding:16px">Override render()</div>`; }
 
+  // Aktivierte Module dieser Karte (aus config.modules), aufgelöst aus der Registry.
+  _enabledModules() {
+    const list = Array.isArray(this._config?.modules) ? this._config.modules : [];
+    return list
+      .map((m) => ({ mod: NeoModules.get(m.id), settings: m.settings || {} }))
+      .filter((x) => x.mod);
+  }
+
   _render() {
     this.setAttribute("data-neo-layout", this._layout());
-    this.shadowRoot.innerHTML = `<style>${NEO_CSS}</style>${this.render()}`;
+
+    const mods = this._enabledModules();
+    const ctx = (settings) => ({ hass: this._hass, config: this._config, settings, card: this });
+
+    // style()-Hooks: zusätzliches CSS in den Shadow-Root.
+    let extraCss = "";
+    for (const { mod, settings } of mods) {
+      if (typeof mod.style === "function") {
+        try { extraCss += "\n" + (mod.style(ctx(settings)) || ""); }
+        catch (e) { console.error("[Neo Module] style", mod.id, e); }
+      }
+    }
+
+    this.shadowRoot.innerHTML = `<style>${NEO_CSS}${extraCss}</style>${this.render()}`;
+
+    // decorate()-Hooks: DOM nach dem Render ergänzen (Layer in Reihenfolge).
+    for (const { mod, settings } of mods) {
+      if (typeof mod.decorate === "function") {
+        try { mod.decorate(this.shadowRoot, ctx(settings)); }
+        catch (e) { console.error("[Neo Module] decorate", mod.id, e); }
+      }
+    }
+
     this._bindEvents();
   }
   _bindEvents() {}

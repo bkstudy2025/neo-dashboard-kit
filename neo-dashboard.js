@@ -128,6 +128,56 @@ const NeoDashboardRegistry = {
 
 window.NeoDashboard = NeoDashboardRegistry;
 
+// Neo Dashboard Kit — Module registry ("Neo Module Layers")
+// Karten-gebundene Erweiterungs-Module. Ein Modul ist ein deklaratives
+// Manifest (mit Ziel-Karte + optionalem Config-Schema) plus optionale,
+// typisierte Hooks. So bleiben die Basis-Karten schlank und alle "großen"
+// Funktionen kommen aus Modulen (Premium/Community).
+//
+// Manifest-Form:
+//   {
+//     id: "neo-badge",            // eindeutig (Pflicht)
+//     name, description, icon,    // Anzeige
+//     target: "neo-button-card",  // Ziel-Karte, Liste, oder "*" für alle
+//     version, author,            // Meta (author = Badge: Premium/Community/…)
+//     config: [ ...ha-form-Schema... ],   // eigene Einstellungen (optional)
+//     // Hooks (alle optional):
+//     style(ctx)    -> CSS-String (in den Shadow-Root der Karte)
+//     decorate(root, ctx)         -> DOM nachträglich ergänzen
+//   }
+// ctx = { hass, config, settings, card }
+
+const _modules = new Map();
+
+function matches(target, cardType) {
+  if (!target || target === "*") return true;
+  if (Array.isArray(target)) return target.includes(cardType);
+  return target === cardType;
+}
+
+const NeoModules = {
+  register(manifest) {
+    if (!manifest || !manifest.id) {
+      console.warn("[Neo Module] Manifest ohne id ignoriert.");
+      return;
+    }
+    _modules.set(manifest.id, manifest); // overwrite on update
+    console.info(`[Neo Module] Registered: ${manifest.id} → ${manifest.target || "*"}`);
+  },
+  get(id) { return _modules.get(id); },
+  list() { return Array.from(_modules.values()); },
+  // Nur Module, deren target zur Karte passt (für den Editor + Anzeige).
+  forCard(cardType) {
+    return Array.from(_modules.values()).filter((m) => matches(m.target, cardType));
+  },
+};
+
+// Öffentliche API für externe/Premium-Module.
+if (window.NeoDashboard) {
+  window.NeoDashboard.modules = NeoModules;
+  window.NeoDashboard.registerModule = (m) => NeoModules.register(m);
+}
+
 // Neo Dashboard Kit — Design-Tokens
 // Akzentfarben, geteiltes Karten-CSS (Shadow-DOM) und Editor-Optionen.
 
@@ -201,8 +251,6 @@ const NEO_LINKS = {
   patreon: "https://www.patreon.com/",
   paypal: "https://www.paypal.com/",
   kofi: "https://ko-fi.com/",
-  // Module Store reads community modules from GitHub Discussions
-  discussions: "https://api.github.com/repos/bkstudy2025/neo-dashboard-kit/discussions?per_page=100",
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
 };
 
@@ -547,9 +595,39 @@ class NeoBaseCard extends HTMLElement {
   getCardSize() { return 2; }
   render() { return `<div style="padding:16px">Override render()</div>`; }
 
+  // Aktivierte Module dieser Karte (aus config.modules), aufgelöst aus der Registry.
+  _enabledModules() {
+    const list = Array.isArray(this._config?.modules) ? this._config.modules : [];
+    return list
+      .map((m) => ({ mod: NeoModules.get(m.id), settings: m.settings || {} }))
+      .filter((x) => x.mod);
+  }
+
   _render() {
     this.setAttribute("data-neo-layout", this._layout());
-    this.shadowRoot.innerHTML = `<style>${NEO_CSS}</style>${this.render()}`;
+
+    const mods = this._enabledModules();
+    const ctx = (settings) => ({ hass: this._hass, config: this._config, settings, card: this });
+
+    // style()-Hooks: zusätzliches CSS in den Shadow-Root.
+    let extraCss = "";
+    for (const { mod, settings } of mods) {
+      if (typeof mod.style === "function") {
+        try { extraCss += "\n" + (mod.style(ctx(settings)) || ""); }
+        catch (e) { console.error("[Neo Module] style", mod.id, e); }
+      }
+    }
+
+    this.shadowRoot.innerHTML = `<style>${NEO_CSS}${extraCss}</style>${this.render()}`;
+
+    // decorate()-Hooks: DOM nach dem Render ergänzen (Layer in Reihenfolge).
+    for (const { mod, settings } of mods) {
+      if (typeof mod.decorate === "function") {
+        try { mod.decorate(this.shadowRoot, ctx(settings)); }
+        catch (e) { console.error("[Neo Module] decorate", mod.id, e); }
+      }
+    }
+
     this._bindEvents();
   }
   _bindEvents() {}
@@ -1526,6 +1604,63 @@ NeoDashboardRegistry.registerCard("neo-quick-action-card", NeoQuickActionCard, {
   hidden: true,
 });
 
+// Neo Module — Status-Badge
+// Beispiel für ein DECORATE-Modul, gebunden an die Button-Karte.
+// Zeigt eine kleine Eck-Badge mit dem Status/Wert einer Entität.
+
+NeoModules.register({
+  id: "neo-badge",
+  name: "Status-Badge",
+  description: "Kleine Eck-Badge mit dem Wert/Status einer Entität.",
+  icon: "🏷️",
+  target: "neo-button-card",
+  version: "1.0.0",
+  author: "Neo",
+  config: [
+    { name: "badge_entity", label: "Entität", selector: { entity: {} } },
+    { name: "badge_color", label: "Farbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+  ],
+  decorate(root, ctx) {
+    const ent = ctx.settings?.badge_entity;
+    if (!ent) return;
+    const stObj = ctx.hass?.states?.[ent];
+    if (!stObj) return;
+    const acc = NEO_ACCENTS[ctx.settings?.badge_color] || NEO_ACCENTS.rose;
+    const card = root.getElementById("card") || root.querySelector(".neo-card");
+    if (!card) return;
+    const badge = document.createElement("div");
+    badge.textContent = stObj.state;
+    badge.style.cssText =
+      `position:absolute;top:12px;right:12px;z-index:3;min-width:18px;height:18px;padding:0 6px;` +
+      `display:flex;align-items:center;justify-content:center;border-radius:9px;` +
+      `font-size:11px;font-weight:700;color:#fff;background:${acc.c};box-shadow:0 2px 8px ${acc.glow};`;
+    card.appendChild(badge);
+  },
+});
+
+// Neo Module — Akzent-Glow
+// Beispiel für ein STYLE-Modul, gebunden an ALLE Karten (target "*").
+// Legt einen sanft pulsierenden Leuchtrahmen über die Karte.
+
+NeoModules.register({
+  id: "neo-glow",
+  name: "Akzent-Glow",
+  description: "Sanft pulsierender Leuchtrahmen in der Akzentfarbe.",
+  icon: "✨",
+  target: "*",
+  version: "1.0.0",
+  author: "Neo",
+  config: [],
+  style() {
+    return `
+      .neo-card { animation: neoGlowPulse 2.6s ease-in-out infinite; }
+      @keyframes neoGlowPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(124,156,255,0); }
+        50%      { box-shadow: 0 0 24px 2px rgba(124,156,255,.40); }
+      }`;
+  },
+});
+
 // Neo Dashboard Kit — Module loader
 // Loads pasted module code (script injection, deduped). Used by the
 // neo-card wrapper at runtime and by its editor's "Modul einfügen" area.
@@ -1608,9 +1743,8 @@ const NeoStore = {
 
 window.NeoDashboard.store = NeoStore;
 
-// Neo Card Editor — type dropdown + selected card's own editor.
-// Also hosts the module manager (My Modules + Module Store) and the
-// "Info & Support" panel.
+// Neo Card Editor — type picker + selected card's editor + card-scoped
+// module manager + always-visible "Info & Support" panel.
 
 class NeoCardEditor extends HTMLElement {
   setConfig(config) {
@@ -1625,9 +1759,9 @@ class NeoCardEditor extends HTMLElement {
   }
   set hass(h) {
     this._hass = h;
-    NeoStore.setHass(h);
     if (this._typeForm) this._typeForm.hass = h;
     if (this._sub) this._sub.hass = h;
+    (this._modForms || []).forEach((f) => { f.hass = h; });
   }
 
   _build() {
@@ -1651,7 +1785,7 @@ class NeoCardEditor extends HTMLElement {
     this._root.appendChild(typeSec);
     this._renderTypePicker();
 
-    // ── Geführter Hinweis (nur ohne Auswahl sichtbar) ──
+    // ── Geführter Hinweis / branded Landing (nur ohne Auswahl) ──
     this._hintBox = document.createElement("div");
     this._root.appendChild(this._hintBox);
 
@@ -1664,12 +1798,10 @@ class NeoCardEditor extends HTMLElement {
     this._settingsSec.appendChild(this._subContainer);
     this._root.appendChild(this._settingsSec);
 
-    // ── Module manager (collapsed). Uses a plain textarea (reliable, unlike the
-    // settings-dialog one) and stores to the server via Neo Dashboard Tools. ──
+    // ── Sektion 3: Karten-gebundene Module (style/decorate-Hooks) ──
     this._modPanel = document.createElement("div");
     this._root.appendChild(this._modPanel);
-    this._renderModPanel();
-    if (NeoStore.available()) NeoStore.list().then((m) => { this._mods = m; this._renderModPanel(); });
+    this._renderModulesSection();
 
     // ── Info & Support panel (immer sichtbar — kein Aufklappen) ──
     const info = document.createElement("div");
@@ -1705,7 +1837,7 @@ class NeoCardEditor extends HTMLElement {
     </style>`;
   }
 
-  // Zeigt/versteckt Hinweis + Einstellungs-Sektion je nach Auswahl (geführter Flow).
+  // Zeigt/versteckt Hinweis + Einstellungs- + Modul-Sektion je nach Auswahl.
   _updateGuidedState() {
     const hasType = !!this._config.card_type;
     if (this._settingsSec) this._settingsSec.style.display = hasType ? "" : "none";
@@ -1727,6 +1859,114 @@ class NeoCardEditor extends HTMLElement {
     }
   }
 
+  // ── Karten-gebundene Module ──────────────────────────────────
+  // Zeigt nur Module, deren target zur aktuellen Karte passt. Aktivierte
+  // Module + ihre Einstellungen landen in config.modules ([{ id, settings }])
+  // und werden von der Karte über die style/decorate-Hooks live angewandt.
+  _enabledList() { return Array.isArray(this._config.modules) ? this._config.modules : []; }
+  _isModEnabled(id) { return this._enabledList().some((m) => m.id === id); }
+  _modSettings(id) { return this._enabledList().find((m) => m.id === id)?.settings || {}; }
+
+  _renderModulesSection() {
+    if (!this._modPanel) return;
+    this._modForms = [];
+    const type = this._config.card_type;
+    const available = type ? NeoModules.forCard(type) : [];
+
+    this._modPanel.innerHTML = `
+      <style>
+        .nmod { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:14px; padding:12px 14px 6px;
+          background:var(--neo-fill1,rgba(255,255,255,.03)); }
+        .nmod-h { display:flex; align-items:center; gap:8px; margin:0 0 4px;
+          font-size:11.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+          color:var(--secondary-text-color,rgba(244,246,251,.72)); }
+        .nmod-empty { font-size:12.5px; color:var(--secondary-text-color); padding:6px 0 10px; line-height:1.45; }
+        .nmod-item { border-top:1px solid var(--divider-color,rgba(255,255,255,.08)); padding:11px 0; }
+        .nmod-item:first-of-type { border-top:0; }
+        .nmod-row { display:flex; align-items:flex-start; gap:10px; }
+        .nmod-ic { font-size:18px; line-height:1.2; flex-shrink:0; }
+        .nmod-meta { flex:1; min-width:0; }
+        .nmod-name { font-size:13.5px; font-weight:600; color:var(--primary-text-color); display:flex; align-items:center; gap:6px; }
+        .nmod-desc { font-size:12px; color:var(--secondary-text-color); margin-top:2px; line-height:1.4; }
+        .nmod-badge { font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px;
+          color:#7C9CFF; background:rgba(124,156,255,.14); border:1px solid rgba(124,156,255,.3); }
+        .nmod-sw { position:relative; width:38px; height:22px; flex-shrink:0; cursor:pointer; }
+        .nmod-sw input { position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; }
+        .nmod-track { position:absolute; inset:0; border-radius:11px; background:var(--neo-line5,rgba(255,255,255,.14)); transition:background .2s; }
+        .nmod-knob { position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:9px; background:#fff;
+          transition:transform .2s cubic-bezier(.2,.8,.2,1); box-shadow:0 1px 2px rgba(0,0,0,.3); }
+        .nmod-sw input:checked ~ .nmod-track { background:var(--primary-color,#7C9CFF); }
+        .nmod-sw input:checked ~ .nmod-knob { transform:translateX(16px); }
+        .nmod-cfg { margin-top:8px; }
+      </style>
+      <div class="nmod">
+        <div class="nmod-h"><span>🧩</span> Module${available.length ? ` (${available.length})` : ""}</div>
+        ${available.length ? `<div class="nmod-list"></div>`
+          : `<div class="nmod-empty">Für diese Karte sind aktuell keine Module verfügbar.
+             Module erweitern die Karte um zusätzliche Funktionen (Premium/Community).</div>`}
+      </div>`;
+
+    const list = this._modPanel.querySelector(".nmod-list");
+    if (!list) return;
+
+    available.forEach((mod) => {
+      const on = this._isModEnabled(mod.id);
+      const item = document.createElement("div");
+      item.className = "nmod-item";
+      const badge = mod.author ? `<span class="nmod-badge">${mod.author}</span>` : "";
+      item.innerHTML = `
+        <div class="nmod-row">
+          <span class="nmod-ic">${mod.icon || "🧩"}</span>
+          <div class="nmod-meta">
+            <div class="nmod-name">${mod.name || mod.id}${badge}</div>
+            ${mod.description ? `<div class="nmod-desc">${mod.description}</div>` : ""}
+          </div>
+          <label class="nmod-sw">
+            <input type="checkbox" ${on ? "checked" : ""} />
+            <span class="nmod-track"></span><span class="nmod-knob"></span>
+          </label>
+        </div>
+        <div class="nmod-cfg"></div>`;
+      list.appendChild(item);
+
+      item.querySelector("input[type=checkbox]")
+        .addEventListener("change", (e) => this._toggleModule(mod, e.target.checked));
+
+      // Auto-generierte Einstellungen (nur wenn aktiv und Schema vorhanden).
+      if (on && Array.isArray(mod.config) && mod.config.length) {
+        const form = document.createElement("ha-form");
+        form.schema = mod.config;
+        form.data = this._modSettings(mod.id);
+        if (this._hass) form.hass = this._hass;
+        form.computeLabel = (s) => s.label || s.name;
+        form.addEventListener("value-changed", (e) => {
+          e.stopPropagation();
+          this._setModuleSettings(mod.id, e.detail.value);
+        });
+        item.querySelector(".nmod-cfg").appendChild(form);
+        this._modForms.push(form);
+      }
+    });
+  }
+
+  _toggleModule(mod, on) {
+    const list = this._enabledList().slice();
+    const idx = list.findIndex((m) => m.id === mod.id);
+    if (on && idx < 0) list.push({ id: mod.id, settings: {} });
+    else if (!on && idx >= 0) list.splice(idx, 1);
+    this._config = { ...this._config };
+    if (list.length) this._config.modules = list;
+    else delete this._config.modules;
+    this._renderModulesSection();
+    this._fire();
+  }
+
+  _setModuleSettings(id, settings) {
+    const list = this._enabledList().map((m) => (m.id === id ? { ...m, settings } : m));
+    this._config = { ...this._config, modules: list };
+    this._fire(); // kein Re-Render → Eingabefokus bleibt erhalten
+  }
+
   _infoPanelHtml() {
     const v = (window.NeoDashboard && window.NeoDashboard.version) || "";
     const chip = (href, label, cls = "") =>
@@ -1734,10 +1974,6 @@ class NeoCardEditor extends HTMLElement {
     return `
       <style>
         .ni { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; overflow:hidden; }
-        .ni-h { display:flex; align-items:center; gap:8px; padding:11px 12px; cursor:pointer;
-          font-size:14px; font-weight:600; color:var(--primary-text-color); }
-        .ni-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
-        .ni.open .chev { transform:rotate(90deg); }
         .ni-head { padding:12px 12px 0; font-size:14px; font-weight:700; color:var(--primary-text-color); }
         .ni-c { padding:8px 12px 14px; }
         .ni-sec { font-size:13px; font-weight:700; color:var(--primary-text-color); margin:14px 0 8px; }
@@ -1758,7 +1994,7 @@ class NeoCardEditor extends HTMLElement {
           font-size:12.5px; color:var(--secondary-text-color); line-height:1.4; }
         .ni-ava { line-height:0; flex-shrink:0; filter:drop-shadow(0 3px 8px rgba(124,156,255,.35)); }
       </style>
-      <div class="ni open">
+      <div class="ni">
         <div class="ni-head">ℹ️ Info &amp; Support${v ? ` · v${v}` : ""}</div>
         <div class="ni-c">
           <div class="ni-sec">Ressourcen &amp; Hilfe</div>
@@ -1790,342 +2026,10 @@ class NeoCardEditor extends HTMLElement {
       </div>`;
   }
 
-  _modStyles() {
-    return `
-      <style>
-        .nm2 { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; overflow:hidden; }
-        .nm2-h { display:flex; align-items:center; gap:8px; padding:11px 12px; cursor:pointer;
-          font-size:14px; font-weight:600; color:var(--primary-text-color); }
-        .nm2-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
-        .nm2.open .chev { transform:rotate(90deg); }
-        .nm2-c { padding:0 12px 12px; }
-        .nm2-tabs { display:flex; gap:6px; margin:6px 0 10px; }
-        .nm2-tab { flex:1; text-align:center; padding:8px; border-radius:9px; cursor:pointer; font-size:13px; font-weight:600;
-          color:var(--secondary-text-color); background:transparent; border:1px solid var(--divider-color,rgba(255,255,255,.1)); }
-        .nm2-tab.active { color:#fff; background:var(--primary-color,#7C9CFF); border-color:transparent; }
-        .nm2 textarea { width:100%; box-sizing:border-box; min-height:110px; resize:vertical; margin-top:8px;
-          border-radius:10px; border:1px solid var(--divider-color,rgba(255,255,255,.15));
-          background:var(--secondary-background-color,#0d1020); color:var(--primary-text-color);
-          font-family:ui-monospace,monospace; font-size:12px; padding:10px; }
-        .nm2-input { width:100%; box-sizing:border-box; padding:9px 12px; border-radius:10px;
-          border:1px solid var(--divider-color,rgba(255,255,255,.15)); background:var(--secondary-background-color,#0d1020);
-          color:var(--primary-text-color); font-size:13px; }
-        .nm2-btn { margin-top:8px; padding:9px 14px; border-radius:10px; cursor:pointer; border:none;
-          background:var(--primary-color,#7C9CFF); color:#fff; font-size:14px; font-weight:600; }
-        .nm2-btn.sm { margin:0; padding:7px 12px; font-size:12.5px; }
-        .nm2-btn.ghost { background:transparent; border:1px solid var(--divider-color,rgba(255,255,255,.15)); color:var(--primary-text-color); }
-        .nm2-item { display:flex; align-items:center; gap:10px; padding:9px 10px; margin-top:8px; font-size:13px;
-          border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:10px; }
-        .nm2-item .t { flex:1; min-width:0; }
-        .nm2-item .nm { font-weight:600; color:var(--primary-text-color); }
-        .nm2-item .meta { font-size:11.5px; color:var(--secondary-text-color); margin-top:1px; }
-        .nm2-iconbtn { width:30px;height:30px;border:none;background:transparent;cursor:pointer; border-radius:8px;
-          display:flex;align-items:center;justify-content:center;flex-shrink:0; color:var(--secondary-text-color); }
-        .nm2-iconbtn.del { color:var(--error-color,#F87171); }
-        .nm2-msg { font-size:12px; margin-top:8px; min-height:14px; }
-        .nm2-note { font-size:11.5px; color:var(--secondary-text-color); margin:6px 0; line-height:1.4; }
-        .nm2-store { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; padding:10px; margin-top:8px; }
-        .nm2-store .img { width:100%; border-radius:8px; margin-top:8px; display:block; }
-        .nm2-store .desc { font-size:12.5px; color:var(--secondary-text-color); margin-top:6px; line-height:1.45; }
-        .nm2-store .row { display:flex; gap:8px; margin-top:10px; }
-        .nm2-badge { display:inline-block; padding:1px 7px; border-radius:999px; font-size:10.5px; font-weight:700;
-          background:rgba(94,220,184,.16); color:#5EDCB8; border:1px solid rgba(94,220,184,.4); margin-left:6px; }
-      </style>`;
-  }
-
-  async _renderModPanel() {
-    const backend = NeoStore.available();
-    const mods = this._mods || [];
-    const open = this._modOpen;
-    const tab = this._modTab || "mine";
-
-    const body = tab === "store" ? this._storeHtml() : this._mineHtml(backend, mods);
-
-    this._modPanel.innerHTML = `
-      ${this._modStyles()}
-      <div class="nm2 ${open ? "open" : ""}">
-        <div class="nm2-h" id="nm2-toggle">
-          <span class="chev">${neoIcon("chevR", { size: 16, color: "currentColor" })}</span>
-          <span>🧩 Module${mods.length ? ` (${mods.length})` : ""}</span>
-        </div>
-        <div class="nm2-c" id="nm2-body" style="display:${open ? "block" : "none"}">
-          <div class="nm2-tabs">
-            <div class="nm2-tab ${tab === "mine" ? "active" : ""}" data-tab="mine">Meine Module</div>
-            <div class="nm2-tab ${tab === "store" ? "active" : ""}" data-tab="store">Modul-Store</div>
-          </div>
-          ${body}
-          <div class="nm2-msg" id="nm2-msg"></div>
-        </div>
-      </div>`;
-
-    const q = (s) => this._modPanel.querySelector(s);
-    q("#nm2-toggle").addEventListener("click", () => {
-      this._modOpen = !this._modOpen;
-      q("#nm2-body").style.display = this._modOpen ? "block" : "none";
-      this._modPanel.querySelector(".nm2").classList.toggle("open", this._modOpen);
-    });
-    this._modPanel.querySelectorAll(".nm2-tab").forEach((t) => {
-      t.addEventListener("click", () => {
-        this._modTab = t.getAttribute("data-tab");
-        this._modOpen = true;
-        this._renderModPanel();
-        if (this._modTab === "store" && !this._storeItems) this._loadStore();
-      });
-    });
-
-    if (tab === "mine") this._wireMine(backend);
-    else this._wireStore(backend);
-  }
-
-  // ── My Modules tab ─────────────────────────────────────────
-  _mineHtml(backend, mods) {
-    if (!backend) {
-      return `<div class="nm2-note">⚠️ Integration <b>Neo Dashboard Tools</b> nicht gefunden — zum zentralen Speichern/Bearbeiten bitte installieren.</div>`;
-    }
-    const item = (m, i, meta) => {
-      if (this._editIdx === i) {
-        return `<div class="nm2-item" style="flex-direction:column;align-items:stretch;">
-          <div style="font-weight:600;color:var(--primary-text-color)">${meta.name} bearbeiten</div>
-          <textarea data-edit="${i}">${(m.code || "").replace(/</g, "&lt;")}</textarea>
-          <div class="nm2-store-row" style="display:flex;gap:8px;margin-top:8px;">
-            <button class="nm2-btn sm" data-save="${i}">Speichern</button>
-            <button class="nm2-btn sm ghost" data-cancel="1">Abbrechen</button>
-          </div>
-        </div>`;
-      }
-      return `<div class="nm2-item">
-        <span style="font-size:18px;">${meta.icon || "📦"}</span>
-        <div class="t"><div class="nm">${meta.name}</div>
-          <div class="meta">${meta.version ? "v" + meta.version : ""}</div></div>
-        <button class="nm2-iconbtn" data-editbtn="${i}" title="Bearbeiten">${neoIcon("settings", { size: 16, color: "currentColor" })}</button>
-        <button class="nm2-iconbtn del" data-del="${i}" title="Entfernen">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>
-      </div>`;
-    };
-    // Nach Kategorie gruppieren (Original-Index für Edit/Delete erhalten).
-    const cat = (a) => a === "Community" ? "Community" : a === "Premium" ? "Premium" : "Sonstige";
-    const groups = { Premium: [], Community: [], Sonstige: [] };
-    mods.forEach((m, i) => { const meta = this._parseMod(m.code); groups[cat(meta.author)].push({ m, i, meta }); });
-    const badge = { Premium: "🟡", Community: "🟢", Sonstige: "📦" };
-    const hdr = (g, n) => `<div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--secondary-text-color);margin:12px 0 2px;">${badge[g]} ${g} (${n})</div>`;
-    const list = ["Premium", "Community", "Sonstige"]
-      .filter((g) => groups[g].length)
-      .map((g) => hdr(g, groups[g].length) + groups[g].map(({ m, i, meta }) => item(m, i, meta)).join(""))
-      .join("");
-    return `
-      ${mods.length ? list : `<div class="nm2-note">Noch keine Module installiert. Über den <b>Modul-Store</b> oder per Code-Einfügen unten hinzufügen.</div>`}
-      <div style="margin-top:12px;font-size:12.5px;font-weight:700;color:var(--primary-text-color)">Code einfügen (z.B. Patreon)</div>
-      <textarea id="nm2-code" placeholder="Karten-Code hier einfügen …"></textarea>
-      <button class="nm2-btn" id="nm2-add">Hinzufügen / Aktualisieren</button>`;
-  }
-
-  _wireMine(backend) {
-    const q = (s) => this._modPanel.querySelector(s);
-    const msg = (txt, err) => {
-      const m = this._modPanel.querySelector("#nm2-msg");
-      if (m) { m.style.color = err ? "var(--error-color,#F87171)" : "var(--success-color,#5EDCB8)"; m.textContent = txt; }
-    };
-    q("#nm2-add")?.addEventListener("click", async () => {
-      const code = (q("#nm2-code").value || "").trim();
-      if (!code) return msg("Bitte Code einfügen.", true);
-      await this._saveModule(code, msg);
-    });
-    this._modPanel.querySelectorAll("[data-editbtn]").forEach((b) =>
-      b.addEventListener("click", () => { this._editIdx = +b.getAttribute("data-editbtn"); this._renderModPanel(); }));
-    this._modPanel.querySelectorAll("[data-cancel]").forEach((b) =>
-      b.addEventListener("click", () => { this._editIdx = null; this._renderModPanel(); }));
-    this._modPanel.querySelectorAll("[data-save]").forEach((b) =>
-      b.addEventListener("click", async () => {
-        const i = +b.getAttribute("data-save");
-        const ta = this._modPanel.querySelector(`textarea[data-edit="${i}"]`);
-        const code = (ta?.value || "").trim();
-        if (!code) return msg("Code ist leer.", true);
-        this._editIdx = null;
-        await this._saveModule(code, msg);
-      }));
-    this._modPanel.querySelectorAll("[data-del]").forEach((b) =>
-      b.addEventListener("click", async () => {
-        const i = +b.getAttribute("data-del");
-        const mod = (this._mods || [])[i];
-        if (backend && mod) { try { await NeoStore.delete(mod.name); } catch (e) {} this._mods = await NeoStore.list(); }
-        this._refreshTypeOptions();
-        this._renderModPanel();
-      }));
-  }
-
-  async _saveModule(code, msg) {
-    neoLoadModule(code);
-    const meta = this._parseMod(code);
-    const name = meta.type || `modul-${Date.now()}`;
-    if (NeoStore.available()) {
-      try { await NeoStore.save(name, code); } catch (e) { return msg("Speichern fehlgeschlagen.", true); }
-      this._mods = await NeoStore.list();
-    }
-    this._refreshTypeOptions();
-    this._renderModPanel();
-    msg(`✓ Gespeichert — ${meta.name}. Oben im Kartentyp wählen.`);
-  }
-
-  // ── Module Store tab (reads GitHub Discussions) ────────────
-  _extractJs(body) {
-    const m = body.match(/```(?:js|javascript)?\s*\n([\s\S]*?)```/i);
-    return m ? m[1].trim() : "";
-  }
-  _extractImage(body) {
-    const m = body.match(/!\[[^\]]*\]\(([^)]+)\)/) || body.match(/<img[^>]+src=["']([^"']+)["']/i);
-    return m ? m[1] : "";
-  }
-  _extractDesc(body) {
-    const text = body
-      .replace(/```[\s\S]*?```/g, "")
-      .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
-      .replace(/<img[^>]*>/gi, "")
-      .replace(/[#>*_`]/g, "")
-      .trim();
-    const line = text.split("\n").map((l) => l.trim()).filter(Boolean)[0] || "";
-    return line.length > 180 ? line.slice(0, 177) + "…" : line;
-  }
-  _parseCodeMeta(code) {
-    const m = code.match(/registerCard\(\s*["'`]([\w-]+)["'`]\s*,\s*[A-Za-z_$][\w$]*\s*,\s*\{([^{}]*)\}/);
-    const field = (body, key) => {
-      const f = body.match(new RegExp(key + "\\s*:\\s*[\"'`]([^\"'`]+)[\"'`]"));
-      return f ? f[1] : null;
-    };
-    if (m) return { type: m[1], name: field(m[2], "name") || m[1], version: field(m[2], "version"), author: field(m[2], "author"), icon: field(m[2], "icon") };
-    const t = (code.match(/registerCard\(\s*["'`]([\w-]+)["'`]/) || [])[1];
-    return { type: t, name: t, version: null, author: null, icon: null };
-  }
-
-  async _loadStore() {
-    try {
-      const txt = await NeoStore.fetch(NEO_LINKS.discussions);
-      const discussions = JSON.parse(txt);
-      const items = [];
-      for (const d of discussions) {
-        const code = this._extractJs(d.body || "");
-        if (!code || !/registerCard\(/.test(code)) continue; // only module posts
-        const meta = this._parseCodeMeta(code);
-        items.push({
-          name: meta.name || d.title,
-          type: meta.type,
-          author: meta.author || d.user?.login || "?",
-          version: meta.version,
-          icon: meta.icon,
-          description: this._extractDesc(d.body || ""),
-          image: this._extractImage(d.body || ""),
-          repo: d.html_url,
-          code,
-        });
-      }
-      this._storeItems = items;
-      this._storeError = null;
-    } catch (e) {
-      this._storeItems = [];
-      this._storeError = "Store konnte nicht geladen werden (GitHub-Limit?).";
-    }
-    this._renderModPanel();
-  }
-
-  _storeHtml() {
-    if (!NeoStore.available()) {
-      return `<div class="nm2-note">⚠️ Für den Store wird die Integration <b>Neo Dashboard Tools</b> benötigt.</div>`;
-    }
-    if (!this._storeItems) return `<div class="nm2-note">Lade Store …</div>`;
-    if (this._storeError) return `<div class="nm2-note">${this._storeError} <button class="nm2-btn sm ghost" id="nm2-reload">Erneut</button></div>`;
-    const installed = new Set((this._mods || []).map((m) => this._parseMod(m.code).type));
-    const ql = (this._storeQuery || "").toLowerCase();
-    const items = this._storeItems.filter((it) =>
-      !ql || (it.name + " " + (it.author || "") + " " + (it.description || "")).toLowerCase().includes(ql));
-    const cards = items.map((it, i) => {
-      const has = installed.has(it.type);
-      return `<div class="nm2-store">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:18px;">🧩</span>
-          <div style="flex:1;min-width:0;">
-            <div class="nm">${it.name}${has ? `<span class="nm2-badge">installiert</span>` : ""}</div>
-            <div class="meta" style="font-size:11.5px;color:var(--secondary-text-color)">von ${it.author || "?"}${it.version ? " · v" + it.version : ""}</div>
-          </div>
-        </div>
-        ${it.image ? `<img class="img" src="${it.image}" loading="lazy" />` : ""}
-        ${it.description ? `<div class="desc">${it.description}</div>` : ""}
-        <div class="row">
-          <button class="nm2-btn sm" data-install="${i}">${has ? "Aktualisieren" : "Installieren"}</button>
-          ${it.repo ? `<a class="nm2-btn sm ghost" href="${it.repo}" target="_blank" rel="noopener" style="text-decoration:none;">Mehr Infos</a>` : ""}
-        </div>
-      </div>`;
-    }).join("");
-    return `
-      <div class="nm2-note" style="border-left:3px solid var(--warning-color,#F0B429);">
-        ⚠️ Store-Module sind <b>ungeprüfter Community-Code</b> mit vollem Frontend-Zugriff.
-        Nur aus vertrauenswürdigen Quellen installieren.</div>
-      <input class="nm2-input" id="nm2-search" placeholder="🔍 Module suchen …" value="${this._storeQuery || ""}" />
-      ${items.length ? cards : `<div class="nm2-note">Noch keine Module veröffentlicht.</div>`}
-      <div class="nm2-note" style="margin-top:10px;">Eigenes Modul teilen? Einfach eine
-        <a href="${NEO_LINKS.newDiscussion}" target="_blank" rel="noopener">GitHub-Diskussion</a>
-        mit deinem Code in einem <code>\`\`\`js</code>-Block erstellen.</div>`;
-  }
-
-  _wireStore() {
-    const q = (s) => this._modPanel.querySelector(s);
-    q("#nm2-reload")?.addEventListener("click", () => { this._storeItems = null; this._storeError = null; this._loadStore(); });
-    const search = q("#nm2-search");
-    if (search) {
-      search.addEventListener("input", () => {
-        this._storeQuery = search.value;
-        const pos = search.selectionStart;
-        this._renderModPanel();
-        const s2 = this._modPanel.querySelector("#nm2-search");
-        if (s2) { s2.focus(); s2.setSelectionRange(pos, pos); }
-      });
-    }
-    this._modPanel.querySelectorAll("[data-install]").forEach((b) =>
-      b.addEventListener("click", async () => {
-        const it = this._storeItems[+b.getAttribute("data-install")];
-        const msg = (t, e) => { const m = q("#nm2-msg"); if (m) { m.style.color = e ? "var(--error-color,#F87171)" : "var(--success-color,#5EDCB8)"; m.textContent = t; } };
-        const src = it.url || it.discussion || "GitHub Discussions";
-        const ok = window.confirm(
-          `⚠ Sicherheitshinweis – „${it.name}" installieren?\n\n` +
-          `Dies ist ungeprüfter Community-Code und läuft mit vollem Zugriff ` +
-          `auf dein Home Assistant Frontend (Tokens, alle Entitäten).\n` +
-          `Installiere nur Module aus Quellen, denen du vertraust.\n\n` +
-          `Autor: ${it.author || "unbekannt"}\n` +
-          `Quelle: ${src}\n\n` +
-          `Fortfahren?`
-        );
-        if (!ok) return;
-        b.textContent = "Lädt …"; b.disabled = true;
-        try {
-          const code = it.code; // already loaded from the discussion
-          neoLoadModule(code);
-          await NeoStore.save(it.type || `modul-${Date.now()}`, code);
-          this._mods = await NeoStore.list();
-          this._refreshTypeOptions();
-          this._renderModPanel();
-          msg(`✓ ${it.name} installiert. Oben im Kartentyp wählen.`);
-        } catch (e) {
-          msg(`Installation fehlgeschlagen: ${e?.message || e}`, true);
-        }
-      }));
-  }
-
-  _parseMod(code) {
-    const t = (code.match(/registerCard\(\s*["'`]([\w-]+)["'`]/) || [])[1];
-    const meta = t ? NeoDashboardRegistry.getMeta(t) : {};
-    return {
-      type: t,
-      name: meta.name || t || "Modul",
-      version: meta.version,
-      author: meta.author,
-      icon: meta.icon,
-    };
-  }
-
   _syncTypeForm() {
     if (this._typeBox) this._renderTypePicker();
+    this._renderModulesSection();
     this._updateGuidedState();
-  }
-
-  _refreshTypeOptions() {
-    if (this._typeBox) this._renderTypePicker();
   }
 
   // Karten nach Kategorie gruppiert: Standard · Premium · Community.
@@ -2144,10 +2048,12 @@ class NeoCardEditor extends HTMLElement {
     if (!newType || newType === this._config.card_type) return;
     const cls = NeoDashboardRegistry.getCard(newType);
     const stub = cls?.getStubConfig?.() || {};
-    const mods = this._config.modules;
-    this._config = { type: this._config.type, card_type: newType, ...(mods ? { modules: mods } : {}), ...stub };
+    // Beim Typwechsel werden karten-gebundene Module zurückgesetzt (sie galten
+    // für den vorherigen Typ). Keine Voreinstellungen außer dem Stub.
+    this._config = { type: this._config.type, card_type: newType, ...stub };
     this._renderTypePicker();
     this._mountSub();
+    this._renderModulesSection();
     this._updateGuidedState();
     this._fire();
   }
@@ -2164,7 +2070,6 @@ class NeoCardEditor extends HTMLElement {
     const groups = this._typeGroups();
     this._typeBox.innerHTML = `
       <style>
-        .nt-h { font-size:12px; color:var(--secondary-text-color); margin:0 0 4px 4px; }
         .nt { position:relative; }
         .nt-btn { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; box-sizing:border-box;
           padding:11px 12px; border-radius:10px; cursor:pointer; font-size:14px;
@@ -2244,7 +2149,6 @@ class NeoCardEditor extends HTMLElement {
       o.addEventListener("click", () => { close(); this._selectType(o.getAttribute("data-v")); }));
   }
 
-
   _mountSub() {
     this._subContainer.innerHTML = "";
     this._sub = null;
@@ -2260,8 +2164,8 @@ class NeoCardEditor extends HTMLElement {
     if (this._hass) this._sub.hass = this._hass;
     this._sub.setConfig(subConfig);
     this._sub.addEventListener("config-changed", (e) => {
-      // Stop the sub-editor's event from bubbling to HA directly —
-      // otherwise HA would receive a config without type/card_type.
+      // Stop the sub-editor's event from bubbling to HA directly — otherwise HA
+      // would receive a config without type/card_type. Keep our modules.
       e.stopPropagation();
       const mods = this._config.modules;
       this._config = { type: this._config.type, card_type: type, ...(mods ? { modules: mods } : {}), ...e.detail.config };
@@ -2289,13 +2193,9 @@ customElements.define("neo-card-editor", NeoCardEditor);
 class NeoCard extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
-
-    // Load any pasted modules first so their card types are available.
-    // Modules may be code strings (legacy) or { code, cards } objects.
-    if (Array.isArray(this._config.modules)) {
-      this._config.modules.forEach((m) => neoLoadModule(typeof m === "string" ? m : m?.code));
-    }
-
+    // Hinweis: config.modules sind jetzt karten-gebundene Layer-Module
+    // ([{ id, settings }]) — sie werden von der Karte selbst (Basis-Karte)
+    // über die style/decorate-Hooks angewandt, nicht hier geladen.
     const type = this._config.card_type;
 
     if (!type) {
@@ -2423,7 +2323,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.26 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.27 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

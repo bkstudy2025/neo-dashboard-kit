@@ -4,7 +4,6 @@
 // every registered Neo card (core + community plugins).
 // ══════════════════════════════════════════════════════════════
 import { NeoDashboardRegistry } from "../core/registry.js";
-import { neoLoadModule } from "../store/module-loader.js";
 import { NeoStore } from "../store/module-store.js";
 import { neoLogo } from "../core/branding.js";
 import "./neo-card-editor.js";
@@ -12,13 +11,9 @@ import "./neo-card-editor.js";
 class NeoCard extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
-
-    // Load any pasted modules first so their card types are available.
-    // Modules may be code strings (legacy) or { code, cards } objects.
-    if (Array.isArray(this._config.modules)) {
-      this._config.modules.forEach((m) => neoLoadModule(typeof m === "string" ? m : m?.code));
-    }
-
+    // Hinweis: config.modules sind jetzt karten-gebundene Layer-Module
+    // ([{ id, settings }]) — sie werden von der Karte selbst (Basis-Karte)
+    // über die style/decorate-Hooks angewandt, nicht hier geladen.
     const type = this._config.card_type;
 
     if (!type) {
