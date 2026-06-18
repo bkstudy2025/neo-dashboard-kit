@@ -599,7 +599,9 @@ class NeoCardEditor extends HTMLElement {
   }
 
   _syncTypeForm() {
-    if (this._typeBox) this._renderTypePicker();
+    // Picker NICHT neu aufbauen, während das Dropdown offen ist — sonst klappt
+    // es beim nächsten setConfig-Echo (z. B. Live-Vorschau) sofort wieder zu.
+    if (this._typeBox && !this._typeMenuOpen) this._renderTypePicker();
     // Modul-Sektion nur neu aufbauen, wenn sich der Kartentyp geändert hat —
     // sonst verliert das Tippen in Modul-Einstellungen den Fokus, weil HA
     // setConfig nach jeder Änderung zurück-echot.
@@ -706,13 +708,14 @@ class NeoCardEditor extends HTMLElement {
       </div>`;
     const root = this._typeBox.querySelector(".nt");
     const panel = this._typeBox.querySelector("#nt-panel");
-    const close = () => { panel.style.display = "none"; root.classList.remove("open"); document.removeEventListener("click", onDoc, true); };
-    const onDoc = (e) => { if (!this._typeBox.contains(e.target)) close(); };
+    const close = () => { panel.style.display = "none"; root.classList.remove("open"); this._typeMenuOpen = false; document.removeEventListener("click", onDoc, true); };
+    // composedPath() statt contains(e.target): robust über Shadow-Grenzen (HA-Dialog).
+    const onDoc = (e) => { const path = e.composedPath ? e.composedPath() : []; if (!path.includes(this._typeBox)) close(); };
     const search = this._typeBox.querySelector("#nt-search");
     this._typeBox.querySelector("#nt-btn").addEventListener("click", (e) => {
       e.stopPropagation();
       if (panel.style.display !== "none") { close(); return; }
-      panel.style.display = "block"; root.classList.add("open");
+      panel.style.display = "block"; root.classList.add("open"); this._typeMenuOpen = true;
       document.addEventListener("click", onDoc, true);
       setTimeout(() => search?.focus(), 30);
     });
