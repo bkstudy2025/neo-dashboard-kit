@@ -67,28 +67,30 @@ im **visuellen Editor** über das Dropdown **„Kartentyp"** — oder per YAML m
 Beispiel (YAML):
 ```yaml
 type: custom:neo-card
-card_type: neo-button-card
+card_type: neo-control-card
 entity: light.wohnzimmer
-button_type: light
 accent: amber
 ```
 
-### Verfügbare Karten
+### Die drei Karten
 
-| Kartentyp | Beschreibung |
+Statt vieler Einzeltypen gibt es **drei** Karten — du wählst eine, suchst deine
+**Entität**, und die Karte passt sich automatisch an:
+
+| Kartentyp | Wofür |
 |---|---|
-| `neo-button-card` | Universelle Kachel: Schalter · Licht · Szene · Skript |
-| `neo-sensor-card` | Sensorwert als Glas-Kachel |
-| `neo-climate-card` | Thermostat mit − / + Temperatursteuerung |
-| `neo-cover-card` | Rollladen mit Auf / Stopp / Zu |
-| `neo-media-card` | Media-Player mit Transport (⏮ ⏯ ⏭) |
-| `neo-header-card` | Überschrift / Trenner (Layout-Baustein) |
+| `neo-control-card` — **Neo Steuerung** | Alles Schaltbare: Licht, Schalter, Ventilator, Rollladen, Klima, Media, Alarm, Schloss, Szene/Skript, Licht-Gruppe |
+| `neo-display-card` — **Neo Anzeige** | Sensorwert, Kamera, Status |
+| `neo-header-card` — **Neo Header** | Überschrift / Trenner (Layout) |
 
 → Details & gemeinsame Optionen: **[docs/cards/](docs/cards/README.md)**
 
 > **Prinzip:** Nur die wichtigste Steuerung liegt direkt auf der Karte — der
-> **volle** Funktionsumfang ist per **Tap → More-Info** erreichbar. So bleibt
-> jede Karte schlank.
+> **volle** Funktionsumfang ist per **Tap → More-Info** erreichbar. Alles
+> Weitere kommt über **Module**. So bleibt der Picker kurz und jede Karte schlank.
+
+> Ältere Typen (`neo-button-card`, `neo-climate-card`, …) bleiben als versteckte
+> Aliasse erhalten und rendern bestehende Dashboards weiter.
 
 ### Module & Store
 
