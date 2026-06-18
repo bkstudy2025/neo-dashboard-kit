@@ -1,45 +1,72 @@
-# Neo Dashboard — Modul-Store (über GitHub Discussions)
+# Neo Dashboard — Modul-Store
 
-Der **Modul-Store** im Editor liest Community-Module direkt aus den
-[GitHub Discussions](https://github.com/bkstudy2025/neo-dashboard-kit/discussions)
-dieses Repos. **Kein eigenes Repo, kein Pull Request nötig.**
+Der **Modul-Store** im Karten-Editor (Sektion „Module" → **➕ Modul hinzufügen**)
+liest seinen Katalog aus der `index.json` in diesem Ordner, ausgeliefert über das
+**jsDelivr-CDN**. Module werden **nach Karte gefiltert** angezeigt (`target`) und
+über die Integration **Neo Dashboard Tools** serverseitig installiert/gespeichert.
 
-## Eigenes Modul veröffentlichen
+```
+store/
+  index.json            ← Katalog (Liste aller Store-Module)
+  modules/<id>.js        ← die eigenständigen Modul-Dateien
+```
 
-1. Erstelle eine **neue Discussion** in diesem Repo.
-2. Schreib eine kurze Beschreibung und (optional) füge ein Vorschaubild ein.
-3. Füge deinen Karten-Code in einen **`js`-Codeblock** ein:
+> Hinweis: Der Katalog kann später ohne Code-Änderung in ein eigenes
+> `neo-modules`-Repo ausgelagert werden — es ist nur die Konstante
+> `modulesIndex` in `src/core/links.js`.
 
-  <pre>
-  ```js
-  (function(){
-    function init(){
-      const NEO = window.NeoDashboard;
-      if(!NEO || !NEO.BaseCard){ window.addEventListener("neo-dashboard-ready", init, {once:true}); return; }
-      const { BaseCard, icon, accents, registerCard, makeEditor } = NEO;
-      class MeineKarte extends BaseCard { /* ... */ }
-      registerCard("neo-meine-karte", MeineKarte, {
-        name: "Meine Karte", icon: "⭐", version: "1.0.0", author: "DeinName"
-      });
-    }
-    init();
-  })();
-  ```
-  </pre>
+## Aufbau eines Moduls
 
-Das war's. Der Store erkennt automatisch jede Discussion, deren Codeblock
-`registerCard(...)` enthält, und zeigt sie mit Name, Autor, Version, Beschreibung
-und Vorschaubild an. Nutzer installieren sie mit einem Klick.
+Ein Store-Modul ist eine **eigenständige** `.js`-Datei (keine Imports aus dem
+Bundle). Es registriert sich über die öffentliche API:
 
-## Felder (aus dem Code/Post)
+```js
+window.NeoDashboard.registerModule({
+  id: "neo-mein-modul",          // eindeutig
+  name: "Mein Modul",
+  description: "Was es macht.",
+  icon: "✨",
+  target: "neo-button-card",     // Ziel-Karte · Liste · "*" für alle
+  version: "1.0.0",
+  author: "Community",           // Badge: Community / Premium / …
+  config: [                       // optionales ha-form-Schema (Einstellungen)
+    { name: "entity", label: "Entität", selector: { entity: {} } },
+  ],
+  // Hooks (alle optional) — ctx = { hass, config, settings, card }
+  style(ctx)    { return "/* CSS in den Shadow-Root der Karte */"; },
+  decorate(root, ctx) { /* DOM nach dem Render ergänzen */ },
+});
+```
 
-| Anzeige | Quelle |
+Siehe [`modules/neo-state-glow.js`](./modules/neo-state-glow.js) als vollständiges
+Beispiel.
+
+## Eigenes Modul einreichen
+
+1. Lege `store/modules/<deine-id>.js` an (Muster wie oben, eigenständig).
+2. Ergänze einen Eintrag in `store/index.json`:
+
+   ```json
+   {
+     "id": "neo-mein-modul",
+     "name": "Mein Modul",
+     "description": "Kurzbeschreibung.",
+     "target": "neo-button-card",
+     "author": "Community",
+     "version": "1.0.0",
+     "icon": "✨",
+     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-mein-modul.js"
+   }
+   ```
+3. Pull Request öffnen.
+
+| index.json-Feld | Zweck |
 |---|---|
-| Name | `registerCard`-Meta `name` (sonst Discussion-Titel) |
-| Autor | Meta `author` (sonst GitHub-Benutzer) |
-| Version | Meta `version` |
-| Beschreibung | erste Textzeile der Discussion |
-| Bild | erstes Bild im Post |
+| `id` | eindeutige ID (muss der `id` im Modul entsprechen) |
+| `target` | für welche Karte(n) das Modul angeboten wird |
+| `url` | jsDelivr-URL zur eigenständigen Modul-Datei |
+| `icon`, `image`, `description`, `author`, `version` | Anzeige im Store |
 
-> Premium-Karten (Patreon) gehören **nicht** öffentlich in die Discussions —
-> die werden direkt über „Module → Code einfügen" im Karten-Editor eingespielt.
+> jsDelivr cacht `@main` einige Stunden — neue/aktualisierte Module erscheinen
+> daher mit etwas Verzögerung. Premium-Module (Patreon) gehören **nicht** in den
+> öffentlichen Katalog; sie werden über „Module → Code einfügen" eingespielt.

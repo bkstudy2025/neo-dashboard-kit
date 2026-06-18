@@ -253,13 +253,15 @@ const NEO_LINKS = {
   patreon: "https://www.patreon.com/",
   paypal: "https://www.paypal.com/",
   kofi: "https://ko-fi.com/",
-  // Module Store reads community modules from GitHub Discussions
-  discussions: "https://api.github.com/repos/bkstudy2025/neo-dashboard-kit/discussions?per_page=100",
+  // Community-Diskussionen (Support/Showcase/Wünsche). Hinweis: der Store
+  // installiert NICHT aus Discussions, sondern aus dem kuratierten Katalog
+  // (modulesIndex) — geprüft, versioniert, CDN-ausgeliefert.
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
-  // Neo Module Store — kuratiertes Index-Repo, ausgeliefert über jsDelivr-CDN.
-  // index.json = [{ id, name, description, target, author, version, icon, image, url }]
-  modulesIndex: "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-modules@main/index.json",
-  modulesRepo: "https://github.com/bkstudy2025/neo-modules",
+  // Neo Module Store — Katalog liegt im Repo unter store/, ausgeliefert über
+  // jsDelivr-CDN. index.json = [{ id, name, description, target, author, version, icon, image, url }]
+  // (Lässt sich später ohne Code-Änderung in ein eigenes neo-modules-Repo auslagern.)
+  modulesIndex: "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/index.json",
+  modulesRepo: "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store",
 };
 
 // Neo Dashboard Kit — Branding
@@ -611,11 +613,46 @@ class NeoBaseCard extends HTMLElement {
       .filter((x) => x.mod);
   }
 
+  // Kontext für Modul-Hooks: Live-Daten + bequeme Aktions-Helfer, damit
+  // Module nicht in interne Methoden greifen müssen.
+  _modCtx(settings, extra) {
+    return {
+      hass: this._hass,
+      config: this._config,
+      settings: settings || {},
+      card: this,
+      callService: (d, s, data) => this._callService(d, s, data),
+      navigate: (path) => {
+        history.pushState(null, "", path);
+        window.dispatchEvent(new CustomEvent("location-changed"));
+      },
+      moreInfo: (entityId) =>
+        this.dispatchEvent(new CustomEvent("hass-more-info", {
+          detail: { entityId }, bubbles: true, composed: true,
+        })),
+      ...extra,
+    };
+  }
+
+  // tapAction-Hook: erstes aktives Modul mit tapAction übernimmt den Tap
+  // (überschreibt die Standard-Aktion der Karte). Gibt true zurück, wenn
+  // ein Modul den Tap behandelt hat.
+  _moduleTap(event) {
+    for (const { mod, settings } of this._enabledModules()) {
+      if (typeof mod.tapAction === "function") {
+        try { mod.tapAction(this._modCtx(settings, { event })); }
+        catch (e) { console.error("[Neo Module] tapAction", mod.id, e); }
+        return true;
+      }
+    }
+    return false;
+  }
+
   _render() {
     this.setAttribute("data-neo-layout", this._layout());
 
     const mods = this._enabledModules();
-    const ctx = (settings) => ({ hass: this._hass, config: this._config, settings, card: this });
+    const ctx = (settings) => this._modCtx(settings);
 
     // style()-Hooks: zusätzliches CSS in den Shadow-Root.
     let extraCss = "";
@@ -769,8 +806,11 @@ class NeoButtonCard extends NeoBaseCard {
       this._callService("light", "turn_on", { entity_id: id, brightness: Math.round((+e.target.value / 100) * 255) });
     });
 
-    // Tap auf die Karte
-    this.shadowRoot.getElementById("card")?.addEventListener("click", () => this._onTap(id, on, type));
+    // Tap auf die Karte — ein Modul-tapAction-Hook hat Vorrang (Override).
+    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
+      if (this._moduleTap(e)) return;
+      this._onTap(id, on, type);
+    });
   }
 
   _toggleEntity(id, on, type) {
@@ -1907,21 +1947,39 @@ class NeoCardEditor extends HTMLElement {
         <div class="nmod-add" id="nmod-add"></div>
       </div>`;
 
+    // Aktive Module zuerst (in Layer-Reihenfolge = config.modules), dann inaktive.
+    const byId = new Map(available.map((m) => [m.id, m]));
+    const active = this._enabledList().map((e) => byId.get(e.id)).filter(Boolean);
+    const inactive = available.filter((m) => !this._isModEnabled(m.id));
+
     const list = this._modPanel.querySelector(".nmod-list");
-    if (list) available.forEach((mod) => this._renderModItem(list, mod));
+    if (list) {
+      active.forEach((mod, i) => this._renderModItem(list, mod, {
+        active: true, reorder: active.length > 1, canUp: i > 0, canDown: i < active.length - 1,
+      }));
+      inactive.forEach((mod) => this._renderModItem(list, mod, { active: false }));
+    }
     this._renderAddArea();
   }
 
-  _renderModItem(list, mod) {
-    const on = this._isModEnabled(mod.id);
+  _renderModItem(list, mod, opts) {
+    opts = opts || {};
+    const on = !!opts.active;
     const item = document.createElement("div");
     item.className = "nmod-item";
     const badge = mod.author ? `<span class="nmod-badge">${mod.author}</span>` : "";
     const rm = this._isInstalled(mod.id)
       ? `<button class="nmod-rm" title="Modul entfernen" data-rm="${mod.id}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
       : "";
+    const move = opts.reorder
+      ? `<div class="nmod-move">
+           <button data-up title="Layer nach oben" ${opts.canUp ? "" : "disabled"}>▲</button>
+           <button data-down title="Layer nach unten" ${opts.canDown ? "" : "disabled"}>▼</button>
+         </div>`
+      : "";
     item.innerHTML = `
       <div class="nmod-row">
+        ${move}
         <span class="nmod-ic">${mod.icon || "🧩"}</span>
         <div class="nmod-meta">
           <div class="nmod-name">${mod.name || mod.id}${badge}</div>
@@ -1939,6 +1997,8 @@ class NeoCardEditor extends HTMLElement {
     item.querySelector("input[type=checkbox]")
       .addEventListener("change", (e) => this._toggleModule(mod, e.target.checked));
     item.querySelector("[data-rm]")?.addEventListener("click", () => this._removeInstalled(mod.id));
+    item.querySelector("[data-up]")?.addEventListener("click", () => this._moveModule(mod.id, -1));
+    item.querySelector("[data-down]")?.addEventListener("click", () => this._moveModule(mod.id, 1));
 
     if (on && Array.isArray(mod.config) && mod.config.length) {
       const form = document.createElement("ha-form");
@@ -1971,6 +2031,18 @@ class NeoCardEditor extends HTMLElement {
     const list = this._enabledList().map((m) => (m.id === id ? { ...m, settings } : m));
     this._config = { ...this._config, modules: list };
     this._fire(); // kein Re-Render → Eingabefokus bleibt erhalten
+  }
+
+  // Layer-Reihenfolge per ▲▼ ändern (Reihenfolge = Anwendungsreihenfolge).
+  _moveModule(id, dir) {
+    const list = this._enabledList().slice();
+    const i = list.findIndex((m) => m.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    const tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    this._config = { ...this._config, modules: list };
+    this._renderModulesSection();
+    this._fire();
   }
 
   // ── Modul hinzufügen: Store (CDN-Index, kartengefiltert) + Code einfügen ──
@@ -2159,6 +2231,10 @@ class NeoCardEditor extends HTMLElement {
         .nmod-sw input:checked ~ .nmod-knob { transform:translateX(16px); }
         .nmod-rm { width:28px; height:28px; flex-shrink:0; border:none; cursor:pointer; border-radius:8px;
           display:flex; align-items:center; justify-content:center; background:transparent; color:var(--error-color,#F87171); }
+        .nmod-move { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
+        .nmod-move button { width:22px; height:15px; line-height:1; padding:0; border:none; cursor:pointer; border-radius:5px;
+          font-size:9px; color:var(--secondary-text-color); background:var(--neo-fill2,rgba(255,255,255,.06)); }
+        .nmod-move button:disabled { opacity:.3; cursor:default; }
         .nmod-cfg { margin-top:8px; }
         .nmod-add { border-top:1px solid var(--divider-color,rgba(255,255,255,.08)); margin-top:6px; padding-top:8px; }
         .nmod-addbtn { width:100%; padding:9px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600;
@@ -2541,7 +2617,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.29 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.31 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

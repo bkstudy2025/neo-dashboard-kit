@@ -1,0 +1,12 @@
+[
+  {
+    "id": "neo-state-glow",
+    "name": "Status-Glow",
+    "description": "Färbt den Kartenrand je nach Zustand einer Entität (an/aus).",
+    "target": "*",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "🟢",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-state-glow.js"
+  }
+]

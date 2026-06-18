@@ -7,11 +7,13 @@ export const NEO_LINKS = {
   patreon: "https://www.patreon.com/",
   paypal: "https://www.paypal.com/",
   kofi: "https://ko-fi.com/",
-  // Module Store reads community modules from GitHub Discussions
-  discussions: "https://api.github.com/repos/bkstudy2025/neo-dashboard-kit/discussions?per_page=100",
+  // Community-Diskussionen (Support/Showcase/Wünsche). Hinweis: der Store
+  // installiert NICHT aus Discussions, sondern aus dem kuratierten Katalog
+  // (modulesIndex) — geprüft, versioniert, CDN-ausgeliefert.
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
-  // Neo Module Store — kuratiertes Index-Repo, ausgeliefert über jsDelivr-CDN.
-  // index.json = [{ id, name, description, target, author, version, icon, image, url }]
-  modulesIndex: "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-modules@main/index.json",
-  modulesRepo: "https://github.com/bkstudy2025/neo-modules",
+  // Neo Module Store — Katalog liegt im Repo unter store/, ausgeliefert über
+  // jsDelivr-CDN. index.json = [{ id, name, description, target, author, version, icon, image, url }]
+  // (Lässt sich später ohne Code-Änderung in ein eigenes neo-modules-Repo auslagern.)
+  modulesIndex: "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/index.json",
+  modulesRepo: "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store",
 };

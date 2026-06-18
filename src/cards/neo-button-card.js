@@ -112,8 +112,11 @@ class NeoButtonCard extends NeoBaseCard {
       this._callService("light", "turn_on", { entity_id: id, brightness: Math.round((+e.target.value / 100) * 255) });
     });
 
-    // Tap auf die Karte
-    this.shadowRoot.getElementById("card")?.addEventListener("click", () => this._onTap(id, on, type));
+    // Tap auf die Karte — ein Modul-tapAction-Hook hat Vorrang (Override).
+    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
+      if (this._moduleTap(e)) return;
+      this._onTap(id, on, type);
+    });
   }
 
   _toggleEntity(id, on, type) {

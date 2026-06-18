@@ -65,11 +65,46 @@ export class NeoBaseCard extends HTMLElement {
       .filter((x) => x.mod);
   }
 
+  // Kontext für Modul-Hooks: Live-Daten + bequeme Aktions-Helfer, damit
+  // Module nicht in interne Methoden greifen müssen.
+  _modCtx(settings, extra) {
+    return {
+      hass: this._hass,
+      config: this._config,
+      settings: settings || {},
+      card: this,
+      callService: (d, s, data) => this._callService(d, s, data),
+      navigate: (path) => {
+        history.pushState(null, "", path);
+        window.dispatchEvent(new CustomEvent("location-changed"));
+      },
+      moreInfo: (entityId) =>
+        this.dispatchEvent(new CustomEvent("hass-more-info", {
+          detail: { entityId }, bubbles: true, composed: true,
+        })),
+      ...extra,
+    };
+  }
+
+  // tapAction-Hook: erstes aktives Modul mit tapAction übernimmt den Tap
+  // (überschreibt die Standard-Aktion der Karte). Gibt true zurück, wenn
+  // ein Modul den Tap behandelt hat.
+  _moduleTap(event) {
+    for (const { mod, settings } of this._enabledModules()) {
+      if (typeof mod.tapAction === "function") {
+        try { mod.tapAction(this._modCtx(settings, { event })); }
+        catch (e) { console.error("[Neo Module] tapAction", mod.id, e); }
+        return true;
+      }
+    }
+    return false;
+  }
+
   _render() {
     this.setAttribute("data-neo-layout", this._layout());
 
     const mods = this._enabledModules();
-    const ctx = (settings) => ({ hass: this._hass, config: this._config, settings, card: this });
+    const ctx = (settings) => this._modCtx(settings);
 
     // style()-Hooks: zusätzliches CSS in den Shadow-Root.
     let extraCss = "";
