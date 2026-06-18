@@ -4,6 +4,10 @@ name: Release
 # package.json auf main ändert. Enthält die Version "beta"/"alpha"/"rc",
 # wird das Release als Pre-Release (Beta) markiert. Idempotent: existiert
 # das Release zur aktuellen Version bereits, passiert nichts.
+#
+# Aufräumen: Beim Veröffentlichen einer Beta werden alle ANDEREN
+# Pre-Releases (alte Betas) samt Tag gelöscht, damit die Release-Liste
+# sauber bleibt. Stabile Releases werden nie angefasst.
 on:
   push:
     branches: [main]
@@ -22,22 +26,39 @@ jobs:
         id: v
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
-      - name: Release erstellen, falls noch nicht vorhanden
+      - name: Release erstellen + alte Betas aufräumen
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="v${{ steps.v.outputs.version }}"
+
           if gh release view "$version" >/dev/null 2>&1; then
             echo "Release $version existiert bereits — übersprungen."
             exit 0
           fi
+
           prerelease=""
           case "$version" in
             *beta*|*alpha*|*rc*) prerelease="--prerelease" ;;
           esac
+
           gh release create "$version" \
             --target "${{ github.sha }}" \
             --title "$version" \
             --notes "Automatisch erstelltes Release für $version." \
             $prerelease
           echo "Release $version erstellt${prerelease:+ (Pre-Release)}."
+
+          # Nur bei einer Beta: alle anderen Pre-Releases (alte Betas) samt
+          # Tag entfernen. Stabile Releases (isPrerelease=false) bleiben.
+          if [ -n "$prerelease" ]; then
+            gh release list --limit 100 --json tagName,isPrerelease \
+              --jq '.[] | select(.isPrerelease) | .tagName' \
+            | while read -r tag; do
+                [ -z "$tag" ] && continue
+                if [ "$tag" != "$version" ]; then
+                  echo "Lösche alte Beta: $tag"
+                  gh release delete "$tag" --yes --cleanup-tag
+                fi
+              done
+          fi
