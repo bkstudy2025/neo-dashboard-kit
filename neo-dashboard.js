@@ -585,11 +585,10 @@ const BUTTON_TYPES = [
   { value: "light",  label: "Licht (mit Helligkeit)" },
   { value: "scene",  label: "Szene" },
   { value: "script", label: "Skript" },
-  { value: "action", label: "Aktion (Tap-Aktion)" },
 ];
 
 // Standard-Icon je Button-Typ, falls keins gesetzt ist.
-const DEFAULT_ICON = { switch: "toggle", light: "lightbulb", scene: "sparkle", script: "robot", action: "sparkle" };
+const DEFAULT_ICON = { switch: "toggle", light: "lightbulb", scene: "sparkle", script: "robot" };
 
 class NeoButtonCard extends NeoBaseCard {
   getCardSize() { return this._type() === "light" ? 3 : 2; }
@@ -598,11 +597,8 @@ class NeoButtonCard extends NeoBaseCard {
 
   // "Aktiv" = farbiger Glow-Zustand der Kachel.
   _isActive(s) {
-    switch (this._type()) {
-      case "scene":  return false;            // Szenen sind zustandslos
-      case "action": return false;
-      default:       return s?.state === "on"; // switch/light/script
-    }
+    if (this._type() === "scene") return false; // Szenen sind zustandslos
+    return s?.state === "on";                    // switch/light/script
   }
 
   _hasToggle() { return this._type() === "switch" || this._type() === "light"; }
@@ -698,56 +694,23 @@ class NeoButtonCard extends NeoBaseCard {
   }
 
   _onTap(id, on, type) {
-    // Konfigurierte Tap-Aktion hat Vorrang (außer "default").
-    const ta = this._config?.tap_action;
-    if (ta && ta.action && ta.action !== "default") return this._runAction(ta);
-
-    // Standardverhalten je Typ
+    // Schlankes Standardverhalten je Typ (erweiterte Tap-Aktionen → Premium-Modul).
     switch (type) {
-      case "scene":  this._callService("scene", "turn_on", { entity_id: id }); break;
-      case "script": id?.startsWith("script.")
-        ? this._callService("script", "turn_on", { entity_id: id })
-        : this._callService("script", id, {}); break;
-      case "action": /* nur konfigurierte Aktion */ break;
-      default:       this._toggleEntity(id, on, type); // switch/light
-    }
-  }
-
-  // Führt eine HA-ui_action aus (navigate/url/more-info/toggle/perform-action/none).
-  _runAction(a) {
-    const entity = a.entity || this._config?.entity;
-    switch (a.action) {
-      case "navigate":
-        if (a.navigation_path) {
-          history.pushState(null, "", a.navigation_path);
-          window.dispatchEvent(new CustomEvent("location-changed"));
-        }
+      case "scene":
+        this._callService("scene", "turn_on", { entity_id: id });
         break;
-      case "url":
-        if (a.url_path) window.open(a.url_path, "_blank");
+      case "script":
+        id?.startsWith("script.")
+          ? this._callService("script", "turn_on", { entity_id: id })
+          : this._callService("script", id, {});
         break;
-      case "toggle":
-        if (entity) this._callService(entity.split(".")[0], "toggle", { entity_id: entity });
-        break;
-      case "more-info":
-        if (entity) this.dispatchEvent(new CustomEvent("hass-more-info", {
-          bubbles: true, composed: true, detail: { entityId: entity },
-        }));
-        break;
-      case "perform-action":
-      case "call-service": {
-        const svc = a.perform_action || a.service;
-        if (svc && svc.includes(".")) {
-          const [domain, service] = svc.split(".");
-          this._callService(domain, service, { ...(a.data || a.service_data || {}), ...(a.target || {}) });
-        }
-        break;
-      }
+      default:
+        this._toggleEntity(id, on, type); // switch/light
     }
   }
 
   static getConfigElement() { return document.createElement("neo-button-card-editor"); }
-  static getStubConfig() { return { button_type: "switch", entity: "switch.living_room", accent: "blue" }; }
+  static getStubConfig() { return {}; } // keine Voreinstellungen — leerer Start
 }
 
 // ── Editor: geteiltes Sektions-Muster (Allgemein/Darstellung/Aktion) ──
@@ -770,14 +733,7 @@ customElements.define("neo-button-card-editor", makeNeoEditor([
       NEO_LAYOUT_FIELD,
     ],
   },
-  {
-    type: "expandable", title: "Aktion", icon: "mdi:gesture-tap",
-    schema: [
-      { name: "tap_action", label: "Tap-Aktion", selector: { ui_action: {} } },
-      { name: "hold_action", label: "Hold-Aktion", selector: { ui_action: {} } },
-    ],
-  },
-], { name: "Neo Button", description: "Schalter · Licht · Szene · Skript · Aktion", icon: "⚡" }));
+], { name: "Neo Button", description: "Schalter · Licht · Szene · Skript", icon: "⚡" }));
 
 NeoDashboardRegistry.registerCard("neo-button-card", NeoButtonCard, {
   name: "Neo Button",
@@ -1715,16 +1671,10 @@ class NeoCardEditor extends HTMLElement {
     this._renderModPanel();
     if (NeoStore.available()) NeoStore.list().then((m) => { this._mods = m; this._renderModPanel(); });
 
-    // ── Info & Support panel (collapsed) ──
+    // ── Info & Support panel (immer sichtbar — kein Aufklappen) ──
     const info = document.createElement("div");
     info.innerHTML = this._infoPanelHtml();
     this._root.appendChild(info);
-    info.querySelector("#ni-toggle")?.addEventListener("click", () => {
-      const body = info.querySelector("#ni-body");
-      const open = body.style.display !== "none";
-      body.style.display = open ? "none" : "block";
-      info.querySelector(".ni").classList.toggle("open", !open);
-    });
 
     this._mountSub();
     this._updateGuidedState();
@@ -1788,7 +1738,8 @@ class NeoCardEditor extends HTMLElement {
           font-size:14px; font-weight:600; color:var(--primary-text-color); }
         .ni-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
         .ni.open .chev { transform:rotate(90deg); }
-        .ni-c { padding:4px 12px 14px; }
+        .ni-head { padding:12px 12px 0; font-size:14px; font-weight:700; color:var(--primary-text-color); }
+        .ni-c { padding:8px 12px 14px; }
         .ni-sec { font-size:13px; font-weight:700; color:var(--primary-text-color); margin:14px 0 8px; }
         .ni-txt { font-size:12.5px; color:var(--secondary-text-color); line-height:1.55; }
         .ni-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
@@ -1807,12 +1758,9 @@ class NeoCardEditor extends HTMLElement {
           font-size:12.5px; color:var(--secondary-text-color); line-height:1.4; }
         .ni-ava { line-height:0; flex-shrink:0; filter:drop-shadow(0 3px 8px rgba(124,156,255,.35)); }
       </style>
-      <div class="ni ${this._infoOpen ? "open" : ""}">
-        <div class="ni-h" id="ni-toggle">
-          <span class="chev">${neoIcon("chevR", { size: 16, color: "currentColor" })}</span>
-          <span>ℹ️ Info &amp; Support${v ? ` · v${v}` : ""}</span>
-        </div>
-        <div class="ni-c" id="ni-body" style="display:${this._infoOpen ? "block" : "none"}">
+      <div class="ni open">
+        <div class="ni-head">ℹ️ Info &amp; Support${v ? ` · v${v}` : ""}</div>
+        <div class="ni-c">
           <div class="ni-sec">Ressourcen &amp; Hilfe</div>
           <div class="ni-txt">Fragen oder ein Problem? Die Doku und die Community helfen weiter.</div>
           <div class="ni-chips">
@@ -2475,7 +2423,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.25 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.26 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
