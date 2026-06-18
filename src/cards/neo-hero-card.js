@@ -280,7 +280,10 @@ customElements.define("neo-hero-card-editor", makeNeoEditor([
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Hero / Begrüßung", description: "Begrüßung mit Name und Action-Buttons", icon: "👋" }));
 
+// Vorübergehend versteckt, bis auf das neue Sektions-Muster umgebaut.
+// hidden → nicht im Picker, rendert aber bestehende Dashboards weiter.
 NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
   name: "Neo Hero / Begrüßung",
   description: "Begrüßung mit Name und Action-Buttons",
+  hidden: true,
 });

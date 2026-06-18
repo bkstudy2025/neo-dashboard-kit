@@ -826,9 +826,12 @@ customElements.define("neo-sensor-card-editor", makeNeoEditor([
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Sensor", description: "Sensorwert mit Icon", icon: "📊" }));
 
+// Vorübergehend versteckt, bis auf das neue Sektions-Muster umgebaut.
+// hidden → nicht im Picker, rendert aber bestehende Dashboards weiter.
 NeoDashboardRegistry.registerCard("neo-sensor-card", NeoSensorCard, {
   name: "Neo Sensor",
   description: "Sensorwert mit Icon",
+  hidden: true,
 });
 
 // Neo Dashboard Kit — Hero Card
@@ -1107,9 +1110,12 @@ customElements.define("neo-hero-card-editor", makeNeoEditor([
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Hero / Begrüßung", description: "Begrüßung mit Name und Action-Buttons", icon: "👋" }));
 
+// Vorübergehend versteckt, bis auf das neue Sektions-Muster umgebaut.
+// hidden → nicht im Picker, rendert aber bestehende Dashboards weiter.
 NeoDashboardRegistry.registerCard("neo-hero-card", NeoHeroCard, {
   name: "Neo Hero / Begrüßung",
   description: "Begrüßung mit Name und Action-Buttons",
+  hidden: true,
 });
 
 // Neo Dashboard Kit — Status Card (horizontal carousel of status pills)
@@ -1358,9 +1364,12 @@ class NeoStatusCardEditor extends HTMLElement {
 }
 
 customElements.define("neo-status-card-editor", NeoStatusCardEditor);
+// Vorübergehend versteckt, bis auf das neue Sektions-Muster umgebaut.
+// hidden → nicht im Picker, rendert aber bestehende Dashboards weiter.
 NeoDashboardRegistry.registerCard("neo-status-card", NeoStatusCard, {
   name: "Neo Status-Leiste",
   description: "Scrollbare Status-Pills mit Pfeilen",
+  hidden: true,
 });
 
 // Neo Dashboard Kit — Light Card
@@ -1750,6 +1759,8 @@ class NeoCardEditor extends HTMLElement {
   _updateGuidedState() {
     const hasType = !!this._config.card_type;
     if (this._settingsSec) this._settingsSec.style.display = hasType ? "" : "none";
+    // Module-Sektion erst zeigen, wenn ein Typ gewählt ist (ruhige Startseite).
+    if (this._modPanel) this._modPanel.style.display = hasType ? "" : "none";
     if (this._hintBox) {
       const ver = (window.NeoDashboard && window.NeoDashboard.version) || "";
       this._hintBox.innerHTML = hasType ? "" : `
@@ -1768,8 +1779,8 @@ class NeoCardEditor extends HTMLElement {
 
   _infoPanelHtml() {
     const v = (window.NeoDashboard && window.NeoDashboard.version) || "";
-    const chip = (href, label) =>
-      `<a href="${href}" target="_blank" rel="noopener" class="ni-chip">${label}</a>`;
+    const chip = (href, label, cls = "") =>
+      `<a href="${href}" target="_blank" rel="noopener" class="ni-chip ${cls}">${label}</a>`;
     return `
       <style>
         .ni { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; overflow:hidden; }
@@ -1778,14 +1789,23 @@ class NeoCardEditor extends HTMLElement {
         .ni-h .chev { transition:transform .2s; display:flex; color:var(--secondary-text-color); }
         .ni.open .chev { transform:rotate(90deg); }
         .ni-c { padding:4px 12px 14px; }
-        .ni-sec { font-size:13px; font-weight:700; color:var(--primary-text-color); margin:12px 0 8px; }
-        .ni-txt { font-size:12.5px; color:var(--secondary-text-color); line-height:1.5; }
-        .ni-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+        .ni-sec { font-size:13px; font-weight:700; color:var(--primary-text-color); margin:14px 0 8px; }
+        .ni-txt { font-size:12.5px; color:var(--secondary-text-color); line-height:1.55; }
+        .ni-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
         .ni-chip { display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px;
           font-size:12.5px; font-weight:600; text-decoration:none; cursor:pointer;
           color:var(--primary-text-color); background:var(--neo-fill2,rgba(255,255,255,.06));
           border:1px solid var(--neo-line2,rgba(255,255,255,.1)); }
         .ni-chip.heart { color:#FFB26B; border-color:rgba(255,178,107,.4); background:rgba(255,178,107,.12); }
+        .ni-chip.coffee { color:#F6C177; border-color:rgba(246,193,119,.4); background:rgba(246,193,119,.12); }
+        .ni-support { margin-top:16px; padding:14px; border-radius:14px;
+          background:linear-gradient(160deg, rgba(124,156,255,.12) 0%, var(--neo-fill1,rgba(255,255,255,.03)) 70%);
+          border:1px solid rgba(124,156,255,.22); }
+        .ni-support .ni-sec { margin-top:0; }
+        .ni-thanks { display:flex; align-items:center; gap:11px; margin-top:14px; padding-top:12px;
+          border-top:1px solid var(--divider-color,rgba(255,255,255,.1));
+          font-size:12.5px; color:var(--secondary-text-color); line-height:1.4; }
+        .ni-ava { line-height:0; flex-shrink:0; filter:drop-shadow(0 3px 8px rgba(124,156,255,.35)); }
       </style>
       <div class="ni ${this._infoOpen ? "open" : ""}">
         <div class="ni-h" id="ni-toggle">
@@ -1794,16 +1814,29 @@ class NeoCardEditor extends HTMLElement {
         </div>
         <div class="ni-c" id="ni-body" style="display:${this._infoOpen ? "block" : "none"}">
           <div class="ni-sec">Ressourcen &amp; Hilfe</div>
+          <div class="ni-txt">Fragen oder ein Problem? Die Doku und die Community helfen weiter.</div>
           <div class="ni-chips">
             ${chip(NEO_LINKS.repo, "📖 Dokumentation")}
             ${chip(NEO_LINKS.issues, "🐞 Probleme melden")}
+            ${chip(NEO_LINKS.newDiscussion, "💬 Diskussionen")}
           </div>
-          <div class="ni-sec">Projekt unterstützen ❤️</div>
-          <div class="ni-txt">Wenn dir Neo Dashboard Kit gefällt, freue ich mich über deine Unterstützung — so kann ich weiter neue Karten &amp; Module entwickeln.</div>
-          <div class="ni-chips">
-            ${chip(NEO_LINKS.patreon, "Patreon")}
-            ${chip(NEO_LINKS.paypal, "PayPal")}
-            ${chip(NEO_LINKS.kofi, "☕ Kaffee")}
+
+          <div class="ni-support">
+            <div class="ni-sec">❤️ Projekt unterstützen</div>
+            <div class="ni-txt">
+              Hi! Ich entwickle <b>Neo Dashboard Kit</b> in meiner Freizeit und stecke viel Herzblut hinein.
+              Wenn es dir gefällt, ist jede Unterstützung eine riesige Motivation — so kann ich weiter neue
+              Karten &amp; Module bauen. Auf Patreon gibt es außerdem exklusive Premium-Karten und Vorlagen.
+            </div>
+            <div class="ni-chips">
+              ${chip(NEO_LINKS.kofi, "☕ Kaffee spendieren", "coffee")}
+              ${chip(NEO_LINKS.paypal, "💳 PayPal")}
+              ${chip(NEO_LINKS.patreon, "♥ Patreon", "heart")}
+            </div>
+            <div class="ni-thanks">
+              <span class="ni-ava">${neoLogo({ size: 34, radius: 10 })}</span>
+              <span>Danke, dass du Teil dieser Community bist! 🎉</span>
+            </div>
           </div>
         </div>
       </div>`;
@@ -2442,7 +2475,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.24 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.25 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

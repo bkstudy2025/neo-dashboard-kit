@@ -46,7 +46,10 @@ customElements.define("neo-sensor-card-editor", makeNeoEditor([
   NEO_LAYOUT_FIELD,
 ], { name: "Neo Sensor", description: "Sensorwert mit Icon", icon: "📊" }));
 
+// Vorübergehend versteckt, bis auf das neue Sektions-Muster umgebaut.
+// hidden → nicht im Picker, rendert aber bestehende Dashboards weiter.
 NeoDashboardRegistry.registerCard("neo-sensor-card", NeoSensorCard, {
   name: "Neo Sensor",
   description: "Sensorwert mit Icon",
+  hidden: true,
 });

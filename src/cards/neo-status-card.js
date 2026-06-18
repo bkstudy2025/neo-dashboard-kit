@@ -250,7 +250,10 @@ class NeoStatusCardEditor extends HTMLElement {
 }
 
 customElements.define("neo-status-card-editor", NeoStatusCardEditor);
+// Vorübergehend versteckt, bis auf das neue Sektions-Muster umgebaut.
+// hidden → nicht im Picker, rendert aber bestehende Dashboards weiter.
 NeoDashboardRegistry.registerCard("neo-status-card", NeoStatusCard, {
   name: "Neo Status-Leiste",
   description: "Scrollbare Status-Pills mit Pfeilen",
+  hidden: true,
 });
