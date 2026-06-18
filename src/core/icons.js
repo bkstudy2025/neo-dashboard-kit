@@ -1,0 +1,126 @@
+// Neo Dashboard Kit — Icon-Set (SF-symbol style SVG, ported from prototype)
+// Returned as strings so cards can inline them via innerHTML.
+
+const NEO_ICON_FILLED = new Set(["play", "pause", "next", "prev", "more", "starF", "dot"]);
+const NEO_ICON_PATHS = {
+  home: `<path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2v-9z"/>`,
+  rooms: `<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>`,
+  devices: `<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>`,
+  energy: `<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>`,
+  scenes: `<path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3l-1.4-1.4M19.1 19.1l-1.4-1.4M17.7 6.3l1.4-1.4M4.9 19.1l1.4-1.4"/><circle cx="12" cy="12" r="4"/>`,
+  settings: `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>`,
+  lightbulb: `<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/>`,
+  thermo: `<path d="M14 14.8V4a2 2 0 1 0-4 0v10.8a4 4 0 1 0 4 0z"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/>`,
+  camera: `<path d="M3 7h3l2-3h8l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/>`,
+  lock: `<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>`,
+  unlock: `<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>`,
+  speaker: `<rect x="6" y="3" width="12" height="18" rx="2"/><circle cx="12" cy="14" r="3"/><circle cx="12" cy="7" r="1" fill="currentColor"/>`,
+  play: `<path d="M8 5v14l11-7z"/>`,
+  pause: `<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>`,
+  next: `<path d="M5 4l10 8-10 8V4zM17 4h2v16h-2z"/>`,
+  prev: `<path d="M19 4L9 12l10 8V4zM5 4h2v16H5z"/>`,
+  blinds: `<rect x="3" y="3" width="18" height="3"/><rect x="3" y="8" width="18" height="2"/><rect x="3" y="12" width="18" height="2"/><path d="M12 16v5M10 21h4"/>`,
+  vacuum: `<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>`,
+  wind: `<path d="M3 8h11a3 3 0 1 0-3-3M3 16h15a3 3 0 1 1-3 3M3 12h17"/>`,
+  plug: `<path d="M9 2v6M15 2v6M7 8h10v3a5 5 0 0 1-10 0V8zM12 16v6"/>`,
+  wifi: `<path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/>`,
+  bell: `<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/>`,
+  plus: `<path d="M12 5v14M5 12h14"/>`,
+  minus: `<path d="M5 12h14"/>`,
+  chevR: `<path d="M9 6l6 6-6 6"/>`,
+  chevL: `<path d="M15 6l-6 6 6 6"/>`,
+  chevD: `<path d="M6 9l6 6 6-6"/>`,
+  chevU: `<path d="M6 15l6-6 6 6"/>`,
+  sun: `<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M5 12H2M22 12h-3M6.3 6.3L4.2 4.2M19.8 19.8l-2.1-2.1M17.7 6.3l2.1-2.1M4.2 19.8l2.1-2.1"/>`,
+  moon: `<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>`,
+  leaf: `<path d="M5 21c0-9 7-16 16-16 0 9-7 16-16 16zM5 21c4-4 8-6 12-7"/>`,
+  info: `<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r="1" fill="currentColor"/>`,
+  grid: `<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>`,
+  // ── SmartHome-Erweiterung ───────────────────────────────────
+  garage: `<path d="M3 21V9l9-5 9 5v12"/><rect x="6" y="12" width="12" height="9"/><path d="M6 15h12M6 18h12"/>`,
+  motion: `<circle cx="5" cy="12" r="1.6" fill="currentColor"/><path d="M9 8a6 6 0 0 1 0 8"/><path d="M13 5a10 10 0 0 1 0 14"/><path d="M17 2a14 14 0 0 1 0 20"/>`,
+  coffee: `<path d="M4 8h13v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 9h2a2 2 0 0 1 0 4h-2"/><path d="M8 2v2.5M12 2v2.5"/>`,
+  washer: `<rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="14" r="5"/><circle cx="12" cy="14" r="2"/><path d="M7 6h.01M10 6h.01"/>`,
+  dishwasher: `<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M4 7h16"/><path d="M8 4.5h.01M11 4.5h.01"/><path d="M9 11c1 1 2 1 3 0s2-1 3 0M9 15c1 1 2 1 3 0s2-1 3 0"/>`,
+  outlet: `<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9v2M15 9v2M9 14h6"/>`,
+  toggle: `<rect x="2" y="8" width="20" height="8" rx="4"/><circle cx="8" cy="12" r="2.5" fill="currentColor"/>`,
+  valve: `<circle cx="12" cy="12" r="3"/><path d="M12 9V3M12 21v-6M9 12H3M21 12h-6M9.5 9.5L7 7M14.5 9.5L17 7M9.5 14.5L7 17M14.5 14.5L17 17"/>`,
+  smoke: `<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>`,
+  warning: `<path d="M12 3l10 18H2z"/><path d="M12 10v4"/><circle cx="12" cy="17.5" r="1" fill="currentColor"/>`,
+  solar: `<rect x="3" y="5" width="18" height="11" rx="1"/><path d="M3 9h18M3 12.5h18M9 5v11M15 5v11M12 19v2M9 21h6"/>`,
+  bed: `<path d="M3 18v-5h18v5"/><path d="M3 13V8h8v5"/><path d="M3 18v2M21 18v2"/><circle cx="7" cy="10.5" r="1.5"/>`,
+  sofa: `<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 12a2 2 0 0 1 2 2v3h14v-3a2 2 0 0 1 2-2"/><path d="M5 17v2M19 17v2"/>`,
+  shower: `<path d="M4 12h16"/><path d="M6 12V7a3 3 0 0 1 6 0"/><path d="M12 7h4a3 3 0 0 1 3 3"/><path d="M8 16v1M12 16v2M16 16v1"/>`,
+  bath: `<path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M6 12V6a2 2 0 0 1 4 0"/><path d="M6 19l-1 2M18 19l1 2"/>`,
+  toilet: `<path d="M6 4v7a5 5 0 0 0 10 0V4"/><path d="M5 4h14"/><path d="M11 16v4M8 20h6"/>`,
+  plant: `<path d="M12 21v-7"/><path d="M12 14c0-3-2-5-5-5 0 3 2 5 5 5z"/><path d="M12 12c0-3 2-5 5-5 0 3-2 5-5 5z"/>`,
+  paw: `<circle cx="6" cy="11" r="1.6"/><circle cx="10" cy="8" r="1.6"/><circle cx="14" cy="8" r="1.6"/><circle cx="18" cy="11" r="1.6"/><path d="M8 16a4 4 0 0 1 8 0 3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3z"/>`,
+  key: `<circle cx="8" cy="8" r="4"/><path d="M11 11l9 9M17 17l2-2M19 19l2-2"/>`,
+  remote: `<rect x="7" y="2" width="10" height="20" rx="3"/><circle cx="12" cy="6" r="1.2" fill="currentColor"/><path d="M10 10h4M10 13h4M10 16h4"/>`,
+  sprinkler: `<path d="M12 3v6M5 9h14"/><path d="M5 9c-1 3-1 6 0 9M19 9c1 3 1 6 0 9M12 9v10"/>`,
+  gate: `<path d="M3 8h18M3 20V8M21 20V8M7 20V8M11 20V8M15 20V8M19 20V8"/>`,
+  shield: `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/>`,
+  shieldOk: `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/>`,
+  water: `<path d="M12 3s-7 8-7 13a7 7 0 0 0 14 0c0-5-7-13-7-13z"/>`,
+  eye: `<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>`,
+  mic: `<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/>`,
+  search: `<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>`,
+  more: `<circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/>`,
+  check: `<path d="M5 12l5 5L20 7"/>`,
+  x: `<path d="M6 6l12 12M18 6L6 18"/>`,
+  star: `<path d="M12 2l3 7 7 .5-5.5 4.5L18 21l-6-4-6 4 1.5-7L2 9.5 9 9l3-7z"/>`,
+  starF: `<path d="M12 2l3 7 7 .5-5.5 4.5L18 21l-6-4-6 4 1.5-7L2 9.5 9 9l3-7z"/>`,
+  sparkle: `<path d="M12 3v6M12 15v6M3 12h6M15 12h6M5.5 5.5l3 3M15.5 15.5l3 3M18.5 5.5l-3 3M8.5 15.5l-3 3"/>`,
+  kettle: `<path d="M5 9h12l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9zM17 11l3-2-3-2M9 5h4"/>`,
+  tv: `<rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 21h8"/>`,
+  fridge: `<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M5 10h14M8 6v1M8 14v3"/>`,
+  dot: `<circle cx="12" cy="12" r="4"/>`,
+  arrUp: `<path d="M12 19V5M5 12l7-7 7 7"/>`,
+  arrDown: `<path d="M12 5v14M5 12l7 7 7-7"/>`,
+  // Weather (added — not in original prototype set)
+  cloud: `<path d="M7 18a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 18z"/>`,
+  rain: `<path d="M7 15a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 19l-1 2M12 19l-1 2M16 19l-1 2"/>`,
+  snow: `<path d="M7 15a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 19v.01M12 20v.01M16 19v.01"/>`,
+  storm: `<path d="M7 15a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M12 16l-2 3h3l-2 3"/>`,
+  fog: `<path d="M4 9h16M4 13h16M6 17h12"/>`,
+  partly: `<circle cx="8" cy="8" r="3"/><path d="M8 2v1.5M3 8H1.5M13 3l-1 1M3 13l1-1"/><path d="M10 18a3.5 3.5 0 0 1 .4-6.98 4.8 4.8 0 0 1 9.2 1.3A3 3 0 0 1 19 18z"/>`,
+  // Common smart-home additions
+  calendar: `<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>`,
+  clock: `<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
+  fan: `<circle cx="12" cy="12" r="1.5"/><path d="M12 10.5C12 7 13.5 4 16 4c1.5 0 2 2 0 3.5-1.5 1-4 3-4 3zM13.5 12c3.5 0 6.5 1.5 6.5 4 0 1.5-2 2-3.5 0-1-1.5-3-4-3-4zM12 13.5c0 3.5-1.5 6.5-4 6.5-1.5 0-2-2 0-3.5 1.5-1 4-3 4-3zM10.5 12c-3.5 0-6.5-1.5-6.5-4 0-1.5 2-2 3.5 0 1 1.5 3 4 3 4z"/>`,
+  door: `<path d="M5 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v17M4 21h14M13.5 12h.01"/>`,
+  window: `<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18M4 12h16"/>`,
+  battery: `<rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/>`,
+  flame: `<path d="M12 2s5 4 5 9a5 5 0 0 1-10 0c0-2 1-3 1-3s0 2 1.5 2C12 12 9 9 12 2z"/>`,
+  snowflake: `<path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"/>`,
+  person: `<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>`,
+  people: `<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 5a3.5 3.5 0 0 1 0 7M17 13.5a6.5 6.5 0 0 1 4.5 6.5"/>`,
+  car: `<path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11M4 11h16v6h-2M4 11v6h2m0 0h12M7 17v2M17 17v2"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/>`,
+  music: `<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>`,
+  volume: `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/>`,
+  heart: `<path d="M12 20l-7-7a4 4 0 0 1 5.6-5.6L12 8.8l1.4-1.4A4 4 0 0 1 19 13l-7 7z"/>`,
+  trash: `<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/>`,
+  refresh: `<path d="M21 12a9 9 0 1 1-3-6.7L21 7M21 3v4h-4"/>`,
+  power: `<path d="M12 3v9M6.6 6.6a9 9 0 1 0 10.8 0"/>`,
+  server: `<rect x="4" y="3" width="16" height="8" rx="2"/><rect x="4" y="13" width="16" height="8" rx="2"/><path d="M8 7h.01M8 17h.01"/>`,
+  robot: `<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5M9 3h6"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/><path d="M8 16h8"/>`,
+  gauge: `<path d="M12 14l3-3"/><path d="M4 18a9 9 0 1 1 16 0"/><circle cx="12" cy="14" r="1"/>`,
+  flag: `<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>`,
+  router_wifi: `<rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 17h.01M11 17h.01M12 6a6 6 0 0 1 6 6M12 9a3 3 0 0 1 3 3"/>`,
+};
+
+export function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 } = {}) {
+  // Name mit Doppelpunkt → HA-Icon (mdi:…, hue:… oder andere registrierte Sets).
+  // So lassen sich Standard-MDI und installierte Custom-Icon-Sets nutzen.
+  if (typeof name === "string" && name.includes(":")) {
+    return `<ha-icon icon="${name}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px;color:${color};display:flex;align-items:center;justify-content:center;line-height:0;flex-shrink:0"></ha-icon>`;
+  }
+  const inner = NEO_ICON_PATHS[name] || `<circle cx="12" cy="12" r="9"/>`;
+  const paint = NEO_ICON_FILLED.has(name)
+    ? `fill="currentColor"`
+    : `fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color};display:block" ${paint}>${inner}</svg>`;
+}
+
+// Icon dropdown options for editors
+export const NEO_ICON_OPTIONS = Object.keys(NEO_ICON_PATHS).map((k) => ({ value: k, label: k }));
