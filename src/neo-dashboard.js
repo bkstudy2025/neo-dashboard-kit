@@ -58,6 +58,10 @@ import "./wrapper/neo-card.js";
 // 7. Public API for external/premium modules + ready event
 import "./core/public-api.js";
 
+// 8. Global polish (mobile header / glass dialogs) — self-contained, no Card Mod
+import { neoInitGlobalStyle } from "./core/global-style.js";
+neoInitGlobalStyle();
+
 console.info(
   "%c NEO DASHBOARD KIT %c v__NEO_VERSION__ ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
