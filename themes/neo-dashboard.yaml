@@ -306,6 +306,11 @@ Neo Dashboard:
       neo-accent-violet: "#9B59D9"
       neo-accent-rose: "#E05555"
 
+  # ── Optional: nur wirksam, wenn die HACS-Frontend-Erweiterung "Card Mod"
+  # installiert ist. Ohne Card Mod ignoriert Home Assistant diese Schlüssel —
+  # das Theme funktioniert weiterhin, nur ohne Dialog-/Mobil-Header-Politur.
+  # Optional: only takes effect if the "Card Mod" frontend add-on is installed.
+  # Without it Home Assistant ignores these keys; the theme still works.
   card-mod-theme: Neo Dashboard
 
   # Header auf Mobile ausblenden (wie Bubble)

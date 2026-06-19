@@ -18,7 +18,7 @@ that adapts to your device. Extensible via **modules** and **Premium**.
 ### Prerequisites
 | Plugin | HACS category | Required? |
 |---|---|---|
-| [Card Mod](https://github.com/thomasloven/lovelace-card-mod) | Frontend | ✅ Yes — for mobile header & dialog styles |
+| [Card Mod](https://github.com/thomasloven/lovelace-card-mod) | Frontend | ◻️ Optional — theme only (dialog/mobile-header polish). The cards do **not** need it. |
 | [Neo Dashboard Tools](https://github.com/bkstudy2025/neo-dashboard-tools) | Integration | ⭐ Recommended — module store & persistent storage |
 
 ### 1. Install (HACS)
