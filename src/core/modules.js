@@ -29,10 +29,20 @@ export const NeoModules = {
   register(manifest) {
     if (!manifest || !manifest.id) {
       console.warn("[Neo Module] Manifest ohne id ignoriert.");
-      return;
+      return null;
     }
     _modules.set(manifest.id, manifest); // overwrite on update
     console.info(`[Neo Module] Registered: ${manifest.id} → ${manifest.target || "*"}`);
+    return manifest;
+  },
+  unregister(id) {
+    if (!id) return false;
+    const removed = _modules.delete(id);
+    if (removed) {
+      console.info(`[Neo Module] Unregistered: ${id}`);
+      window.dispatchEvent(new CustomEvent("neo-module-changed"));
+    }
+    return removed;
   },
   get(id) { return _modules.get(id); },
   list() { return Array.from(_modules.values()); },
@@ -48,4 +58,5 @@ export const NeoModules = {
 if (window.NeoDashboard) {
   window.NeoDashboard.modules = NeoModules;
   window.NeoDashboard.registerModule = (m) => NeoModules.register(m);
+  window.NeoDashboard.unregisterModule = (id) => NeoModules.unregister(id);
 }
