@@ -4,151 +4,61 @@
 
 <h1 align="center">Neo Dashboard Kit</h1>
 
-A glassmorphism-style Home Assistant dashboard with a community plugin system.
+<p align="center">
+  Glassmorphism cards for Home Assistant — one card that adapts to your device.<br>
+  Glassmorphism-Karten für Home Assistant — eine Karte, die sich anpasst.
+</p>
 
-![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)
-![Version](https://img.shields.io/github/v/release/bkstudy2025/neo-dashboard-kit?include_prereleases)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+<p align="center">
+  <a href="docs/de/README.md"><b>🇩🇪 Deutsch</b></a> ·
+  <a href="docs/en/README.md"><b>🇬🇧 English</b></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/HACS-Custom-orange.svg" alt="HACS">
+  <img src="https://img.shields.io/github/v/release/bkstudy2025/neo-dashboard-kit?include_prereleases" alt="Version">
+  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
+</p>
 
 ---
 
-## Voraussetzungen / Prerequisites
+## 📚 Documentation / Dokumentation
 
-Vor der Installation müssen folgende HACS-Plugins installiert sein:
-
-| Plugin | HACS-Kategorie | Pflicht |
+| | 🇩🇪 Deutsch | 🇬🇧 English |
 |---|---|---|
-| [Card Mod](https://github.com/thomasloven/lovelace-card-mod) | Frontend | ✅ Ja — für Mobile-Header und Dialog-Styles |
-| [Neo Dashboard Tools](https://github.com/bkstudy2025/neo-dashboard-tools) | Integration | ⭐ Empfohlen — server-seitiger Modul-Speicher (saubere Config). Ohne sie werden Module in der Karten-Config gespeichert. |
+| Getting started | [Erste Schritte](docs/de/README.md) | [Getting started](docs/en/README.md) |
+| Cards | [Karten](docs/de/karten.md) | [Cards](docs/en/cards.md) |
+| Modules & Store | [Module & Store](docs/de/module.md) | [Modules & Store](docs/en/modules.md) |
+| Development | [Entwicklung](docs/de/entwicklung.md) | [Development](docs/en/development.md) |
 
 ---
 
-## Installation
+## ⚡ Quick start
 
-### Schritt 1 — Card Mod installieren
+1. **Prerequisites:** [Card Mod](https://github.com/thomasloven/lovelace-card-mod) (required) ·
+   [Neo Dashboard Tools](https://github.com/bkstudy2025/neo-dashboard-tools) (recommended).
+2. **Install** via HACS → Frontend → custom repository → `bkstudy2025/neo-dashboard-kit`.
+3. **Add a card:** *Add card* → search **“Neo Card”** → pick a card type → choose an entity. Done.
 
-1. HACS → Frontend → Suche **"Card Mod"**
-2. Installieren → HA neu starten
+The picker has **three** cards — pick one, choose an entity, it adapts:
 
-### Schritt 2 — Neo Dashboard Kit installieren
-
-1. HACS → Frontend → ⋮ → Benutzerdefinierte Repositories
-2. URL: `https://github.com/bkstudy2025/neo-dashboard-kit` — Kategorie: **Plugin**
-3. **Neo Dashboard Kit** installieren
-4. HA neu starten
-
-### Schritt 3 — Theme einrichten
-
-1. Datei `themes/neo-dashboard.yaml` aus diesem Repo nach `config/themes/neo-dashboard.yaml` kopieren
-2. In `configuration.yaml` sicherstellen dass folgendes steht:
-
-```yaml
-frontend:
-  themes: !include_dir_merge_named themes
-```
-
-3. HA neu starten
-
-### Schritt 4 — Theme aktivieren
-
-Profil (Avatar unten links) → **Theme** → **Neo Dashboard** auswählen
-
-> Das Theme wechselt automatisch zwischen Dark und Light je nach Betriebssystem-Einstellung.
-
----
-
-## Karten verwenden
-
-Alle Karten laufen über **eine** Karte: `custom:neo-card`. Den Kartentyp wählst du
-im **visuellen Editor** über das Dropdown **„Kartentyp"** — oder per YAML mit `card_type`.
-
-> **Karte hinzufügen** → nach **„Neo Card"** suchen → im Editor den Kartentyp wählen.
-
-Beispiel (YAML):
-```yaml
-type: custom:neo-card
-card_type: neo-control-card
-entity: light.wohnzimmer
-accent: amber
-```
-
-### Die drei Karten
-
-Statt vieler Einzeltypen gibt es **drei** Karten — du wählst eine, suchst deine
-**Entität**, und die Karte passt sich automatisch an:
-
-| Kartentyp | Wofür |
+| Card | For |
 |---|---|
-| `neo-control-card` — **Neo Steuerung** | Alles Schaltbare: Licht, Schalter, Ventilator, Rollladen, Klima, Media, Alarm, Schloss, Szene/Skript, Licht-Gruppe |
-| `neo-display-card` — **Neo Anzeige** | Sensorwert, Kamera, Status |
-| `neo-header-card` — **Neo Header** | Überschrift / Trenner (Layout) |
+| **Neo Control** (`neo-control-card`) | anything controllable: light, switch, cover, climate, media, lock, alarm, scene/script, light groups |
+| **Neo Display** (`neo-display-card`) | sensor values & cameras |
+| **Neo Header** (`neo-header-card`) | headings / dividers |
 
-→ Details & gemeinsame Optionen: **[docs/cards/](docs/cards/README.md)**
-
-> **Prinzip:** Nur die wichtigste Steuerung liegt direkt auf der Karte — der
-> **volle** Funktionsumfang ist per **Tap → More-Info** erreichbar. Alles
-> Weitere kommt über **Module**. So bleibt der Picker kurz und jede Karte schlank.
-
-> Ältere Typen (`neo-button-card`, `neo-climate-card`, …) bleiben als versteckte
-> Aliasse erhalten und rendern bestehende Dashboards weiter.
-
-### Module & Store
-
-Karten lassen sich mit **Modulen** erweitern — kleine Bausteine, die eine Karte um
-Funktionen/Optik ergänzen (z. B. Status-Badge, Glow, eigene Tap-Aktion). Im Editor:
-**Module → ➕ Modul hinzufügen → Store** (kuratierter Katalog, nach Karte gefiltert)
-oder **Code einfügen** (z. B. Patreon). Mehr: **[docs/modules.md](docs/modules.md)**.
+Everything else is added through **modules** and **Premium** — see the docs above.
 
 ---
 
-## Community Plugins
+## ❤️ Support
+Built with love in my spare time. If you enjoy it, any support is huge
+motivation — links are in the editor’s **“Info & Support”** panel and on
+[Patreon](https://patreon.com), [Ko‑fi](https://ko-fi.com) & PayPal.
 
-Jeder kann eigene Neo Dashboard Karten als separates HACS-Repo bauen.
+## 🤝 Contributing
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`STRUCTURE.md`](STRUCTURE.md).
 
-Siehe **[docs/plugin-development.md](docs/plugin-development.md)** für die vollständige Anleitung.
-
-Schnellbeispiel:
-```js
-class MyCustomCard extends HTMLElement {
-  setConfig(config) { this._config = config; }
-  set hass(hass) { this._hass = hass; }
-  getCardSize() { return 2; }
-}
-
-// Bei Neo Dashboard registrieren
-window.NeoDashboard.registerCard("neo-my-card", MyCustomCard);
-```
-
----
-
-## Design Tokens
-
-Alle Karten nutzen CSS Custom Properties — können im Theme überschrieben werden:
-
-| Variable | Dark Default | Beschreibung |
-|---|---|---|
-| `--neo-fill0` | `rgba(255,255,255,0.02)` | Dunkelste Oberfläche |
-| `--neo-fill1` | `rgba(255,255,255,0.04)` | Karten-Hintergrund |
-| `--neo-fill2` | `rgba(255,255,255,0.055)` | Erhöhte Oberfläche |
-| `--neo-text1` | `#F4F6FB` | Primärer Text |
-| `--neo-text2` | `rgba(244,246,251,0.72)` | Sekundärer Text |
-| `--neo-text3` | `rgba(244,246,251,0.50)` | Labels / Tertiary |
-| `--neo-blur` | `blur(24px) saturate(140%)` | Backdrop Filter |
-| `--neo-radius` | `24px` | Karten-Eckenradius |
-| `--neo-accent-blue` | `#7C9CFF` | Akzentfarbe Blau |
-| `--neo-accent-amber` | `#FFB26B` | Akzentfarbe Amber |
-| `--neo-accent-mint` | `#5EDCB8` | Akzentfarbe Mint |
-| `--neo-accent-violet` | `#C084FC` | Akzentfarbe Violet |
-| `--neo-accent-rose` | `#F87171` | Akzentfarbe Rose |
-
----
-
-## Mitwirken / Contributing
-
-PRs willkommen! Bitte zuerst [CONTRIBUTING.md](CONTRIBUTING.md) lesen.
-
----
-
-## Lizenz / License
-
-MIT © [Neo Dashboard Kit Contributors](https://github.com/bkstudy2025/neo-dashboard-kit)
+## 📄 License
+MIT

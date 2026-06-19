@@ -22,7 +22,7 @@ hacs.json             ← HACS-Metadaten (content_in_root → Bundle liegt im Ro
 info.md / README.md   ← HACS-Beschreibung / GitHub-Readme
 icon.png / logo.png   ← HACS-Branding
 src/                  ← QUELLCODE (siehe unten)
-docs/                 ← Dokumentation (Karten, Architektur, Plugin-Dev)
+docs/de/ · docs/en/   ← zweisprachige Doku (README, Karten, Module, Entwicklung)
 themes/               ← Optionales HA-Theme zum Kopieren nach <config>/themes/
 premium/              ← Nur die Vorlage (neo-card-template.js); Premium-Karten
                         werden via Patreon verteilt, NIE hier committen (.gitignore)
