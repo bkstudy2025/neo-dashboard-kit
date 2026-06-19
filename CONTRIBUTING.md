@@ -6,13 +6,13 @@ Thanks for your interest! Here's how to contribute.
 
 1. Fork and clone the repo
 2. `npm install`
-3. `npm run dev` — watches and rebuilds `dist/neo-dashboard.js`
+3. `npm run dev` — watches and rebuilds `neo-dashboard.js` (repo root)
 4. Test in Home Assistant by pointing your resource at your local build
 5. Open a PR with a clear description of what the card does
 
 ## Community plugin cards (separate repos)
 
-Build your own card as a standalone HACS repo — see [docs/plugin-development.md](docs/plugin-development.md).
+Build your own card as a standalone HACS repo — see [docs/en/development.md](docs/en/development.md) ([Deutsch](docs/de/entwicklung.md)).
 
 ## Code style
 
