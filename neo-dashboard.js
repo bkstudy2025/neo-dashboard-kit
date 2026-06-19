@@ -103,6 +103,15 @@ const NeoDashboardRegistry = {
     _registry.set(type, { cls, meta, tag }); // overwrite on update
     console.info(`[Neo Dashboard] Registered: ${type} (${tag})`);
   },
+  unregisterCard(type) {
+    if (!type || type === "neo-card") return false;
+    const removed = _registry.delete(type);
+    if (removed) {
+      console.info(`[Neo Dashboard] Unregistered: ${type}`);
+      window.dispatchEvent(new CustomEvent("neo-module-changed"));
+    }
+    return removed;
+  },
   getCard(type) {
     return _registry.get(type)?.cls;
   },
@@ -159,10 +168,20 @@ const NeoModules = {
   register(manifest) {
     if (!manifest || !manifest.id) {
       console.warn("[Neo Module] Manifest ohne id ignoriert.");
-      return;
+      return null;
     }
     _modules.set(manifest.id, manifest); // overwrite on update
     console.info(`[Neo Module] Registered: ${manifest.id} → ${manifest.target || "*"}`);
+    return manifest;
+  },
+  unregister(id) {
+    if (!id) return false;
+    const removed = _modules.delete(id);
+    if (removed) {
+      console.info(`[Neo Module] Unregistered: ${id}`);
+      window.dispatchEvent(new CustomEvent("neo-module-changed"));
+    }
+    return removed;
   },
   get(id) { return _modules.get(id); },
   list() { return Array.from(_modules.values()); },
@@ -178,6 +197,7 @@ const NeoModules = {
 if (window.NeoDashboard) {
   window.NeoDashboard.modules = NeoModules;
   window.NeoDashboard.registerModule = (m) => NeoModules.register(m);
+  window.NeoDashboard.unregisterModule = (id) => NeoModules.unregister(id);
 }
 
 // Neo Dashboard Kit — Design-Tokens
@@ -2292,26 +2312,57 @@ NeoModules.register({
 // Neo Dashboard Kit — Module loader
 // Loads pasted module code (script injection, deduped). Used by the
 // neo-card wrapper at runtime and by its editor's "Modul einfügen" area.
-// Returns { ok, cards } where cards = metadata of newly registered cards.
+// Returns { ok, modules, cards } where modules/cards are the manifests that
+// registered while the pasted code ran — including updates of existing IDs.
 
 function neoLoadModule(code) {
-  if (!code || !code.trim()) return { ok: false, cards: [] };
+  if (!code || !code.trim()) return { ok: false, modules: [], cards: [] };
   window.__neoModules = window.__neoModules || new Set();
-  const key = code.length + ":" + code.slice(0, 96);
-  if (window.__neoModules.has(key)) return { ok: true, cards: [] };
-  const before = new Set(NeoDashboardRegistry.list().map((c) => c.type));
+
+  const modules = [];
+  const cards = [];
+  const originalRegisterModule = window.NeoDashboard?.registerModule;
+  const originalRegisterCard = window.NeoDashboard?.registerCard;
+
   try {
+    // Capture both new installs and updates. The editor needs the touched ID;
+    // diffing only "new IDs" fails when an existing module/card is updated.
+    if (window.NeoDashboard) {
+      window.NeoDashboard.registerModule = (manifest) => {
+        const res = originalRegisterModule ? originalRegisterModule.call(window.NeoDashboard, manifest) : null;
+        if (manifest?.id) modules.push(res || manifest);
+        return res;
+      };
+      window.NeoDashboard.registerCard = (type, cls, meta = {}) => {
+        const res = originalRegisterCard ? originalRegisterCard.call(window.NeoDashboard, type, cls, meta) : null;
+        if (type) cards.push({ type, ...(meta || {}) });
+        return res;
+      };
+    }
+
     const s = document.createElement("script");
     s.textContent = code;
     document.head.appendChild(s);
+
+    const key = code.length + ":" + code.slice(0, 96);
     window.__neoModules.add(key);
-    const cards = NeoDashboardRegistry.list().filter((c) => !before.has(c.type));
+
+    // Backward compatibility for the current editor: it already accepts
+    // res.cards for updates. Expose touched modules there too so an existing
+    // module update is never misreported as "no module/card detected".
+    const editorCards = cards.length ? cards : modules.map((m) => ({ type: m.id, name: m.name || m.id, isModule: true }));
+
     // Live-Swap aller neo-card-Instanzen auf die (neue) Modul-Version – kein Reload nötig.
     window.dispatchEvent(new CustomEvent("neo-module-changed"));
-    return { ok: true, cards };
+    return { ok: true, modules, cards: editorCards };
   } catch (e) {
     console.error("[Neo Module] Fehler beim Laden:", e);
-    return { ok: false, cards: [] };
+    return { ok: false, modules: [], cards: [] };
+  } finally {
+    if (window.NeoDashboard) {
+      if (originalRegisterModule) window.NeoDashboard.registerModule = originalRegisterModule;
+      if (originalRegisterCard) window.NeoDashboard.registerCard = originalRegisterCard;
+    }
   }
 }
 
@@ -2355,11 +2406,18 @@ const NeoStore = {
   },
 
   async save(name, code) {
-    return this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/save", name, code });
+    const res = await this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/save", name, code });
+    this._cache = this._cache.filter((m) => m.name !== name).concat([{ name, code }]);
+    return res;
   },
 
   async delete(name) {
-    return this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/delete", name });
+    const res = await this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/delete", name });
+    this._cache = this._cache.filter((m) => m.name !== name);
+    NeoModules.unregister(name);
+    NeoDashboardRegistry.unregisterCard?.(name);
+    window.dispatchEvent(new CustomEvent("neo-module-changed"));
+    return res;
   },
 
   // Server-side fetch of an https URL (Module Store) — avoids browser CORS.
@@ -3275,7 +3333,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.57", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.58", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3287,7 +3345,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.57 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.58 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
