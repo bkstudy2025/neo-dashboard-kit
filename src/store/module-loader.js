@@ -3,7 +3,6 @@
 // neo-card wrapper at runtime and by its editor's "Modul einfügen" area.
 // Returns { ok, modules, cards } where modules/cards are the manifests that
 // registered while the pasted code ran — including updates of existing IDs.
-import { NeoDashboardRegistry } from "../core/registry.js";
 
 export function neoLoadModule(code) {
   if (!code || !code.trim()) return { ok: false, modules: [], cards: [] };
