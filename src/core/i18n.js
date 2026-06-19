@@ -88,6 +88,54 @@ const EN = {
   "💳 PayPal": "💳 PayPal",
   "♥ Patreon": "♥ Patreon",
   "Danke, dass du Teil dieser Community bist! 🎉": "Thanks for being part of this community! 🎉",
+
+  // ── Karten: Render-Texte ──
+  "An": "On", "Aus": "Off", "Bereit": "Idle", "Auto": "Auto",
+  "Schalter": "Switch", "Helligkeit": "Brightness", "Stufe": "Speed",
+  "Verriegelt": "Locked", "Entriegelt": "Unlocked", "Schloss": "Lock",
+  "Ventilator": "Fan", "Rollladen": "Cover", "Klima": "Climate", "Media": "Media",
+  "Öffnen": "Open", "Stopp": "Stop", "Schließen": "Close",
+  "Offen": "Open", "Geschlossen": "Closed", "Öffnet": "Opening", "Schließt": "Closing",
+  "% offen": "% open",
+  "Heizt": "Heating", "Kühlt": "Cooling", "Entfeuchtet": "Drying", "Lüftet": "Fan",
+  "Heizen": "Heat", "Kühlen": "Cool", "Aktuell": "Current",
+  "Spielt": "Playing", "Pausiert": "Paused", "Standby": "Standby", "Puffert": "Buffering",
+  "Unscharf": "Disarmed", "Zuhause": "Home", "Abwesend": "Away", "Alarm": "Alarm",
+  "Scharf · Zuhause": "Armed · Home", "Scharf · Abwesend": "Armed · Away",
+  "Scharf · Nacht": "Armed · Night", "Scharf · Urlaub": "Armed · Vacation",
+  "Aktiviert …": "Arming …", "Eingang …": "Entry …", "ALARM": "ALARM",
+  "Szene": "Scene", "Taster": "Button", "Skript": "Script", "Aktion": "Action",
+  "an": "on",
+  "Wert": "Value", "Kamera": "Camera", "Sensor": "Sensor", "Licht-Gruppe": "Light group",
+
+  // ── Editor: Feld-Labels & Abschnitte (zentral in makeEditor übersetzt) ──
+  "Allgemein": "General", "Darstellung": "Appearance",
+  "Entität": "Entity", "Entität (Gerät)": "Entity (device)",
+  "Name (optional)": "Name (optional)", "Untertitel (optional)": "Subtitle (optional)",
+  "Icon": "Icon", "Icon (optional)": "Icon (optional)",
+  "Akzentfarbe": "Accent color", "Akzentfarbe (optional)": "Accent color (optional)",
+  "Einheit (optional)": "Unit (optional)", "Lichter": "Lights",
+  "Code (optional, falls erforderlich)": "Code (optional, if required)",
+  "Typ": "Type", "Titel (bei Trenner optional)": "Title (optional for divider)",
+  "Layout / Gerät": "Layout / device",
+  // Optionen
+  "Blau": "Blue", "Amber": "Amber", "Mint": "Mint", "Violett": "Violet", "Rosé": "Rosé",
+  "Automatisch (Bildschirmbreite)": "Automatic (screen width)",
+  "Mobil (kompakt)": "Mobile (compact)", "Tablet": "Tablet", "Desktop (groß)": "Desktop (large)",
+  "Überschrift": "Heading", "Trenner": "Divider",
+  // Karten-Namen & -Beschreibungen (Picker + Editor-Kopf)
+  "Neo Steuerung": "Neo Control", "Neo Anzeige": "Neo Display",
+  "Neo Ventilator": "Neo Fan", "Neo Kamera": "Neo Camera", "Neo Klima": "Neo Climate",
+  "Neo Cover": "Neo Cover", "Neo Media": "Neo Media", "Neo Licht-Gruppe": "Neo Light Group",
+  "Eine Karte für alle Geräte — passt sich automatisch an die Entität an":
+    "One card for all devices — adapts automatically to the entity",
+  "Eine Karte für alle Geräte — passt sich an": "One card for all devices — it adapts",
+  "Sensorwert, Kamera oder Status — passt sich an die Entität an":
+    "Sensor value, camera or status — adapts to the entity",
+  "Sensor · Kamera · Status": "Sensor · Camera · Status",
+  "Überschrift / Trenner zum Strukturieren": "Heading / divider for structure",
+  "Überschrift / Trenner": "Heading / Divider",
+  "Neo Karte": "Neo Card",
 };
 
 export function neoLang(hass) {

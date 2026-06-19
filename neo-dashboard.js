@@ -434,11 +434,185 @@ function neoViewportLayout() {
   return "desktop";
 }
 
+// Neo Dashboard Kit — i18n
+// Die UI ist in Deutsch verfasst (Quelle). neoT(hass, de) liefert die englische
+// Übersetzung, wenn die HA-Sprache NICHT Deutsch ist — sonst den deutschen Text.
+// So folgt die Oberfläche automatisch der Home-Assistant-Sprache (Englisch als
+// Standard/international, Deutsch für deutsche Nutzer) ohne eigenen Schalter.
+//
+// Platzhalter: Strings können {name}/{author}/… enthalten und werden am
+// Aufrufort per .replace() gefüllt.
+
+// Deutsch → Englisch. Fehlt ein Eintrag, wird der deutsche Text zurückgegeben.
+const EN = {
+  // Sektionen
+  "Kartentyp": "Card type",
+  "Einstellungen": "Settings",
+  // Startseite
+  "Glassmorphism-Karten für dein Dashboard. Wähle oben einen <b>Kartentyp</b> — danach erscheinen hier die Einstellungen und rechts die Live-Vorschau.":
+    "Glassmorphism cards for your dashboard. Pick a <b>card type</b> above — the settings appear here and the live preview on the right.",
+  // Erweiterungen / Module
+  "Module": "Modules",
+  "Erweiterungen": "Extensions",
+  "Für diese Karte sind noch keine Module aktiv. Über <b>➕ Modul hinzufügen</b> kommst du zum Store.":
+    "No modules are active for this card yet. Use <b>➕ Add module</b> to open the store.",
+  "<b>Karten</b> &amp; <b>Module</b> installieren (Store oder Code einfügen) — oder oben einen <b>Kartentyp</b> wählen, um Module für eine Karte zu aktivieren.":
+    "Install <b>cards</b> &amp; <b>modules</b> (store or paste code) — or pick a <b>card type</b> above to enable modules for a card.",
+  "Modul hinzufügen": "Add module",
+  "Karte oder Modul installieren": "Install card or module",
+  "Store": "Store",
+  "Code einfügen": "Paste code",
+  "Installiert": "Installed",
+  // Store
+  "⚠️ Für den Store wird die Integration <b>Neo Dashboard Tools</b> benötigt (serverseitiges Speichern + Laden).":
+    "⚠️ The store needs the <b>Neo Dashboard Tools</b> integration (server-side save + load).",
+  "Lade Store …": "Loading store …",
+  "Store-Index konnte nicht geladen werden.": "Could not load the store index.",
+  "Erneut": "Retry",
+  "Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.":
+    "No store modules available right now. Add premium cards (e.g. weather) via <b>Paste code</b>.",
+  "✓ Installiert": "✓ Installed",
+  "Installieren": "Install",
+  "Aktualisieren": "Update",
+  "Entfernen": "Remove",
+  "von": "by",
+  "Karte": "Card",
+  "Modul": "Module",
+  // Code einfügen
+  "ℹ️ Ohne <b>Neo Dashboard Tools</b> wird das Modul nur für diese Sitzung geladen (nicht dauerhaft gespeichert).":
+    "ℹ️ Without <b>Neo Dashboard Tools</b> the module loads for this session only (not saved permanently).",
+  "Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …":
+    "Paste module or card code (registerModule / registerCard, e.g. premium cards) …",
+  "Hinzufügen": "Add",
+  // Meldungen
+  "Bitte Code einfügen.": "Please paste some code.",
+  "Code konnte nicht geladen werden.": "Could not load the code.",
+  "Kein Modul/Karte erkannt (registerModule/registerCard fehlt?).":
+    "No module/card detected (missing registerModule/registerCard?).",
+  "✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.":
+    "✓ Card “{name}” added — selectable in the card type above.",
+  "✓ Modul „{name}” hinzugefügt.": "✓ Module “{name}” added.",
+  "Speichern fehlgeschlagen: {err}": "Saving failed: {err}",
+  "Installiere …": "Installing …",
+  "✓ „{name}” installiert.": "✓ “{name}” installed.",
+  "Installation fehlgeschlagen: {err}": "Installation failed: {err}",
+  "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":
+    "Module removed. (Already-loaded code disappears after a reload.)",
+  // Reorder / Aktionen
+  "Layer nach oben": "Move layer up",
+  "Layer nach unten": "Move layer down",
+  "Modul entfernen": "Remove module",
+  // Kartentyp-Picker
+  "Kartentyp wählen …": "Choose a card type …",
+  "🔍 Karte suchen …": "🔍 Search cards …",
+  "Keine Treffer.": "No matches.",
+  "Standard": "Standard",
+  "Premium": "Premium",
+  "Community": "Community",
+  // Info & Support
+  "Info &amp; Support": "Info &amp; Support",
+  "Ressourcen &amp; Hilfe": "Resources &amp; help",
+  "Fragen oder ein Problem? Die Doku und die Community helfen weiter.":
+    "Questions or a problem? The docs and the community can help.",
+  "📖 Dokumentation": "📖 Documentation",
+  "🐞 Probleme melden": "🐞 Report issues",
+  "💬 Diskussionen": "💬 Discussions",
+  "❤️ Projekt unterstützen": "❤️ Support the project",
+  "Hi! Ich entwickle <b>Neo Dashboard Kit</b> in meiner Freizeit und stecke viel Herzblut hinein. Wenn es dir gefällt, ist jede Unterstützung eine riesige Motivation — so kann ich weiter neue Karten &amp; Module bauen. Auf Patreon gibt es außerdem exklusive Premium-Karten und Vorlagen.":
+    "Hi! I build <b>Neo Dashboard Kit</b> in my spare time and put a lot of heart into it. If you enjoy it, any support is huge motivation — it lets me keep building new cards &amp; modules. Patreon also has exclusive premium cards and templates.",
+  "☕ Kaffee spendieren": "☕ Buy me a coffee",
+  "💳 PayPal": "💳 PayPal",
+  "♥ Patreon": "♥ Patreon",
+  "Danke, dass du Teil dieser Community bist! 🎉": "Thanks for being part of this community! 🎉",
+
+  // ── Karten: Render-Texte ──
+  "An": "On", "Aus": "Off", "Bereit": "Idle", "Auto": "Auto",
+  "Schalter": "Switch", "Helligkeit": "Brightness", "Stufe": "Speed",
+  "Verriegelt": "Locked", "Entriegelt": "Unlocked", "Schloss": "Lock",
+  "Ventilator": "Fan", "Rollladen": "Cover", "Klima": "Climate", "Media": "Media",
+  "Öffnen": "Open", "Stopp": "Stop", "Schließen": "Close",
+  "Offen": "Open", "Geschlossen": "Closed", "Öffnet": "Opening", "Schließt": "Closing",
+  "% offen": "% open",
+  "Heizt": "Heating", "Kühlt": "Cooling", "Entfeuchtet": "Drying", "Lüftet": "Fan",
+  "Heizen": "Heat", "Kühlen": "Cool", "Aktuell": "Current",
+  "Spielt": "Playing", "Pausiert": "Paused", "Standby": "Standby", "Puffert": "Buffering",
+  "Unscharf": "Disarmed", "Zuhause": "Home", "Abwesend": "Away", "Alarm": "Alarm",
+  "Scharf · Zuhause": "Armed · Home", "Scharf · Abwesend": "Armed · Away",
+  "Scharf · Nacht": "Armed · Night", "Scharf · Urlaub": "Armed · Vacation",
+  "Aktiviert …": "Arming …", "Eingang …": "Entry …", "ALARM": "ALARM",
+  "Szene": "Scene", "Taster": "Button", "Skript": "Script", "Aktion": "Action",
+  "an": "on",
+  "Wert": "Value", "Kamera": "Camera", "Sensor": "Sensor", "Licht-Gruppe": "Light group",
+
+  // ── Editor: Feld-Labels & Abschnitte (zentral in makeEditor übersetzt) ──
+  "Allgemein": "General", "Darstellung": "Appearance",
+  "Entität": "Entity", "Entität (Gerät)": "Entity (device)",
+  "Name (optional)": "Name (optional)", "Untertitel (optional)": "Subtitle (optional)",
+  "Icon": "Icon", "Icon (optional)": "Icon (optional)",
+  "Akzentfarbe": "Accent color", "Akzentfarbe (optional)": "Accent color (optional)",
+  "Einheit (optional)": "Unit (optional)", "Lichter": "Lights",
+  "Code (optional, falls erforderlich)": "Code (optional, if required)",
+  "Typ": "Type", "Titel (bei Trenner optional)": "Title (optional for divider)",
+  "Layout / Gerät": "Layout / device",
+  // Optionen
+  "Blau": "Blue", "Amber": "Amber", "Mint": "Mint", "Violett": "Violet", "Rosé": "Rosé",
+  "Automatisch (Bildschirmbreite)": "Automatic (screen width)",
+  "Mobil (kompakt)": "Mobile (compact)", "Tablet": "Tablet", "Desktop (groß)": "Desktop (large)",
+  "Überschrift": "Heading", "Trenner": "Divider",
+  // Karten-Namen & -Beschreibungen (Picker + Editor-Kopf)
+  "Neo Steuerung": "Neo Control", "Neo Anzeige": "Neo Display",
+  "Neo Ventilator": "Neo Fan", "Neo Kamera": "Neo Camera", "Neo Klima": "Neo Climate",
+  "Neo Cover": "Neo Cover", "Neo Media": "Neo Media", "Neo Licht-Gruppe": "Neo Light Group",
+  "Eine Karte für alle Geräte — passt sich automatisch an die Entität an":
+    "One card for all devices — adapts automatically to the entity",
+  "Eine Karte für alle Geräte — passt sich an": "One card for all devices — it adapts",
+  "Sensorwert, Kamera oder Status — passt sich an die Entität an":
+    "Sensor value, camera or status — adapts to the entity",
+  "Sensor · Kamera · Status": "Sensor · Camera · Status",
+  "Überschrift / Trenner zum Strukturieren": "Heading / divider for structure",
+  "Überschrift / Trenner": "Heading / Divider",
+  "Neo Karte": "Neo Card",
+};
+
+function neoLang(hass) {
+  return (hass && hass.language ? String(hass.language) : "en").slice(0, 2).toLowerCase();
+}
+
+// Übersetzt den deutschen Quelltext je nach HA-Sprache.
+function neoT(hass, de) {
+  if (neoLang(hass) === "de") return de;
+  return EN[de] || de;
+}
+
 // Neo Dashboard Kit — Shared ha-form editor factory
-// HA's <ha-form> needs real JS properties (.schema/.data) — they
-// cannot be passed as stringified HTML attributes. This helper
-// creates the element and binds properties correctly.
-// meta: { name, description, icon } renders a Bubble-style header.
+// HA's <ha-form> needs real JS properties (.schema/.data) — they cannot be
+// passed as stringified HTML attributes. This helper creates the element and
+// binds properties correctly. meta: { name, description, icon } renders a header.
+//
+// Labels, Abschnitts-Titel und Select-Optionen werden über i18n nach der
+// HA-Sprache übersetzt (Deutsch = Quelle, Englisch = Standard).
+
+// Übersetzt label / title / select-options eines ha-form-Schemas (rekursiv).
+function neoTranslateSchema(hass, schema) {
+  return schema.map((item) => {
+    const out = { ...item };
+    if (out.label) out.label = neoT(hass, out.label);
+    if (out.title) out.title = neoT(hass, out.title);
+    if (Array.isArray(out.schema)) out.schema = neoTranslateSchema(hass, out.schema);
+    const sel = out.selector && out.selector.select;
+    if (sel && Array.isArray(sel.options)) {
+      out.selector = {
+        ...out.selector,
+        select: {
+          ...sel,
+          options: sel.options.map((o) =>
+            (o && typeof o === "object" && "label" in o) ? { ...o, label: neoT(hass, o.label) } : o),
+        },
+      };
+    }
+    return out;
+  });
+}
 
 function makeNeoEditor(schema, meta = {}) {
   return class extends HTMLElement {
@@ -448,10 +622,18 @@ function makeNeoEditor(schema, meta = {}) {
       else this._build();
     }
     set hass(hass) {
+      const langChanged = this._lang !== undefined && this._lang !== neoLang(hass);
       this._hass = hass;
-      if (this._form) this._form.hass = hass;
+      this._lang = neoLang(hass);
+      if (this._form) {
+        this._form.hass = hass;
+        if (langChanged) this._build(); // Sprache gewechselt → Labels neu übersetzen
+      }
     }
+    _t(s) { return neoT(this._hass, s); }
+
     _build() {
+      this.innerHTML = ""; // idempotent (auch beim Sprachwechsel-Rebuild)
       // Bubble-style header card
       const header = document.createElement("div");
       header.className = "neo-editor-header";
@@ -482,17 +664,17 @@ function makeNeoEditor(schema, meta = {}) {
         </style>
         <div class="neo-editor-icon">${meta.icon || "✨"}</div>
         <div>
-          <div class="neo-editor-meta-name">${meta.name || "Neo Karte"}</div>
-          <div class="neo-editor-meta-desc">${meta.description || ""}</div>
+          <div class="neo-editor-meta-name">${this._t(meta.name || "Neo Karte")}</div>
+          <div class="neo-editor-meta-desc">${this._t(meta.description || "")}</div>
         </div>
       `;
       this.appendChild(header);
 
       this._form = document.createElement("ha-form");
-      this._form.schema = schema;
+      this._form.schema = neoTranslateSchema(this._hass, schema);
       this._form.data = this._config || {};
       if (this._hass) this._form.hass = this._hass;
-      this._form.computeLabel = (s) => s.label || s.name;
+      this._form.computeLabel = (s) => neoT(this._hass, s.label || s.name);
       this._form.addEventListener("value-changed", (e) => {
         this._config = e.detail.value;
         this.dispatchEvent(new CustomEvent("config-changed", {
@@ -693,6 +875,9 @@ class NeoBaseCard extends HTMLElement {
     return this._trackedCache;
   }
 
+  // Übersetzt UI-Text nach HA-Sprache (DE Quelle, EN Standard).
+  _t(s) { return neoT(this._hass, s); }
+
   _state(id) { return this._hass?.states?.[id]; }
   _attr(id, a) { return this._state(id)?.attributes?.[a]; }
   _callService(domain, service, data = {}) { this._hass?.callService(domain, service, data); }
@@ -732,7 +917,7 @@ class NeoControlCard extends NeoBaseCard {
     return id ? id.split(".")[0] : "";
   }
   _acc() { return NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue; }
-  _name(s, fallback) { return this._config?.name || s?.attributes?.friendly_name || this._config?.entity || fallback; }
+  _name(s, fallback) { return this._config?.name || s?.attributes?.friendly_name || this._config?.entity || this._t(fallback); }
 
   // ── gemeinsame Bausteine ───────────────────────────────────
   _shell(acc, active, headerRight, icon, body, minH) {
@@ -816,8 +1001,8 @@ class NeoControlCard extends NeoBaseCard {
     const isLight = d === "light";
     let pct = 0;
     if (isLight && on) pct = s?.attributes?.brightness ? Math.round((s.attributes.brightness / 255) * 100) : 0;
-    const sub = this._config?.sub ?? (on ? (isLight ? `${pct}%` : "An") : "Aus");
-    const body = this._title(this._name(s, "Schalter"), sub, isLight && on ? this._slider("bri", acc, pct, "Helligkeit") : "");
+    const sub = this._config?.sub ?? (on ? (isLight ? `${pct}%` : this._t("An")) : this._t("Aus"));
+    const body = this._title(this._name(s, "Schalter"), sub, isLight && on ? this._slider("bri", acc, pct, this._t("Helligkeit")) : "");
     return this._shell(acc, on, this._toggleEl(acc, on), this._icon(d), body, isLight ? 180 : 160);
   }
 
@@ -826,7 +1011,7 @@ class NeoControlCard extends NeoBaseCard {
     const s = this._state(id);
     const locked = s?.state === "locked";
     const acc = NEO_ACCENTS[this._config?.accent] || (locked ? NEO_ACCENTS.mint : NEO_ACCENTS.amber);
-    const sub = this._config?.sub ?? (locked ? "Verriegelt" : "Entriegelt");
+    const sub = this._config?.sub ?? (locked ? this._t("Verriegelt") : this._t("Entriegelt"));
     const right = this._badge(acc, true, locked ? "🔒" : "🔓");
     const body = this._title(this._name(s, "Schloss"), sub);
     return this._shell(acc, locked, right, this._config?.icon || (locked ? "lock" : "unlock"), body);
@@ -839,8 +1024,8 @@ class NeoControlCard extends NeoBaseCard {
     const on = s?.state === "on";
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.mint;
     const pct = typeof a.percentage === "number" ? a.percentage : (on ? 100 : 0);
-    const sub = this._config?.sub ?? (on ? `${pct}%` : "Aus");
-    const body = this._title(this._name(s, "Ventilator"), sub, on ? this._slider("pct", acc, pct, "Stufe") : "");
+    const sub = this._config?.sub ?? (on ? `${pct}%` : this._t("Aus"));
+    const body = this._title(this._name(s, "Ventilator"), sub, on ? this._slider("pct", acc, pct, this._t("Stufe")) : "");
     return this._shell(acc, on, this._toggleEl(acc, on), this._icon("fan"), body, 180);
   }
 
@@ -852,9 +1037,9 @@ class NeoControlCard extends NeoBaseCard {
     const acc = this._acc();
     const pos = typeof a.current_position === "number" ? a.current_position : null;
     const active = state === "open" || state === "opening" || (pos != null && pos > 0);
-    const right = this._badge(acc, false, pos != null ? `${pos}% offen` : (COVER_LABEL[state] || state));
+    const right = this._badge(acc, false, pos != null ? `${pos}${this._t("% offen")}` : this._t(COVER_LABEL[state] || state));
     const row = `<div style="display:flex;gap:8px;margin-top:10px;">
-      ${this._iconBtnTxt("up", "▲", "Öffnen")}${this._iconBtnTxt("stop", "■", "Stopp")}${this._iconBtnTxt("down", "▼", "Schließen")}</div>`;
+      ${this._iconBtnTxt("up", "▲", this._t("Öffnen"))}${this._iconBtnTxt("stop", "■", this._t("Stopp"))}${this._iconBtnTxt("down", "▼", this._t("Schließen"))}</div>`;
     return this._shell(acc, active, right, this._icon("cover"), this._title(this._name(s, "Rollladen"), "", row), 200);
   }
   _iconBtnTxt(val, glyph, title) {
@@ -875,14 +1060,14 @@ class NeoControlCard extends NeoBaseCard {
     const actCol = action === "cooling" ? NEO_ACCENTS.blue.c : action === "heating" ? NEO_ACCENTS.amber.c : acc.c;
     const active = (action && action !== "idle" && action !== "off") || (!action && mode !== "off" && mode !== "unavailable");
     const accE = { c: actCol, glow: actCol + "55" };
-    const badge = action ? ({ heating: "Heizt", cooling: "Kühlt", drying: "Entfeuchtet", fan: "Lüftet", idle: "Bereit", off: "Aus" }[action] || action)
-      : ({ heat: "Heizen", cool: "Kühlen", auto: "Auto", heat_cool: "Auto", off: "Aus" }[mode] || mode);
+    const badge = this._t(action ? ({ heating: "Heizt", cooling: "Kühlt", drying: "Entfeuchtet", fan: "Lüftet", idle: "Bereit", off: "Aus" }[action] || action)
+      : ({ heat: "Heizen", cool: "Kühlen", auto: "Auto", heat_cool: "Auto", off: "Aus" }[mode] || mode));
     const cur = a.current_temperature;
     const row = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;">
         ${this._iconBtn("data-temp", "dec", "minus", accE)}
         <div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${target != null ? target : "—"}</span><span style="font-size:15px;color:var(--neo-text2);">${unit}</span></div>
         ${this._iconBtn("data-temp", "inc", "plus", accE)}
-      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">Aktuell ${cur}${unit}</div>` : ""}`;
+      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">${this._t("Aktuell")} ${cur}${unit}</div>` : ""}`;
     return this._shell(accE, active, this._badge(accE, active, badge), this._icon("climate"), this._title(this._name(s, "Klima"), "", row), 200);
   }
 
@@ -897,14 +1082,14 @@ class NeoControlCard extends NeoBaseCard {
     const title = a.media_title || "";
     const artist = a.media_artist || a.app_name || "";
     const name = this._name(s, "Media");
-    const line2 = title ? (artist || name) : (MEDIA_LABEL[state] || state);
+    const line2 = title ? (artist || name) : this._t(MEDIA_LABEL[state] || state);
     const transport = `<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;">
         ${this._iconBtn("data-media", "media_previous_track", "prev", acc)}
         ${this._iconBtn("data-media", "media_play_pause", playing ? "pause" : "play", acc)}
         ${this._iconBtn("data-media", "media_next_track", "next", acc)}</div>`;
     const body = `<div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || name}</div>
       ${line2 ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${line2}</div>` : ""}${transport}`;
-    return this._shell(acc, active, this._badge(acc, false, MEDIA_LABEL[state] || state), this._icon("media_player"), body, 200);
+    return this._shell(acc, active, this._badge(acc, false, this._t(MEDIA_LABEL[state] || state)), this._icon("media_player"), body, 200);
   }
 
   _renderAlarm() {
@@ -915,17 +1100,17 @@ class NeoControlCard extends NeoBaseCard {
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS[meta.accent] || NEO_ACCENTS.blue;
     const armed = state !== "disarmed" && state !== "unavailable";
     const controls = state === "disarmed"
-      ? `${this._flatBtn("data-alarm", "alarm_arm_home", "Zuhause", acc)}${this._flatBtn("data-alarm", "alarm_arm_away", "Abwesend", acc)}`
-      : `${this._flatBtn("data-alarm", "alarm_disarm", "Unscharf", acc, true)}`;
+      ? `${this._flatBtn("data-alarm", "alarm_arm_home", this._t("Zuhause"), acc)}${this._flatBtn("data-alarm", "alarm_arm_away", this._t("Abwesend"), acc)}`
+      : `${this._flatBtn("data-alarm", "alarm_disarm", this._t("Unscharf"), acc, true)}`;
     const row = `<div style="display:flex;gap:8px;margin-top:10px;">${controls}</div>`;
-    return this._shell(acc, armed, this._badge(acc, armed, meta.label), this._config?.icon || meta.icon, this._title(this._name(s, "Alarm"), "", row), 190);
+    return this._shell(acc, armed, this._badge(acc, armed, this._t(meta.label)), this._config?.icon || meta.icon, this._title(this._name(s, "Alarm"), "", row), 190);
   }
 
   _renderAction(d) {
     const id = this._config?.entity;
     const s = this._state(id);
     const acc = this._acc();
-    const sub = this._config?.sub ?? (d === "scene" ? "Szene" : d === "button" ? "Taster" : "Skript");
+    const sub = this._config?.sub ?? this._t(d === "scene" ? "Szene" : d === "button" ? "Taster" : "Skript");
     return this._shell(acc, false, "", this._icon(d), this._title(this._name(s, "Aktion"), sub), 160);
   }
 
@@ -936,8 +1121,8 @@ class NeoControlCard extends NeoBaseCard {
     const bri = briN ? Math.round((briSum / briN / 255) * 100) : 0;
     const on = onCount > 0;
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.amber;
-    const sub = this._config?.sub ?? `${onCount}/${ids.length} an`;
-    const body = this._title(this._config?.name || "Licht-Gruppe", sub, on ? this._slider("bri", acc, bri, "Helligkeit") : "");
+    const sub = this._config?.sub ?? `${onCount}/${ids.length} ${this._t("an")}`;
+    const body = this._title(this._config?.name || this._t("Licht-Gruppe"), sub, on ? this._slider("bri", acc, bri, this._t("Helligkeit")) : "");
     return this._shell(acc, on, this._toggleEl(acc, on), this._config?.icon || "lightbulb", body);
   }
 
@@ -1053,7 +1238,7 @@ class NeoDisplayCard extends NeoBaseCard {
     const a = s?.attributes || {};
     const value = s?.state ?? "—";
     const unit = this._config?.unit ?? a.unit_of_measurement ?? "";
-    const name = this._config?.name || a.friendly_name || id || "Wert";
+    const name = this._config?.name || a.friendly_name || id || this._t("Wert");
     const icon = this._config?.icon || "thermo";
     const acc = this._acc();
     const sub = this._config?.sub || "";
@@ -1082,7 +1267,7 @@ class NeoDisplayCard extends NeoBaseCard {
     const s = this._state(id);
     const a = s?.attributes || {};
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
-    const name = this._config?.name || a.friendly_name || id || "Kamera";
+    const name = this._config?.name || a.friendly_name || id || this._t("Kamera");
     const icon = this._config?.icon || "camera";
     const pic = a.entity_picture;
     const image = pic
@@ -2186,108 +2371,6 @@ const NeoStore = {
 
 window.NeoDashboard.store = NeoStore;
 
-// Neo Dashboard Kit — i18n
-// Die UI ist in Deutsch verfasst (Quelle). neoT(hass, de) liefert die englische
-// Übersetzung, wenn die HA-Sprache NICHT Deutsch ist — sonst den deutschen Text.
-// So folgt die Oberfläche automatisch der Home-Assistant-Sprache (Englisch als
-// Standard/international, Deutsch für deutsche Nutzer) ohne eigenen Schalter.
-//
-// Platzhalter: Strings können {name}/{author}/… enthalten und werden am
-// Aufrufort per .replace() gefüllt.
-
-// Deutsch → Englisch. Fehlt ein Eintrag, wird der deutsche Text zurückgegeben.
-const EN = {
-  // Sektionen
-  "Kartentyp": "Card type",
-  "Einstellungen": "Settings",
-  // Startseite
-  "Glassmorphism-Karten für dein Dashboard. Wähle oben einen <b>Kartentyp</b> — danach erscheinen hier die Einstellungen und rechts die Live-Vorschau.":
-    "Glassmorphism cards for your dashboard. Pick a <b>card type</b> above — the settings appear here and the live preview on the right.",
-  // Erweiterungen / Module
-  "Module": "Modules",
-  "Erweiterungen": "Extensions",
-  "Für diese Karte sind noch keine Module aktiv. Über <b>➕ Modul hinzufügen</b> kommst du zum Store.":
-    "No modules are active for this card yet. Use <b>➕ Add module</b> to open the store.",
-  "<b>Karten</b> &amp; <b>Module</b> installieren (Store oder Code einfügen) — oder oben einen <b>Kartentyp</b> wählen, um Module für eine Karte zu aktivieren.":
-    "Install <b>cards</b> &amp; <b>modules</b> (store or paste code) — or pick a <b>card type</b> above to enable modules for a card.",
-  "Modul hinzufügen": "Add module",
-  "Karte oder Modul installieren": "Install card or module",
-  "Store": "Store",
-  "Code einfügen": "Paste code",
-  "Installiert": "Installed",
-  // Store
-  "⚠️ Für den Store wird die Integration <b>Neo Dashboard Tools</b> benötigt (serverseitiges Speichern + Laden).":
-    "⚠️ The store needs the <b>Neo Dashboard Tools</b> integration (server-side save + load).",
-  "Lade Store …": "Loading store …",
-  "Store-Index konnte nicht geladen werden.": "Could not load the store index.",
-  "Erneut": "Retry",
-  "Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.":
-    "No store modules available right now. Add premium cards (e.g. weather) via <b>Paste code</b>.",
-  "✓ Installiert": "✓ Installed",
-  "Installieren": "Install",
-  "Aktualisieren": "Update",
-  "Entfernen": "Remove",
-  "von": "by",
-  "Karte": "Card",
-  "Modul": "Module",
-  // Code einfügen
-  "ℹ️ Ohne <b>Neo Dashboard Tools</b> wird das Modul nur für diese Sitzung geladen (nicht dauerhaft gespeichert).":
-    "ℹ️ Without <b>Neo Dashboard Tools</b> the module loads for this session only (not saved permanently).",
-  "Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …":
-    "Paste module or card code (registerModule / registerCard, e.g. premium cards) …",
-  "Hinzufügen": "Add",
-  // Meldungen
-  "Bitte Code einfügen.": "Please paste some code.",
-  "Code konnte nicht geladen werden.": "Could not load the code.",
-  "Kein Modul/Karte erkannt (registerModule/registerCard fehlt?).":
-    "No module/card detected (missing registerModule/registerCard?).",
-  "✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.":
-    "✓ Card “{name}” added — selectable in the card type above.",
-  "✓ Modul „{name}” hinzugefügt.": "✓ Module “{name}” added.",
-  "Speichern fehlgeschlagen: {err}": "Saving failed: {err}",
-  "Installiere …": "Installing …",
-  "✓ „{name}” installiert.": "✓ “{name}” installed.",
-  "Installation fehlgeschlagen: {err}": "Installation failed: {err}",
-  "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":
-    "Module removed. (Already-loaded code disappears after a reload.)",
-  // Reorder / Aktionen
-  "Layer nach oben": "Move layer up",
-  "Layer nach unten": "Move layer down",
-  "Modul entfernen": "Remove module",
-  // Kartentyp-Picker
-  "Kartentyp wählen …": "Choose a card type …",
-  "🔍 Karte suchen …": "🔍 Search cards …",
-  "Keine Treffer.": "No matches.",
-  "Standard": "Standard",
-  "Premium": "Premium",
-  "Community": "Community",
-  // Info & Support
-  "Info &amp; Support": "Info &amp; Support",
-  "Ressourcen &amp; Hilfe": "Resources &amp; help",
-  "Fragen oder ein Problem? Die Doku und die Community helfen weiter.":
-    "Questions or a problem? The docs and the community can help.",
-  "📖 Dokumentation": "📖 Documentation",
-  "🐞 Probleme melden": "🐞 Report issues",
-  "💬 Diskussionen": "💬 Discussions",
-  "❤️ Projekt unterstützen": "❤️ Support the project",
-  "Hi! Ich entwickle <b>Neo Dashboard Kit</b> in meiner Freizeit und stecke viel Herzblut hinein. Wenn es dir gefällt, ist jede Unterstützung eine riesige Motivation — so kann ich weiter neue Karten &amp; Module bauen. Auf Patreon gibt es außerdem exklusive Premium-Karten und Vorlagen.":
-    "Hi! I build <b>Neo Dashboard Kit</b> in my spare time and put a lot of heart into it. If you enjoy it, any support is huge motivation — it lets me keep building new cards &amp; modules. Patreon also has exclusive premium cards and templates.",
-  "☕ Kaffee spendieren": "☕ Buy me a coffee",
-  "💳 PayPal": "💳 PayPal",
-  "♥ Patreon": "♥ Patreon",
-  "Danke, dass du Teil dieser Community bist! 🎉": "Thanks for being part of this community! 🎉",
-};
-
-function neoLang(hass) {
-  return (hass && hass.language ? String(hass.language) : "en").slice(0, 2).toLowerCase();
-}
-
-// Übersetzt den deutschen Quelltext je nach HA-Sprache.
-function neoT(hass, de) {
-  if (neoLang(hass) === "de") return de;
-  return EN[de] || de;
-}
-
 // Neo Card Editor — type picker + selected card's editor + card-scoped
 // module manager + always-visible "Info & Support" panel.
 
@@ -2923,7 +3006,7 @@ class NeoCardEditor extends HTMLElement {
     const cur = this._config.card_type;
     const m = NeoDashboardRegistry.getMeta(cur) || {};
     const curCat = catOf(m.author);
-    const curName = m.name || cur || this._t("Kartentyp wählen …");
+    const curName = m.name ? this._t(m.name) : (cur || this._t("Kartentyp wählen …"));
     const groups = this._typeGroups();
     // Aufklapp-Zustand je Kategorie (Standard + die aktuelle Kategorie offen,
     // Rest eingeklappt). Nutzer-Klicks werden in this._typeOpen gemerkt.
@@ -2977,8 +3060,8 @@ class NeoCardEditor extends HTMLElement {
             <div class="nt-section ${open(grp.group) ? "" : "collapsed"}" data-grp="${grp.group}">
               <div class="nt-grp" data-grp="${grp.group}"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};"></span>${this._t(grp.group)}<span class="nt-gcount">${grp.items.length}</span><span class="nt-gcv">›</span></div>
               <div class="nt-opts">
-              ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}" data-s="${(it.name + " " + it.value + " " + grp.group).toLowerCase()}">
-                <span class="nt-ic">${it.icon}</span><span class="nt-nm">${it.name}</span>
+              ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}" data-s="${(this._t(it.name) + " " + it.name + " " + it.value + " " + grp.group).toLowerCase()}">
+                <span class="nt-ic">${it.icon}</span><span class="nt-nm">${this._t(it.name)}</span>
               </div>`).join("")}
               </div>
             </div>`).join("")}
@@ -3192,7 +3275,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.54", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.55", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3204,7 +3287,7 @@ window.dispatchEvent(new CustomEvent("neo-dashboard-ready"));
 
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.54 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.55 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

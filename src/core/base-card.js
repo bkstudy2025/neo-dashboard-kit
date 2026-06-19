@@ -5,6 +5,7 @@
 import { NEO_CSS } from "./tokens.js";
 import { NEO_BP, normalizeLayout, neoViewportLayout } from "./layout.js";
 import { NeoModules } from "./modules.js";
+import { neoT } from "./i18n.js";
 
 export class NeoBaseCard extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: "open" }); }
@@ -144,6 +145,9 @@ export class NeoBaseCard extends HTMLElement {
     this._trackedCache = [...ids];
     return this._trackedCache;
   }
+
+  // Übersetzt UI-Text nach HA-Sprache (DE Quelle, EN Standard).
+  _t(s) { return neoT(this._hass, s); }
 
   _state(id) { return this._hass?.states?.[id]; }
   _attr(id, a) { return this._state(id)?.attributes?.[a]; }

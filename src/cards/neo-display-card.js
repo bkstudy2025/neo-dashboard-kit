@@ -27,7 +27,7 @@ class NeoDisplayCard extends NeoBaseCard {
     const a = s?.attributes || {};
     const value = s?.state ?? "—";
     const unit = this._config?.unit ?? a.unit_of_measurement ?? "";
-    const name = this._config?.name || a.friendly_name || id || "Wert";
+    const name = this._config?.name || a.friendly_name || id || this._t("Wert");
     const icon = this._config?.icon || "thermo";
     const acc = this._acc();
     const sub = this._config?.sub || "";
@@ -56,7 +56,7 @@ class NeoDisplayCard extends NeoBaseCard {
     const s = this._state(id);
     const a = s?.attributes || {};
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
-    const name = this._config?.name || a.friendly_name || id || "Kamera";
+    const name = this._config?.name || a.friendly_name || id || this._t("Kamera");
     const icon = this._config?.icon || "camera";
     const pic = a.entity_picture;
     const image = pic

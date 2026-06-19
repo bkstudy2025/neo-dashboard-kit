@@ -641,7 +641,7 @@ class NeoCardEditor extends HTMLElement {
     const cur = this._config.card_type;
     const m = NeoDashboardRegistry.getMeta(cur) || {};
     const curCat = catOf(m.author);
-    const curName = m.name || cur || this._t("Kartentyp wählen …");
+    const curName = m.name ? this._t(m.name) : (cur || this._t("Kartentyp wählen …"));
     const groups = this._typeGroups();
     // Aufklapp-Zustand je Kategorie (Standard + die aktuelle Kategorie offen,
     // Rest eingeklappt). Nutzer-Klicks werden in this._typeOpen gemerkt.
@@ -695,8 +695,8 @@ class NeoCardEditor extends HTMLElement {
             <div class="nt-section ${open(grp.group) ? "" : "collapsed"}" data-grp="${grp.group}">
               <div class="nt-grp" data-grp="${grp.group}"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};"></span>${this._t(grp.group)}<span class="nt-gcount">${grp.items.length}</span><span class="nt-gcv">›</span></div>
               <div class="nt-opts">
-              ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}" data-s="${(it.name + " " + it.value + " " + grp.group).toLowerCase()}">
-                <span class="nt-ic">${it.icon}</span><span class="nt-nm">${it.name}</span>
+              ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}" data-s="${(this._t(it.name) + " " + it.name + " " + it.value + " " + grp.group).toLowerCase()}">
+                <span class="nt-ic">${it.icon}</span><span class="nt-nm">${this._t(it.name)}</span>
               </div>`).join("")}
               </div>
             </div>`).join("")}
