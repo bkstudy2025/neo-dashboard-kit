@@ -18,7 +18,7 @@ die sich an dein Gerät anpasst. Erweiterbar über **Module** und **Premium**.
 ### Voraussetzungen
 | Plugin | HACS-Kategorie | Pflicht? |
 |---|---|---|
-| [Card Mod](https://github.com/thomasloven/lovelace-card-mod) | Frontend | ◻️ Optional — nur fürs Theme (Dialog-/Mobil-Header-Politur). Die Karten brauchen es **nicht**. |
+| _keine Frontend-Abhängigkeit_ | — | Die Karten brauchen **kein** Card Mod o. Ä. — Mobil-Header & Glas-Dialoge bringt Neo selbst mit. |
 | [Neo Dashboard Tools](https://github.com/bkstudy2025/neo-dashboard-tools) | Integration | ⭐ Empfohlen — Modul-Store & dauerhaftes Speichern |
 
 ### 1. Installieren (HACS)

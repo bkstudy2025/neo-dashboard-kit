@@ -306,46 +306,8 @@ Neo Dashboard:
       neo-accent-violet: "#9B59D9"
       neo-accent-rose: "#E05555"
 
-  # ── Optional: nur wirksam, wenn die HACS-Frontend-Erweiterung "Card Mod"
-  # installiert ist. Ohne Card Mod ignoriert Home Assistant diese Schlüssel —
-  # das Theme funktioniert weiterhin, nur ohne Dialog-/Mobil-Header-Politur.
-  # Optional: only takes effect if the "Card Mod" frontend add-on is installed.
-  # Without it Home Assistant ignores these keys; the theme still works.
-  card-mod-theme: Neo Dashboard
-
-  # Header auf Mobile ausblenden (wie Bubble)
-  card-mod-root-yaml: |
-    .: |
-      @media only screen and (max-width: 768px) {
-          .header {
-            display: none;
-            opacity: 0;
-          }
-          #view {
-            padding-top: 0 !important;
-            margin-top: 0 !important;
-            height: calc(100vh - env(safe-area-inset-top)) !important;
-          }
-      }
-
-  # Dialoge: Backdrop-Blur + abgerundete Ecken
-  card-mod-more-info-yaml: |
-    $: |
-      .mdc-dialog .mdc-dialog__scrim {
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        background: rgba(0,0,0,0.55);
-      }
-      .mdc-dialog .mdc-dialog__container .mdc-dialog__surface {
-        box-shadow: none !important;
-        border-radius: var(--ha-card-border-radius);
-      }
-    .: |
-      :host {
-        --ha-card-box-shadow: none;
-      }
-
-  card-mod-card: |
-    ha-card {
-      transition: none;
-    }
+  # Marker: aktiviert Neos eigenen Global-Styler (Mobil-Header ausblenden +
+  # Glas-Dialoge). KEIN Card Mod nötig — das übernimmt neo-dashboard.js selbst.
+  # Marker: enables Neo's own global styler (hide mobile header + glass dialogs).
+  # No Card Mod required — handled by neo-dashboard.js itself.
+  neo-dashboard-theme: "1"
