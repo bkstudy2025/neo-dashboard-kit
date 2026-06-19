@@ -37,9 +37,14 @@ export function neoLoadModule(code) {
     const key = code.length + ":" + code.slice(0, 96);
     window.__neoModules.add(key);
 
+    // Backward compatibility for the current editor: it already accepts
+    // res.cards for updates. Expose touched modules there too so an existing
+    // module update is never misreported as "no module/card detected".
+    const editorCards = cards.length ? cards : modules.map((m) => ({ type: m.id, name: m.name || m.id, isModule: true }));
+
     // Live-Swap aller neo-card-Instanzen auf die (neue) Modul-Version – kein Reload nötig.
     window.dispatchEvent(new CustomEvent("neo-module-changed"));
-    return { ok: true, modules, cards };
+    return { ok: true, modules, cards: editorCards };
   } catch (e) {
     console.error("[Neo Module] Fehler beim Laden:", e);
     return { ok: false, modules: [], cards: [] };
