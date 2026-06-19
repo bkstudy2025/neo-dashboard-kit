@@ -67,7 +67,9 @@ export function neoInitGlobalStyle() {
   // Dialoge werden dynamisch eingehängt → den HA-Root beobachten.
   const ha = document.querySelector?.("home-assistant");
   if (ha?.shadowRoot && typeof MutationObserver !== "undefined") {
-    try { new MutationObserver(apply).observe(ha.shadowRoot, { childList: true, subtree: true }); }
+    // Nur direkte Kinder beobachten (Dialoge werden dort eingehängt) — NICHT
+    // subtree, sonst feuert apply() bei jeder DOM-Änderung im ganzen Frontend.
+    try { new MutationObserver(apply).observe(ha.shadowRoot, { childList: true }); }
     catch (e) { /* ignore */ }
   }
   // Während des Frontend-Starts ein paar Versuche, dann Schluss.

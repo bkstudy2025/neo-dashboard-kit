@@ -898,6 +898,11 @@ class NeoBaseCard extends HTMLElement {
       else if (v && typeof v === "object") Object.values(v).forEach(scan);
     };
     scan(this._config || {});
+    // Sicher: die expliziten Entity-Felder immer tracken (auch falls das Regex
+    // einen ungewöhnlichen entity_id verfehlt) → Karte bleibt live.
+    const c = this._config || {};
+    if (typeof c.entity === "string") ids.add(c.entity);
+    (Array.isArray(c.entities) ? c.entities : []).forEach((e) => { if (typeof e === "string") ids.add(e); });
     this._trackedCache = [...ids];
     return this._trackedCache;
   }
@@ -2522,6 +2527,7 @@ class NeoCardEditor extends HTMLElement {
 
     this._mountSub();
     this._updateGuidedState();
+    this._builtLang = neoLang(this._hass); // verhindert unnötigen Rebuild beim 1. hass
   }
 
   // Einheitliche Glas-Optik für die Editor-Sektionen (Neo-Designsprache).
@@ -2810,7 +2816,7 @@ class NeoCardEditor extends HTMLElement {
       return `<div class="nmod-note">${this._t("Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.")}</div>`;
     }
 
-    const rows = catalog.map((it, i) => {
+    const rows = catalog.map((it) => {
       const installed = this._isInstalled(it.id);
       const reg = this._addonMeta(it.id);
       const update = installed && this._verGt(it.version, reg.version) ? it.version : null;
@@ -2819,7 +2825,9 @@ class NeoCardEditor extends HTMLElement {
         icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
         version: (installed && reg.version) || it.version, kind: reg.isCard ? "Karte" : "Modul",
         installed, update, homepage: it.homepage || it.repo, image: it.image, description: it.description,
-        installAttr: showInstall ? `data-install="${i}"` : "", installLabel: installed ? "Aktualisieren" : "Installieren",
+        // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
+        // gefilterte Liste zwischen Render und Klick ändert.
+        installAttr: showInstall ? `data-install-id="${it.id}"` : "", installLabel: installed ? "Aktualisieren" : "Installieren",
         uninstallId: installed ? it.id : null,
       });
     });
@@ -2852,9 +2860,10 @@ class NeoCardEditor extends HTMLElement {
       const code = (q("#nmod-code").value || "").trim();
       this._pasteModule(code);
     });
-    this._modPanel.querySelectorAll("[data-install]").forEach((b) =>
+    this._modPanel.querySelectorAll("[data-install-id]").forEach((b) =>
       b.addEventListener("click", () => {
-        this._installFromStore(this._catalog()[+b.getAttribute("data-install")]);
+        const id = b.getAttribute("data-install-id");
+        this._installFromStore((this._storeItems || []).find((it) => it.id === id));
       }));
     this._modPanel.querySelectorAll("[data-uninstall]").forEach((b) =>
       b.addEventListener("click", () => this._removeInstalled(b.getAttribute("data-uninstall"))));
@@ -3367,7 +3376,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.59", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.60", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3442,7 +3451,9 @@ function neoInitGlobalStyle() {
   // Dialoge werden dynamisch eingehängt → den HA-Root beobachten.
   const ha = document.querySelector?.("home-assistant");
   if (ha?.shadowRoot && typeof MutationObserver !== "undefined") {
-    try { new MutationObserver(apply).observe(ha.shadowRoot, { childList: true, subtree: true }); }
+    // Nur direkte Kinder beobachten (Dialoge werden dort eingehängt) — NICHT
+    // subtree, sonst feuert apply() bei jeder DOM-Änderung im ganzen Frontend.
+    try { new MutationObserver(apply).observe(ha.shadowRoot, { childList: true }); }
     catch (e) { /* ignore */ }
   }
   // Während des Frontend-Starts ein paar Versuche, dann Schluss.
@@ -3459,7 +3470,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.59 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.60 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

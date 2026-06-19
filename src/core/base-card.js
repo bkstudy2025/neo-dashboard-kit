@@ -142,6 +142,11 @@ export class NeoBaseCard extends HTMLElement {
       else if (v && typeof v === "object") Object.values(v).forEach(scan);
     };
     scan(this._config || {});
+    // Sicher: die expliziten Entity-Felder immer tracken (auch falls das Regex
+    // einen ungewöhnlichen entity_id verfehlt) → Karte bleibt live.
+    const c = this._config || {};
+    if (typeof c.entity === "string") ids.add(c.entity);
+    (Array.isArray(c.entities) ? c.entities : []).forEach((e) => { if (typeof e === "string") ids.add(e); });
     this._trackedCache = [...ids];
     return this._trackedCache;
   }
