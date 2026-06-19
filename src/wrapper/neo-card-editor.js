@@ -294,12 +294,27 @@ class NeoCardEditor extends HTMLElement {
       version: meta.version || mod?.version,
     };
   }
+  // Vergleicht Versionsstrings (a > b?), z. B. "1.4.0" > "1.3.9".
+  _verGt(a, b) {
+    if (!a || !b) return false;
+    const pa = String(a).split("."), pb = String(b).split(".");
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const x = parseInt(pa[i], 10) || 0, y = parseInt(pb[i], 10) || 0;
+      if (x !== y) return x > y;
+    }
+    return false;
+  }
   _storeRow(o) {
+    const status = o.installed
+      ? (o.update
+          ? ` <span class="nmod-badge upd">⬆ ${this._t("Update")} → v${o.update}</span>`
+          : ` <span class="nmod-badge ok">${this._t("✓ Installiert")}</span>`)
+      : "";
     return `<div class="nmod-store">
         <div class="nmod-store-h">
           <span class="nmod-ic">${o.icon || "🧩"}</span>
           <div class="nmod-meta">
-            <div class="nmod-name">${o.name} <span class="nmod-badge">${this._t(o.kind)}</span>${o.installed ? ` <span class="nmod-badge ok">${this._t("✓ Installiert")}</span>` : ""}</div>
+            <div class="nmod-name">${o.name} <span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
             <div class="nmod-desc">${this._t("von")} ${o.author || "?"}${o.version ? " · v" + o.version : ""}</div>
           </div>
         </div>
@@ -308,7 +323,9 @@ class NeoCardEditor extends HTMLElement {
         <div class="nmod-store-row">
           ${o.installAttr ? `<button class="nmod-mini" ${o.installAttr}>${this._t(o.installLabel)}</button>` : ""}
           ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${o.uninstallId}">${this._t("Entfernen")}</button>` : ""}
+          ${o.homepage ? `<a class="nmod-mini ghost" href="${o.homepage}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
         </div>
+        ${o.note ? `<div class="nmod-note" style="margin:6px 0 0;">${o.note}</div>` : ""}
       </div>`;
   }
 
@@ -366,20 +383,24 @@ class NeoCardEditor extends HTMLElement {
     const rows = catalog.map((it, i) => {
       const installed = this._isInstalled(it.id);
       const reg = this._addonMeta(it.id);
+      const update = installed && this._verGt(it.version, reg.version) ? it.version : null;
+      const showInstall = !installed || !!update; // installiert & aktuell → nur Entfernen/Info
       return this._storeRow({
         icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
         version: (installed && reg.version) || it.version, kind: reg.isCard ? "Karte" : "Modul",
-        installed, image: it.image, description: it.description,
-        installAttr: `data-install="${i}"`, installLabel: installed ? "Aktualisieren" : "Installieren",
+        installed, update, homepage: it.homepage || it.repo, image: it.image, description: it.description,
+        installAttr: showInstall ? `data-install="${i}"` : "", installLabel: installed ? "Aktualisieren" : "Installieren",
         uninstallId: installed ? it.id : null,
       });
     });
-    // Installierte ohne Katalog-Eintrag (kein "Aktualisieren" — keine Quelle).
+    // Installierte ohne Katalog-Eintrag (z. B. per Code eingefügt) — keine Quelle
+    // zum Aktualisieren; Hinweis erklärt den Weg.
     extra.forEach((id) => {
       const reg = this._addonMeta(id);
       rows.push(this._storeRow({
         icon: reg.icon, name: reg.name, author: reg.author, version: reg.version,
         kind: reg.isCard ? "Karte" : "Modul", installed: true, uninstallId: id,
+        note: this._t("Per Code eingefügt — Update durch erneutes Einfügen."),
       }));
     });
     return rows.join("");
@@ -470,9 +491,14 @@ class NeoCardEditor extends HTMLElement {
   }
 
   async _removeInstalled(id) {
-    try {
-      if (NeoStore.available()) await NeoStore.delete(id);
-    } catch (e) { /* ignore */ }
+    const isCard = !!NeoDashboardRegistry.getCard(id);
+    // Serverseitig löschen — Fehler sichtbar machen (nicht verschlucken).
+    if (NeoStore.available()) {
+      try { await NeoStore.delete(id); }
+      catch (e) { return this._msg(this._t("Entfernen fehlgeschlagen: {err}").replace("{err}", e?.message || e), true); }
+    }
+    // Layer-Modul sofort live entladen; Karten brauchen einen Reload.
+    if (!isCard && NeoModules.get(id)) NeoModules.unregister(id);
     // Aus der aktiven Konfiguration nehmen, falls aktiviert.
     if (this._isModEnabled(id)) {
       const list = this._enabledList().filter((m) => m.id !== id);
@@ -481,7 +507,7 @@ class NeoCardEditor extends HTMLElement {
       this._fire();
     }
     await this._refreshInstalled();
-    this._msg(this._t("Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)"));
+    this._msg(this._t(isCard ? "Karte entfernt — zum vollständigen Entladen einmal neu laden." : "Modul entfernt."));
   }
 
   _modStyles() {
@@ -533,6 +559,7 @@ class NeoCardEditor extends HTMLElement {
           border:1px solid var(--divider-color,rgba(255,255,255,.15)); background:var(--secondary-background-color,#0d1020);
           color:var(--primary-text-color); font-family:ui-monospace,monospace; font-size:12px; padding:10px; }
         .nmod-badge.ok { color:#5EDCB8; background:rgba(94,220,184,.16); border-color:rgba(94,220,184,.4); }
+        .nmod-badge.upd { color:#FFB26B; background:rgba(255,178,107,.16); border-color:rgba(255,178,107,.45); }
         .nmod-store-row { display:flex; gap:8px; }
         .nmod-mini { margin-top:8px; padding:7px 12px; border-radius:9px; cursor:pointer; border:none;
           background:var(--primary-color,#7C9CFF); color:#fff; font-size:12.5px; font-weight:600; }
