@@ -2,6 +2,8 @@
 // Talks to the "Neo Dashboard Tools" integration. Persists modules
 // server-side (file-based) so the dashboard config stays clean.
 // Falls back gracefully (available=false) when not installed.
+import { NeoDashboardRegistry } from "../core/registry.js";
+import { NeoModules } from "../core/modules.js";
 import { neoLoadModule } from "./module-loader.js";
 
 export const NeoStore = {
@@ -39,11 +41,18 @@ export const NeoStore = {
   },
 
   async save(name, code) {
-    return this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/save", name, code });
+    const res = await this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/save", name, code });
+    this._cache = this._cache.filter((m) => m.name !== name).concat([{ name, code }]);
+    return res;
   },
 
   async delete(name) {
-    return this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/delete", name });
+    const res = await this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/delete", name });
+    this._cache = this._cache.filter((m) => m.name !== name);
+    NeoModules.unregister(name);
+    NeoDashboardRegistry.unregisterCard?.(name);
+    window.dispatchEvent(new CustomEvent("neo-module-changed"));
+    return res;
   },
 
   // Server-side fetch of an https URL (Module Store) — avoids browser CORS.
