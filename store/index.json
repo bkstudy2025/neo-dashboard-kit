@@ -7,7 +7,8 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "🟢",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-state-glow.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-state-glow.js",
+    "homepage": "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store"
   },
   {
     "id": "neo-cover-position",
@@ -17,6 +18,7 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "🪟",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-cover-position.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-cover-position.js",
+    "homepage": "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store"
   }
 ]

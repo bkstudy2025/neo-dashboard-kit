@@ -136,6 +136,13 @@ const EN = {
   "Überschrift / Trenner zum Strukturieren": "Heading / divider for structure",
   "Überschrift / Trenner": "Heading / Divider",
   "Neo Karte": "Neo Card",
+  // Store: Update/Entfernen/Info
+  "Update": "Update", "Info": "Info",
+  "Per Code eingefügt — Update durch erneutes Einfügen.": "Pasted code — update by pasting again.",
+  "Entfernen fehlgeschlagen: {err}": "Removal failed: {err}",
+  "Modul entfernt.": "Module removed.",
+  "Karte entfernt — zum vollständigen Entladen einmal neu laden.":
+    "Card removed — reload once to fully unload it.",
 };
 
 export function neoLang(hass) {

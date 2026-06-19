@@ -65,7 +65,9 @@ Beispiel.
 | `id` | eindeutige ID (muss der `id` im Modul entsprechen) |
 | `target` | für welche Karte(n) das Modul angeboten wird |
 | `url` | jsDelivr-URL zur eigenständigen Modul-Datei |
-| `icon`, `image`, `description`, `author`, `version` | Anzeige im Store |
+| `version` | Versionsnummer — der Store vergleicht sie mit der installierten und zeigt **„⬆ Update"** an, wenn neuer |
+| `homepage` | (optional) Link für den **Info**-Button (Doku/Repo) |
+| `icon`, `image`, `description`, `author` | Anzeige im Store |
 
 > jsDelivr cacht `@main` einige Stunden — neue/aktualisierte Module erscheinen
 > daher mit etwas Verzögerung. Premium-Module (Patreon) gehören **nicht** in den
