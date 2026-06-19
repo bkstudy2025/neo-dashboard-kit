@@ -16,6 +16,15 @@ export const NeoDashboardRegistry = {
     _registry.set(type, { cls, meta, tag }); // overwrite on update
     console.info(`[Neo Dashboard] Registered: ${type} (${tag})`);
   },
+  unregisterCard(type) {
+    if (!type || type === "neo-card") return false;
+    const removed = _registry.delete(type);
+    if (removed) {
+      console.info(`[Neo Dashboard] Unregistered: ${type}`);
+      window.dispatchEvent(new CustomEvent("neo-module-changed"));
+    }
+    return removed;
+  },
   getCard(type) {
     return _registry.get(type)?.cls;
   },
