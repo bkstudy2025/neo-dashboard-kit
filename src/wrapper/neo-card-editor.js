@@ -92,6 +92,7 @@ class NeoCardEditor extends HTMLElement {
 
     this._mountSub();
     this._updateGuidedState();
+    this._builtLang = neoLang(this._hass); // verhindert unnötigen Rebuild beim 1. hass
   }
 
   // Einheitliche Glas-Optik für die Editor-Sektionen (Neo-Designsprache).
@@ -380,7 +381,7 @@ class NeoCardEditor extends HTMLElement {
       return `<div class="nmod-note">${this._t("Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.")}</div>`;
     }
 
-    const rows = catalog.map((it, i) => {
+    const rows = catalog.map((it) => {
       const installed = this._isInstalled(it.id);
       const reg = this._addonMeta(it.id);
       const update = installed && this._verGt(it.version, reg.version) ? it.version : null;
@@ -389,7 +390,9 @@ class NeoCardEditor extends HTMLElement {
         icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
         version: (installed && reg.version) || it.version, kind: reg.isCard ? "Karte" : "Modul",
         installed, update, homepage: it.homepage || it.repo, image: it.image, description: it.description,
-        installAttr: showInstall ? `data-install="${i}"` : "", installLabel: installed ? "Aktualisieren" : "Installieren",
+        // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
+        // gefilterte Liste zwischen Render und Klick ändert.
+        installAttr: showInstall ? `data-install-id="${it.id}"` : "", installLabel: installed ? "Aktualisieren" : "Installieren",
         uninstallId: installed ? it.id : null,
       });
     });
@@ -422,9 +425,10 @@ class NeoCardEditor extends HTMLElement {
       const code = (q("#nmod-code").value || "").trim();
       this._pasteModule(code);
     });
-    this._modPanel.querySelectorAll("[data-install]").forEach((b) =>
+    this._modPanel.querySelectorAll("[data-install-id]").forEach((b) =>
       b.addEventListener("click", () => {
-        this._installFromStore(this._catalog()[+b.getAttribute("data-install")]);
+        const id = b.getAttribute("data-install-id");
+        this._installFromStore((this._storeItems || []).find((it) => it.id === id));
       }));
     this._modPanel.querySelectorAll("[data-uninstall]").forEach((b) =>
       b.addEventListener("click", () => this._removeInstalled(b.getAttribute("data-uninstall"))));
