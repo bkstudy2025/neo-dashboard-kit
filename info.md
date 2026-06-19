@@ -10,7 +10,7 @@ Glassmorphism-Karten für Home Assistant — eine Karte, die sich anpasst.
 📚 **Docs:** [🇩🇪 Deutsch](https://github.com/bkstudy2025/neo-dashboard-kit/blob/main/docs/de/README.md) · [🇬🇧 English](https://github.com/bkstudy2025/neo-dashboard-kit/blob/main/docs/en/README.md)
 
 ## Prerequisites / Voraussetzungen
-- **Card Mod** (HACS · Frontend) — required / erforderlich
+- **Card Mod** (HACS · Frontend) — optional, theme polish only / optional, nur Theme-Politur
 - **Neo Dashboard Tools** (HACS · Integration) — recommended / empfohlen
 
 ## Quick start

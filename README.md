@@ -35,7 +35,7 @@
 
 ## ⚡ Quick start
 
-1. **Prerequisites:** [Card Mod](https://github.com/thomasloven/lovelace-card-mod) (required) ·
+1. **Prerequisites:** none required. Optional: [Card Mod](https://github.com/thomasloven/lovelace-card-mod) (theme polish only) ·
    [Neo Dashboard Tools](https://github.com/bkstudy2025/neo-dashboard-tools) (recommended).
 2. **Install** via HACS → Frontend → custom repository → `bkstudy2025/neo-dashboard-kit`.
 3. **Add a card:** *Add card* → search **“Neo Card”** → pick a card type → choose an entity. Done.
