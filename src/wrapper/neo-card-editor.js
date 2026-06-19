@@ -7,8 +7,12 @@ import { neoLogo } from "../core/branding.js";
 import { NeoModules } from "../core/modules.js";
 import { NeoStore } from "../store/module-store.js";
 import { neoLoadModule } from "../store/module-loader.js";
+import { neoT, neoLang } from "../core/i18n.js";
 
 class NeoCardEditor extends HTMLElement {
+  // Übersetzungs-Helfer: folgt der HA-Sprache (EN Standard, DE wenn HA Deutsch).
+  _t(s) { return neoT(this._hass, s); }
+
   setConfig(config) {
     const incoming = { ...config };
     // Defensive: if a partial config arrives without card_type, keep ours.
@@ -26,6 +30,9 @@ class NeoCardEditor extends HTMLElement {
     if (this._sub) this._sub.hass = h;
     (this._modForms || []).forEach((f) => { f.hass = h; });
     if (!this._installedLoaded) { this._installedLoaded = true; this._refreshInstalled(); }
+    // Sprache der UI folgt HA. Ändert sie sich (oder erstes hass), neu aufbauen.
+    const lang = neoLang(h);
+    if (this._builtLang !== lang) { this._builtLang = lang; if (this._built) this._build(); }
   }
 
   // Re-render der Modul-Sektion, wenn (Store-)Module geladen/aktualisiert werden.
@@ -54,7 +61,7 @@ class NeoCardEditor extends HTMLElement {
     const typeSec = document.createElement("div");
     typeSec.className = "neo-ed-sec";
     typeSec.innerHTML =
-      `<div class="neo-ed-sec-h"><span class="neo-ed-sec-ic">${neoIcon("grid", { size: 15, color: "currentColor" })}</span>Kartentyp</div>`;
+      `<div class="neo-ed-sec-h"><span class="neo-ed-sec-ic">${neoIcon("grid", { size: 15, color: "currentColor" })}</span>${this._t("Kartentyp")}</div>`;
     this._typeBox = document.createElement("div");
     typeSec.appendChild(this._typeBox);
     this._root.appendChild(typeSec);
@@ -68,7 +75,7 @@ class NeoCardEditor extends HTMLElement {
     this._settingsSec = document.createElement("div");
     this._settingsSec.className = "neo-ed-sec";
     this._settingsSec.innerHTML =
-      `<div class="neo-ed-sec-h"><span class="neo-ed-sec-ic">${neoIcon("settings", { size: 15, color: "currentColor" })}</span>Einstellungen</div>`;
+      `<div class="neo-ed-sec-h"><span class="neo-ed-sec-ic">${neoIcon("settings", { size: 15, color: "currentColor" })}</span>${this._t("Einstellungen")}</div>`;
     this._subContainer = document.createElement("div");
     this._settingsSec.appendChild(this._subContainer);
     this._root.appendChild(this._settingsSec);
@@ -125,11 +132,7 @@ class NeoCardEditor extends HTMLElement {
           <div class="neo-ed-landing-logo">${neoLogo({ size: 60, radius: 18 })}</div>
           <div class="neo-ed-landing-title">Neo Dashboard Kit</div>
           ${ver ? `<div class="neo-ed-landing-ver">v${ver}</div>` : ""}
-          <div class="neo-ed-landing-desc">
-            Glassmorphism-Karten für dein Dashboard. Wähle oben einen
-            <b>Kartentyp</b> — danach erscheinen hier die Einstellungen und
-            rechts die Live-Vorschau.
-          </div>
+          <div class="neo-ed-landing-desc">${this._t("Glassmorphism-Karten für dein Dashboard. Wähle oben einen <b>Kartentyp</b> — danach erscheinen hier die Einstellungen und rechts die Live-Vorschau.")}</div>
         </div>`;
     }
   }
@@ -153,10 +156,10 @@ class NeoCardEditor extends HTMLElement {
 
     // Ohne Kartentyp = globale "Erweiterungen" (Karten & Module installieren,
     // direkt von der Startseite). Mit Kartentyp = "Module" für diese Karte.
-    const heading = type ? `Module${available.length ? ` (${available.length})` : ""}` : "Erweiterungen";
+    const heading = type ? `${this._t("Module")}${available.length ? ` (${available.length})` : ""}` : this._t("Erweiterungen");
     const emptyText = type
-      ? `Für diese Karte sind noch keine Module aktiv. Über <b>➕ Modul hinzufügen</b> kommst du zum Store.`
-      : `<b>Karten</b> &amp; <b>Module</b> installieren (Store oder Code einfügen) — oder oben einen <b>Kartentyp</b> wählen, um Module für eine Karte zu aktivieren.`;
+      ? this._t("Für diese Karte sind noch keine Module aktiv. Über <b>➕ Modul hinzufügen</b> kommst du zum Store.")
+      : this._t("<b>Karten</b> &amp; <b>Module</b> installieren (Store oder Code einfügen) — oder oben einen <b>Kartentyp</b> wählen, um Module für eine Karte zu aktivieren.");
 
     this._modPanel.innerHTML = `
       ${this._modStyles()}
@@ -187,12 +190,12 @@ class NeoCardEditor extends HTMLElement {
     item.className = "nmod-item";
     const badge = mod.author ? `<span class="nmod-badge">${mod.author}</span>` : "";
     const rm = this._isInstalled(mod.id)
-      ? `<button class="nmod-rm" title="Modul entfernen" data-rm="${mod.id}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
+      ? `<button class="nmod-rm" title="${this._t("Modul entfernen")}" data-rm="${mod.id}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
       : "";
     const move = opts.reorder
       ? `<div class="nmod-move">
-           <button data-up title="Layer nach oben" ${opts.canUp ? "" : "disabled"}>▲</button>
-           <button data-down title="Layer nach unten" ${opts.canDown ? "" : "disabled"}>▼</button>
+           <button data-up title="${this._t("Layer nach oben")}" ${opts.canUp ? "" : "disabled"}>▲</button>
+           <button data-down title="${this._t("Layer nach unten")}" ${opts.canDown ? "" : "disabled"}>▼</button>
          </div>`
       : "";
     item.innerHTML = `
@@ -296,15 +299,15 @@ class NeoCardEditor extends HTMLElement {
         <div class="nmod-store-h">
           <span class="nmod-ic">${o.icon || "🧩"}</span>
           <div class="nmod-meta">
-            <div class="nmod-name">${o.name} <span class="nmod-badge">${o.kind}</span>${o.installed ? ` <span class="nmod-badge ok">✓ Installiert</span>` : ""}</div>
-            <div class="nmod-desc">von ${o.author || "?"}${o.version ? " · v" + o.version : ""}</div>
+            <div class="nmod-name">${o.name} <span class="nmod-badge">${this._t(o.kind)}</span>${o.installed ? ` <span class="nmod-badge ok">${this._t("✓ Installiert")}</span>` : ""}</div>
+            <div class="nmod-desc">${this._t("von")} ${o.author || "?"}${o.version ? " · v" + o.version : ""}</div>
           </div>
         </div>
         ${o.image ? `<img class="nmod-img" src="${o.image}" loading="lazy" />` : ""}
         ${o.description ? `<div class="nmod-desc" style="margin-top:6px;">${o.description}</div>` : ""}
         <div class="nmod-store-row">
-          ${o.installAttr ? `<button class="nmod-mini" ${o.installAttr}>${o.installLabel}</button>` : ""}
-          ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${o.uninstallId}">Entfernen</button>` : ""}
+          ${o.installAttr ? `<button class="nmod-mini" ${o.installAttr}>${this._t(o.installLabel)}</button>` : ""}
+          ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${o.uninstallId}">${this._t("Entfernen")}</button>` : ""}
         </div>
       </div>`;
   }
@@ -316,13 +319,13 @@ class NeoCardEditor extends HTMLElement {
     // Installations-Weg soll sofort sichtbar sein, nicht versteckt.
     const open = this._addOpen ?? !this._config.card_type;
     const tab = this._addTab || "store";
-    const label = this._config.card_type ? "Modul hinzufügen" : "Karte oder Modul installieren";
+    const label = this._config.card_type ? this._t("Modul hinzufügen") : this._t("Karte oder Modul installieren");
     host.innerHTML = `
       <button class="nmod-addbtn" id="nmod-addbtn">${open ? "▾" : "➕"} ${label}</button>
       <div class="nmod-addbody" style="display:${open ? "block" : "none"}">
         <div class="nmod-tabs">
-          <div class="nmod-tab ${tab === "store" ? "active" : ""}" data-tab="store">Store</div>
-          <div class="nmod-tab ${tab === "paste" ? "active" : ""}" data-tab="paste">Code einfügen</div>
+          <div class="nmod-tab ${tab === "store" ? "active" : ""}" data-tab="store">${this._t("Store")}</div>
+          <div class="nmod-tab ${tab === "paste" ? "active" : ""}" data-tab="paste">${this._t("Code einfügen")}</div>
         </div>
         <div class="nmod-tabbody">${tab === "store" ? this._storeHtml() : this._pasteHtml()}</div>
         <div class="nmod-msg" id="nmod-msg"></div>
@@ -346,10 +349,10 @@ class NeoCardEditor extends HTMLElement {
 
   _storeHtml() {
     if (!NeoStore.available()) {
-      return `<div class="nmod-note">⚠️ Für den Store wird die Integration <b>Neo Dashboard Tools</b> benötigt (serverseitiges Speichern + Laden).</div>`;
+      return `<div class="nmod-note">${this._t("⚠️ Für den Store wird die Integration <b>Neo Dashboard Tools</b> benötigt (serverseitiges Speichern + Laden).")}</div>`;
     }
-    if (this._storeLoading) return `<div class="nmod-note">Lade Store …</div>`;
-    if (this._storeErr) return `<div class="nmod-note">${this._storeErr} <button class="nmod-mini" id="nmod-reload">Erneut</button></div>`;
+    if (this._storeLoading) return `<div class="nmod-note">${this._t("Lade Store …")}</div>`;
+    if (this._storeErr) return `<div class="nmod-note">${this._t(this._storeErr)} <button class="nmod-mini" id="nmod-reload">${this._t("Erneut")}</button></div>`;
 
     // Eine Liste: Katalog (Store) + installierte Add-ons, die NICHT im Katalog
     // sind (z. B. eingefügte Premium-Karten) — mit Version, Aktualisieren/Entfernen.
@@ -357,8 +360,7 @@ class NeoCardEditor extends HTMLElement {
     const seen = new Set(catalog.map((c) => c.id));
     const extra = Array.from(this._installed || []).filter((id) => !seen.has(id));
     if (!catalog.length && !extra.length) {
-      return `<div class="nmod-note">Aktuell keine Store-Module verfügbar.
-        Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.</div>`;
+      return `<div class="nmod-note">${this._t("Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.")}</div>`;
     }
 
     const rows = catalog.map((it, i) => {
@@ -386,10 +388,10 @@ class NeoCardEditor extends HTMLElement {
   _pasteHtml() {
     const note = NeoStore.available()
       ? ""
-      : `<div class="nmod-note">ℹ️ Ohne <b>Neo Dashboard Tools</b> wird das Modul nur für diese Sitzung geladen (nicht dauerhaft gespeichert).</div>`;
+      : `<div class="nmod-note">${this._t("ℹ️ Ohne <b>Neo Dashboard Tools</b> wird das Modul nur für diese Sitzung geladen (nicht dauerhaft gespeichert).")}</div>`;
     return `${note}
-      <textarea id="nmod-code" placeholder="Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …"></textarea>
-      <button class="nmod-mini" id="nmod-paste-add">Hinzufügen</button>`;
+      <textarea id="nmod-code" placeholder="${this._t("Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …")}"></textarea>
+      <button class="nmod-mini" id="nmod-paste-add">${this._t("Hinzufügen")}</button>`;
   }
 
   _wireAddArea() {
@@ -429,30 +431,30 @@ class NeoCardEditor extends HTMLElement {
 
   async _installFromStore(item) {
     if (!item) return;
-    this._msg("Installiere …");
+    this._msg(this._t("Installiere …"));
     try {
       const code = await NeoStore.fetch(item.url);
       const res = neoLoadModule(code); // registriert das Modul sofort
       if (!res.ok) throw new Error("Code-Fehler");
       if (NeoStore.available()) await NeoStore.save(item.id, code);
       await this._refreshInstalled();
-      this._msg(`✓ „${item.name || item.id}" installiert.`);
+      this._msg(this._t("✓ „{name}” installiert.").replace("{name}", item.name || item.id));
     } catch (e) {
-      this._msg(`Installation fehlgeschlagen: ${e?.message || e}`, true);
+      this._msg(this._t("Installation fehlgeschlagen: {err}").replace("{err}", e?.message || e), true);
     }
   }
 
   async _pasteModule(code) {
-    if (!code) return this._msg("Bitte Code einfügen.", true);
+    if (!code) return this._msg(this._t("Bitte Code einfügen."), true);
     const before = new Set(NeoModules.list().map((m) => m.id));
     const res = neoLoadModule(code);
-    if (!res.ok) return this._msg("Code konnte nicht geladen werden.", true);
+    if (!res.ok) return this._msg(this._t("Code konnte nicht geladen werden."), true);
     // Erkennt BEIDES: Layer-Module (registerModule) und eigenständige Karten
     // (registerCard, z. B. Premium-Karten wie Neo Wetter).
     const addedMods = NeoModules.list().filter((m) => !before.has(m.id));
     const addedCards = res.cards || [];
     if (!addedMods.length && !addedCards.length) {
-      return this._msg("Kein Modul/Karte erkannt (registerModule/registerCard fehlt?).", true);
+      return this._msg(this._t("Kein Modul/Karte erkannt (registerModule/registerCard fehlt?)."), true);
     }
     const id = addedMods[0]?.id || addedCards[0]?.type || `neo-${Date.now()}`;
     try {
@@ -460,10 +462,10 @@ class NeoCardEditor extends HTMLElement {
       await this._refreshInstalled();
       this._renderTypePicker(); // neue Karten sofort im Kartentyp-Dropdown
       this._msg(addedCards.length
-        ? `✓ Karte „${addedCards[0].name || addedCards[0].type}" hinzugefügt — oben im Kartentyp wählbar.`
-        : `✓ Modul „${addedMods[0].name || addedMods[0].id}" hinzugefügt.`);
+        ? this._t("✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.").replace("{name}", addedCards[0].name || addedCards[0].type)
+        : this._t("✓ Modul „{name}” hinzugefügt.").replace("{name}", addedMods[0].name || addedMods[0].id));
     } catch (e) {
-      this._msg(`Speichern fehlgeschlagen: ${e?.message || e}`, true);
+      this._msg(this._t("Speichern fehlgeschlagen: {err}").replace("{err}", e?.message || e), true);
     }
   }
 
@@ -479,7 +481,7 @@ class NeoCardEditor extends HTMLElement {
       this._fire();
     }
     await this._refreshInstalled();
-    this._msg("Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)");
+    this._msg(this._t("Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)"));
   }
 
   _modStyles() {
@@ -567,31 +569,27 @@ class NeoCardEditor extends HTMLElement {
         .ni-ava { line-height:0; flex-shrink:0; filter:drop-shadow(0 3px 8px rgba(124,156,255,.35)); }
       </style>
       <div class="ni">
-        <div class="ni-head">ℹ️ Info &amp; Support${v ? ` · v${v}` : ""}</div>
+        <div class="ni-head">ℹ️ ${this._t("Info &amp; Support")}${v ? ` · v${v}` : ""}</div>
         <div class="ni-c">
-          <div class="ni-sec">Ressourcen &amp; Hilfe</div>
-          <div class="ni-txt">Fragen oder ein Problem? Die Doku und die Community helfen weiter.</div>
+          <div class="ni-sec">${this._t("Ressourcen &amp; Hilfe")}</div>
+          <div class="ni-txt">${this._t("Fragen oder ein Problem? Die Doku und die Community helfen weiter.")}</div>
           <div class="ni-chips">
-            ${chip(NEO_LINKS.repo, "📖 Dokumentation")}
-            ${chip(NEO_LINKS.issues, "🐞 Probleme melden")}
-            ${chip(NEO_LINKS.newDiscussion, "💬 Diskussionen")}
+            ${chip(NEO_LINKS.repo, this._t("📖 Dokumentation"))}
+            ${chip(NEO_LINKS.issues, this._t("🐞 Probleme melden"))}
+            ${chip(NEO_LINKS.newDiscussion, this._t("💬 Diskussionen"))}
           </div>
 
           <div class="ni-support">
-            <div class="ni-sec">❤️ Projekt unterstützen</div>
-            <div class="ni-txt">
-              Hi! Ich entwickle <b>Neo Dashboard Kit</b> in meiner Freizeit und stecke viel Herzblut hinein.
-              Wenn es dir gefällt, ist jede Unterstützung eine riesige Motivation — so kann ich weiter neue
-              Karten &amp; Module bauen. Auf Patreon gibt es außerdem exklusive Premium-Karten und Vorlagen.
-            </div>
+            <div class="ni-sec">${this._t("❤️ Projekt unterstützen")}</div>
+            <div class="ni-txt">${this._t("Hi! Ich entwickle <b>Neo Dashboard Kit</b> in meiner Freizeit und stecke viel Herzblut hinein. Wenn es dir gefällt, ist jede Unterstützung eine riesige Motivation — so kann ich weiter neue Karten &amp; Module bauen. Auf Patreon gibt es außerdem exklusive Premium-Karten und Vorlagen.")}</div>
             <div class="ni-chips">
-              ${chip(NEO_LINKS.kofi, "☕ Kaffee spendieren", "coffee")}
-              ${chip(NEO_LINKS.paypal, "💳 PayPal")}
-              ${chip(NEO_LINKS.patreon, "♥ Patreon", "heart")}
+              ${chip(NEO_LINKS.kofi, this._t("☕ Kaffee spendieren"), "coffee")}
+              ${chip(NEO_LINKS.paypal, this._t("💳 PayPal"))}
+              ${chip(NEO_LINKS.patreon, this._t("♥ Patreon"), "heart")}
             </div>
             <div class="ni-thanks">
               <span class="ni-ava">${neoLogo({ size: 34, radius: 10 })}</span>
-              <span>Danke, dass du Teil dieser Community bist! 🎉</span>
+              <span>${this._t("Danke, dass du Teil dieser Community bist! 🎉")}</span>
             </div>
           </div>
         </div>
@@ -643,7 +641,7 @@ class NeoCardEditor extends HTMLElement {
     const cur = this._config.card_type;
     const m = NeoDashboardRegistry.getMeta(cur) || {};
     const curCat = catOf(m.author);
-    const curName = m.name || cur || "Kartentyp wählen …";
+    const curName = m.name || cur || this._t("Kartentyp wählen …");
     const groups = this._typeGroups();
     // Aufklapp-Zustand je Kategorie (Standard + die aktuelle Kategorie offen,
     // Rest eingeklappt). Nutzer-Klicks werden in this._typeOpen gemerkt.
@@ -691,18 +689,18 @@ class NeoCardEditor extends HTMLElement {
           <span class="nt-cv">▾</span>
         </div>
         <div class="nt-panel" id="nt-panel" style="display:none;">
-          <div class="nt-search"><input id="nt-search" type="text" placeholder="🔍 Karte suchen …" /></div>
+          <div class="nt-search"><input id="nt-search" type="text" placeholder="${this._t("🔍 Karte suchen …")}" /></div>
           <div id="nt-list">
           ${groups.map((grp) => `
             <div class="nt-section ${open(grp.group) ? "" : "collapsed"}" data-grp="${grp.group}">
-              <div class="nt-grp" data-grp="${grp.group}"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};"></span>${grp.group}<span class="nt-gcount">${grp.items.length}</span><span class="nt-gcv">›</span></div>
+              <div class="nt-grp" data-grp="${grp.group}"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};"></span>${this._t(grp.group)}<span class="nt-gcount">${grp.items.length}</span><span class="nt-gcv">›</span></div>
               <div class="nt-opts">
               ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}" data-s="${(it.name + " " + it.value + " " + grp.group).toLowerCase()}">
                 <span class="nt-ic">${it.icon}</span><span class="nt-nm">${it.name}</span>
               </div>`).join("")}
               </div>
             </div>`).join("")}
-          <div class="nt-empty" id="nt-empty" style="display:none;">Keine Treffer.</div>
+          <div class="nt-empty" id="nt-empty" style="display:none;">${this._t("Keine Treffer.")}</div>
           </div>
         </div>
       </div>`;

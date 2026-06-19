@@ -1,0 +1,101 @@
+// Neo Dashboard Kit — i18n
+// Die UI ist in Deutsch verfasst (Quelle). neoT(hass, de) liefert die englische
+// Übersetzung, wenn die HA-Sprache NICHT Deutsch ist — sonst den deutschen Text.
+// So folgt die Oberfläche automatisch der Home-Assistant-Sprache (Englisch als
+// Standard/international, Deutsch für deutsche Nutzer) ohne eigenen Schalter.
+//
+// Platzhalter: Strings können {name}/{author}/… enthalten und werden am
+// Aufrufort per .replace() gefüllt.
+
+// Deutsch → Englisch. Fehlt ein Eintrag, wird der deutsche Text zurückgegeben.
+const EN = {
+  // Sektionen
+  "Kartentyp": "Card type",
+  "Einstellungen": "Settings",
+  // Startseite
+  "Glassmorphism-Karten für dein Dashboard. Wähle oben einen <b>Kartentyp</b> — danach erscheinen hier die Einstellungen und rechts die Live-Vorschau.":
+    "Glassmorphism cards for your dashboard. Pick a <b>card type</b> above — the settings appear here and the live preview on the right.",
+  // Erweiterungen / Module
+  "Module": "Modules",
+  "Erweiterungen": "Extensions",
+  "Für diese Karte sind noch keine Module aktiv. Über <b>➕ Modul hinzufügen</b> kommst du zum Store.":
+    "No modules are active for this card yet. Use <b>➕ Add module</b> to open the store.",
+  "<b>Karten</b> &amp; <b>Module</b> installieren (Store oder Code einfügen) — oder oben einen <b>Kartentyp</b> wählen, um Module für eine Karte zu aktivieren.":
+    "Install <b>cards</b> &amp; <b>modules</b> (store or paste code) — or pick a <b>card type</b> above to enable modules for a card.",
+  "Modul hinzufügen": "Add module",
+  "Karte oder Modul installieren": "Install card or module",
+  "Store": "Store",
+  "Code einfügen": "Paste code",
+  "Installiert": "Installed",
+  // Store
+  "⚠️ Für den Store wird die Integration <b>Neo Dashboard Tools</b> benötigt (serverseitiges Speichern + Laden).":
+    "⚠️ The store needs the <b>Neo Dashboard Tools</b> integration (server-side save + load).",
+  "Lade Store …": "Loading store …",
+  "Store-Index konnte nicht geladen werden.": "Could not load the store index.",
+  "Erneut": "Retry",
+  "Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.":
+    "No store modules available right now. Add premium cards (e.g. weather) via <b>Paste code</b>.",
+  "✓ Installiert": "✓ Installed",
+  "Installieren": "Install",
+  "Aktualisieren": "Update",
+  "Entfernen": "Remove",
+  "von": "by",
+  "Karte": "Card",
+  "Modul": "Module",
+  // Code einfügen
+  "ℹ️ Ohne <b>Neo Dashboard Tools</b> wird das Modul nur für diese Sitzung geladen (nicht dauerhaft gespeichert).":
+    "ℹ️ Without <b>Neo Dashboard Tools</b> the module loads for this session only (not saved permanently).",
+  "Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …":
+    "Paste module or card code (registerModule / registerCard, e.g. premium cards) …",
+  "Hinzufügen": "Add",
+  // Meldungen
+  "Bitte Code einfügen.": "Please paste some code.",
+  "Code konnte nicht geladen werden.": "Could not load the code.",
+  "Kein Modul/Karte erkannt (registerModule/registerCard fehlt?).":
+    "No module/card detected (missing registerModule/registerCard?).",
+  "✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.":
+    "✓ Card “{name}” added — selectable in the card type above.",
+  "✓ Modul „{name}” hinzugefügt.": "✓ Module “{name}” added.",
+  "Speichern fehlgeschlagen: {err}": "Saving failed: {err}",
+  "Installiere …": "Installing …",
+  "✓ „{name}” installiert.": "✓ “{name}” installed.",
+  "Installation fehlgeschlagen: {err}": "Installation failed: {err}",
+  "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":
+    "Module removed. (Already-loaded code disappears after a reload.)",
+  // Reorder / Aktionen
+  "Layer nach oben": "Move layer up",
+  "Layer nach unten": "Move layer down",
+  "Modul entfernen": "Remove module",
+  // Kartentyp-Picker
+  "Kartentyp wählen …": "Choose a card type …",
+  "🔍 Karte suchen …": "🔍 Search cards …",
+  "Keine Treffer.": "No matches.",
+  "Standard": "Standard",
+  "Premium": "Premium",
+  "Community": "Community",
+  // Info & Support
+  "Info &amp; Support": "Info &amp; Support",
+  "Ressourcen &amp; Hilfe": "Resources &amp; help",
+  "Fragen oder ein Problem? Die Doku und die Community helfen weiter.":
+    "Questions or a problem? The docs and the community can help.",
+  "📖 Dokumentation": "📖 Documentation",
+  "🐞 Probleme melden": "🐞 Report issues",
+  "💬 Diskussionen": "💬 Discussions",
+  "❤️ Projekt unterstützen": "❤️ Support the project",
+  "Hi! Ich entwickle <b>Neo Dashboard Kit</b> in meiner Freizeit und stecke viel Herzblut hinein. Wenn es dir gefällt, ist jede Unterstützung eine riesige Motivation — so kann ich weiter neue Karten &amp; Module bauen. Auf Patreon gibt es außerdem exklusive Premium-Karten und Vorlagen.":
+    "Hi! I build <b>Neo Dashboard Kit</b> in my spare time and put a lot of heart into it. If you enjoy it, any support is huge motivation — it lets me keep building new cards &amp; modules. Patreon also has exclusive premium cards and templates.",
+  "☕ Kaffee spendieren": "☕ Buy me a coffee",
+  "💳 PayPal": "💳 PayPal",
+  "♥ Patreon": "♥ Patreon",
+  "Danke, dass du Teil dieser Community bist! 🎉": "Thanks for being part of this community! 🎉",
+};
+
+export function neoLang(hass) {
+  return (hass && hass.language ? String(hass.language) : "en").slice(0, 2).toLowerCase();
+}
+
+// Übersetzt den deutschen Quelltext je nach HA-Sprache.
+export function neoT(hass, de) {
+  if (neoLang(hass) === "de") return de;
+  return EN[de] || de;
+}
