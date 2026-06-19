@@ -38,7 +38,7 @@ class NeoControlCard extends NeoBaseCard {
     return id ? id.split(".")[0] : "";
   }
   _acc() { return NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue; }
-  _name(s, fallback) { return this._config?.name || s?.attributes?.friendly_name || this._config?.entity || fallback; }
+  _name(s, fallback) { return this._config?.name || s?.attributes?.friendly_name || this._config?.entity || this._t(fallback); }
 
   // ── gemeinsame Bausteine ───────────────────────────────────
   _shell(acc, active, headerRight, icon, body, minH) {
@@ -122,8 +122,8 @@ class NeoControlCard extends NeoBaseCard {
     const isLight = d === "light";
     let pct = 0;
     if (isLight && on) pct = s?.attributes?.brightness ? Math.round((s.attributes.brightness / 255) * 100) : 0;
-    const sub = this._config?.sub ?? (on ? (isLight ? `${pct}%` : "An") : "Aus");
-    const body = this._title(this._name(s, "Schalter"), sub, isLight && on ? this._slider("bri", acc, pct, "Helligkeit") : "");
+    const sub = this._config?.sub ?? (on ? (isLight ? `${pct}%` : this._t("An")) : this._t("Aus"));
+    const body = this._title(this._name(s, "Schalter"), sub, isLight && on ? this._slider("bri", acc, pct, this._t("Helligkeit")) : "");
     return this._shell(acc, on, this._toggleEl(acc, on), this._icon(d), body, isLight ? 180 : 160);
   }
 
@@ -132,7 +132,7 @@ class NeoControlCard extends NeoBaseCard {
     const s = this._state(id);
     const locked = s?.state === "locked";
     const acc = NEO_ACCENTS[this._config?.accent] || (locked ? NEO_ACCENTS.mint : NEO_ACCENTS.amber);
-    const sub = this._config?.sub ?? (locked ? "Verriegelt" : "Entriegelt");
+    const sub = this._config?.sub ?? (locked ? this._t("Verriegelt") : this._t("Entriegelt"));
     const right = this._badge(acc, true, locked ? "🔒" : "🔓");
     const body = this._title(this._name(s, "Schloss"), sub);
     return this._shell(acc, locked, right, this._config?.icon || (locked ? "lock" : "unlock"), body);
@@ -145,8 +145,8 @@ class NeoControlCard extends NeoBaseCard {
     const on = s?.state === "on";
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.mint;
     const pct = typeof a.percentage === "number" ? a.percentage : (on ? 100 : 0);
-    const sub = this._config?.sub ?? (on ? `${pct}%` : "Aus");
-    const body = this._title(this._name(s, "Ventilator"), sub, on ? this._slider("pct", acc, pct, "Stufe") : "");
+    const sub = this._config?.sub ?? (on ? `${pct}%` : this._t("Aus"));
+    const body = this._title(this._name(s, "Ventilator"), sub, on ? this._slider("pct", acc, pct, this._t("Stufe")) : "");
     return this._shell(acc, on, this._toggleEl(acc, on), this._icon("fan"), body, 180);
   }
 
@@ -158,9 +158,9 @@ class NeoControlCard extends NeoBaseCard {
     const acc = this._acc();
     const pos = typeof a.current_position === "number" ? a.current_position : null;
     const active = state === "open" || state === "opening" || (pos != null && pos > 0);
-    const right = this._badge(acc, false, pos != null ? `${pos}% offen` : (COVER_LABEL[state] || state));
+    const right = this._badge(acc, false, pos != null ? `${pos}${this._t("% offen")}` : this._t(COVER_LABEL[state] || state));
     const row = `<div style="display:flex;gap:8px;margin-top:10px;">
-      ${this._iconBtnTxt("up", "▲", "Öffnen")}${this._iconBtnTxt("stop", "■", "Stopp")}${this._iconBtnTxt("down", "▼", "Schließen")}</div>`;
+      ${this._iconBtnTxt("up", "▲", this._t("Öffnen"))}${this._iconBtnTxt("stop", "■", this._t("Stopp"))}${this._iconBtnTxt("down", "▼", this._t("Schließen"))}</div>`;
     return this._shell(acc, active, right, this._icon("cover"), this._title(this._name(s, "Rollladen"), "", row), 200);
   }
   _iconBtnTxt(val, glyph, title) {
@@ -181,14 +181,14 @@ class NeoControlCard extends NeoBaseCard {
     const actCol = action === "cooling" ? NEO_ACCENTS.blue.c : action === "heating" ? NEO_ACCENTS.amber.c : acc.c;
     const active = (action && action !== "idle" && action !== "off") || (!action && mode !== "off" && mode !== "unavailable");
     const accE = { c: actCol, glow: actCol + "55" };
-    const badge = action ? ({ heating: "Heizt", cooling: "Kühlt", drying: "Entfeuchtet", fan: "Lüftet", idle: "Bereit", off: "Aus" }[action] || action)
-      : ({ heat: "Heizen", cool: "Kühlen", auto: "Auto", heat_cool: "Auto", off: "Aus" }[mode] || mode);
+    const badge = this._t(action ? ({ heating: "Heizt", cooling: "Kühlt", drying: "Entfeuchtet", fan: "Lüftet", idle: "Bereit", off: "Aus" }[action] || action)
+      : ({ heat: "Heizen", cool: "Kühlen", auto: "Auto", heat_cool: "Auto", off: "Aus" }[mode] || mode));
     const cur = a.current_temperature;
     const row = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;">
         ${this._iconBtn("data-temp", "dec", "minus", accE)}
         <div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${target != null ? target : "—"}</span><span style="font-size:15px;color:var(--neo-text2);">${unit}</span></div>
         ${this._iconBtn("data-temp", "inc", "plus", accE)}
-      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">Aktuell ${cur}${unit}</div>` : ""}`;
+      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">${this._t("Aktuell")} ${cur}${unit}</div>` : ""}`;
     return this._shell(accE, active, this._badge(accE, active, badge), this._icon("climate"), this._title(this._name(s, "Klima"), "", row), 200);
   }
 
@@ -203,14 +203,14 @@ class NeoControlCard extends NeoBaseCard {
     const title = a.media_title || "";
     const artist = a.media_artist || a.app_name || "";
     const name = this._name(s, "Media");
-    const line2 = title ? (artist || name) : (MEDIA_LABEL[state] || state);
+    const line2 = title ? (artist || name) : this._t(MEDIA_LABEL[state] || state);
     const transport = `<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;">
         ${this._iconBtn("data-media", "media_previous_track", "prev", acc)}
         ${this._iconBtn("data-media", "media_play_pause", playing ? "pause" : "play", acc)}
         ${this._iconBtn("data-media", "media_next_track", "next", acc)}</div>`;
     const body = `<div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || name}</div>
       ${line2 ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${line2}</div>` : ""}${transport}`;
-    return this._shell(acc, active, this._badge(acc, false, MEDIA_LABEL[state] || state), this._icon("media_player"), body, 200);
+    return this._shell(acc, active, this._badge(acc, false, this._t(MEDIA_LABEL[state] || state)), this._icon("media_player"), body, 200);
   }
 
   _renderAlarm() {
@@ -221,17 +221,17 @@ class NeoControlCard extends NeoBaseCard {
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS[meta.accent] || NEO_ACCENTS.blue;
     const armed = state !== "disarmed" && state !== "unavailable";
     const controls = state === "disarmed"
-      ? `${this._flatBtn("data-alarm", "alarm_arm_home", "Zuhause", acc)}${this._flatBtn("data-alarm", "alarm_arm_away", "Abwesend", acc)}`
-      : `${this._flatBtn("data-alarm", "alarm_disarm", "Unscharf", acc, true)}`;
+      ? `${this._flatBtn("data-alarm", "alarm_arm_home", this._t("Zuhause"), acc)}${this._flatBtn("data-alarm", "alarm_arm_away", this._t("Abwesend"), acc)}`
+      : `${this._flatBtn("data-alarm", "alarm_disarm", this._t("Unscharf"), acc, true)}`;
     const row = `<div style="display:flex;gap:8px;margin-top:10px;">${controls}</div>`;
-    return this._shell(acc, armed, this._badge(acc, armed, meta.label), this._config?.icon || meta.icon, this._title(this._name(s, "Alarm"), "", row), 190);
+    return this._shell(acc, armed, this._badge(acc, armed, this._t(meta.label)), this._config?.icon || meta.icon, this._title(this._name(s, "Alarm"), "", row), 190);
   }
 
   _renderAction(d) {
     const id = this._config?.entity;
     const s = this._state(id);
     const acc = this._acc();
-    const sub = this._config?.sub ?? (d === "scene" ? "Szene" : d === "button" ? "Taster" : "Skript");
+    const sub = this._config?.sub ?? this._t(d === "scene" ? "Szene" : d === "button" ? "Taster" : "Skript");
     return this._shell(acc, false, "", this._icon(d), this._title(this._name(s, "Aktion"), sub), 160);
   }
 
@@ -242,8 +242,8 @@ class NeoControlCard extends NeoBaseCard {
     const bri = briN ? Math.round((briSum / briN / 255) * 100) : 0;
     const on = onCount > 0;
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.amber;
-    const sub = this._config?.sub ?? `${onCount}/${ids.length} an`;
-    const body = this._title(this._config?.name || "Licht-Gruppe", sub, on ? this._slider("bri", acc, bri, "Helligkeit") : "");
+    const sub = this._config?.sub ?? `${onCount}/${ids.length} ${this._t("an")}`;
+    const body = this._title(this._config?.name || this._t("Licht-Gruppe"), sub, on ? this._slider("bri", acc, bri, this._t("Helligkeit")) : "");
     return this._shell(acc, on, this._toggleEl(acc, on), this._config?.icon || "lightbulb", body);
   }
 
