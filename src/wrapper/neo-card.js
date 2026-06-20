@@ -6,6 +6,7 @@
 import { NeoDashboardRegistry } from "../core/registry.js";
 import { NeoStore } from "../store/module-store.js";
 import { neoLogo } from "../core/branding.js";
+import { escapeHtml } from "../core/html.js";
 import "./neo-card-editor.js";
 
 class NeoCard extends HTMLElement {
@@ -25,7 +26,7 @@ class NeoCard extends HTMLElement {
           ${neoLogo({ size: 56, radius: 16 })}
           <div style="font-size:16px;font-weight:600;color:var(--primary-text-color);">Neo Card</div>
           <div style="font-size:13px;color:var(--secondary-text-color);max-width:240px;line-height:1.4;">
-            Wähle im Editor unter <b>Kartentyp</b> die gewünschte Karte (Licht, Sensor, Szene …).
+            Wähle zuerst eine Karte: Header, Steuerung oder Anzeige. Danach wählst du den passenden Typ.
           </div>
         </ha-card>`;
       this._child = null;
@@ -37,7 +38,7 @@ class NeoCard extends HTMLElement {
       // Module may still be loading from the backend store — retry once ready
       this.innerHTML = `
         <ha-card style="padding:24px;text-align:center;color:var(--secondary-text-color);">
-          ${NeoStore._loaded ? `Unbekannter Neo-Kartentyp: ${type}` : "Modul wird geladen …"}
+          ${NeoStore._loaded ? `Unbekannter Neo-Kartentyp: ${escapeHtml(type)}` : "Modul wird geladen …"}
         </ha-card>`;
       if (!NeoStore._loaded && !this._waitingModules) {
         this._waitingModules = true;

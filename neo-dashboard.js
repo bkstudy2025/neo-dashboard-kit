@@ -734,7 +734,7 @@ function makeNeoEditor(schema, meta = {}) {
       this._structSig = this._sig(this._config);
     }
     _sig(config) {
-      return rebuildKeys.map((k) => String(config?.[k])).join(" ");
+      return rebuildKeys.map((k) => String(config?.[k])).join("::");
     }
 
     // Optionaler Hook: normalisiert die Config (z. B. Legacy → expliziter Typ,
@@ -1136,15 +1136,21 @@ function buildCapabilitySchema(config, spec) {
     (def?.fields || []).forEach((f) => general.push(f));
   }
 
-  const appearance = [];
-  if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: { icon: {} } });
-  if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
-  (spec.appearance || []).forEach((f) => appearance.push(f));
-
-  return [
+  const sections = [
     { type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true, schema: general },
-    { type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance },
   ];
+
+  // Empty-State: ohne gewählten Typ und ohne Legacy-Entität nur den Typ-Picker
+  // anzeigen. Darstellungsfelder würden sonst versteckte Optionen suggerieren.
+  if (t || hasLegacyEntity) {
+    const appearance = [];
+    if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: { icon: {} } });
+    if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
+    (spec.appearance || []).forEach((f) => appearance.push(f));
+    sections.push({ type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance });
+  }
+
+  return sections;
 }
 
 // Erzeugt die Editor-Custom-Element-Klasse aus einem Capability-Spec.
@@ -1155,6 +1161,37 @@ function makeNeoTypedEditor(spec, meta = {}) {
     rebuildKeys: [spec.typeKey],
     normalizeConfig: (config) => neoCapabilityNormalize(config, spec),
   });
+}
+
+// Neo Dashboard Kit — small HTML escaping helpers
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function safeUrl(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  // Relative HA/local paths are allowed; protocol-relative and malformed values
+  // are intentionally not allowed for card/store-rendered links and images.
+  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+
+  try {
+    const url = new URL(raw);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+  } catch (_err) {
+    return "";
+  }
 }
 
 // Neo Dashboard Kit — Control Card ("Neo Steuerung")
@@ -1234,16 +1271,16 @@ class NeoControlCard extends NeoBaseCard {
   _badge(acc, active, text) {
     return `<span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;
       color:${active ? acc.c : "var(--neo-text2)"};background:${active ? acc.c + "1f" : "var(--neo-fill2)"};
-      border:1px solid ${active ? acc.c + "55" : "var(--neo-line2)"};">${text}</span>`;
+      border:1px solid ${active ? acc.c + "55" : "var(--neo-line2)"};">${escapeHtml(text)}</span>`;
   }
   _title(name, sub, extra) {
-    return `<div style="font-size:16px;font-weight:600;">${name}</div>
-      ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}${extra || ""}`;
+    return `<div style="font-size:16px;font-weight:600;">${escapeHtml(name)}</div>
+      ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${escapeHtml(sub)}</div>` : ""}${extra || ""}`;
   }
   _slider(idAttr, acc, pct, label) {
     return `<div style="margin-top:8px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--neo-text3);">
-        <span>${label}</span><span style="font-weight:600;">${pct}%</span></div>
+        <span>${escapeHtml(label)}</span><span style="font-weight:600;">${escapeHtml(pct)}%</span></div>
       <input type="range" id="${idAttr}" min="1" max="100" value="${pct || 1}" style="
         width:100%;height:26px;border-radius:9px;-webkit-appearance:none;appearance:none;cursor:pointer;
         background:linear-gradient(90deg,${acc.c}cc 0%,${acc.c} ${pct}%,var(--neo-line2) ${pct}%);
@@ -1253,7 +1290,7 @@ class NeoControlCard extends NeoBaseCard {
     return `<button ${attr}="${val}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;
       display:flex;align-items:center;justify-content:center;color:#fff;
       background:${primary ? acc.c : "var(--neo-fill2,rgba(255,255,255,.06))"};
-      border:1px solid ${primary ? "transparent" : "var(--neo-line2)"};">${label}</button>`;
+      border:1px solid ${primary ? "transparent" : "var(--neo-line2)"};">${escapeHtml(label)}</button>`;
   }
   _iconBtn(attr, val, sym, acc) {
     return `<button ${attr}="${val}" style="width:44px;height:44px;flex-shrink:0;border-radius:22px;cursor:pointer;
@@ -1276,7 +1313,7 @@ class NeoControlCard extends NeoBaseCard {
         border:1px dashed var(--neo-line2);">
         <div style="width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;
           background:var(--neo-fill1);border:1px solid var(--neo-line2);">${neoIcon("plus", { size: 20, color: "var(--neo-text3)" })}</div>
-        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${msg}</div>
+        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${escapeHtml(msg)}</div>
       </div>`;
   }
 
@@ -1348,9 +1385,9 @@ class NeoControlCard extends NeoBaseCard {
     return this._shell(acc, active, right, this._icon("cover"), this._title(this._name(s, "Rollladen"), "", row), 200);
   }
   _iconBtnTxt(val, glyph, title) {
-    return `<button data-cover="${val}" title="${title}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:16px;
+    return `<button data-cover="${val}" title="${escapeAttr(title)}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:16px;
       display:flex;align-items:center;justify-content:center;color:var(--neo-text1,#fff);
-      background:var(--neo-fill2,rgba(255,255,255,.06));border:1px solid var(--neo-line2);">${glyph}</button>`;
+      background:var(--neo-fill2,rgba(255,255,255,.06));border:1px solid var(--neo-line2);">${escapeHtml(glyph)}</button>`;
   }
 
   _renderClimate() {
@@ -1370,9 +1407,9 @@ class NeoControlCard extends NeoBaseCard {
     const cur = a.current_temperature;
     const row = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;">
         ${this._iconBtn("data-temp", "dec", "minus", accE)}
-        <div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${target != null ? target : "—"}</span><span style="font-size:15px;color:var(--neo-text2);">${unit}</span></div>
+        <div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${escapeHtml(target != null ? target : "—")}</span><span style="font-size:15px;color:var(--neo-text2);">${escapeHtml(unit)}</span></div>
         ${this._iconBtn("data-temp", "inc", "plus", accE)}
-      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">${this._t("Aktuell")} ${cur}${unit}</div>` : ""}`;
+      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">${escapeHtml(this._t("Aktuell"))} ${escapeHtml(cur)}${escapeHtml(unit)}</div>` : ""}`;
     return this._shell(accE, active, this._badge(accE, active, badge), this._icon("climate"), this._title(this._name(s, "Klima"), "", row), 200);
   }
 
@@ -1392,8 +1429,8 @@ class NeoControlCard extends NeoBaseCard {
         ${this._iconBtn("data-media", "media_previous_track", "prev", acc)}
         ${this._iconBtn("data-media", "media_play_pause", playing ? "pause" : "play", acc)}
         ${this._iconBtn("data-media", "media_next_track", "next", acc)}</div>`;
-    const body = `<div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || name}</div>
-      ${line2 ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${line2}</div>` : ""}${transport}`;
+    const body = `<div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title || name)}</div>
+      ${line2 ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(line2)}</div>` : ""}${transport}`;
     return this._shell(acc, active, this._badge(acc, false, this._t(MEDIA_LABEL[state] || state)), this._icon("media_player"), body, 200);
   }
 
@@ -1621,7 +1658,7 @@ class NeoDisplayCard extends NeoBaseCard {
         border:1px dashed var(--neo-line2);">
         <div style="width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;
           background:var(--neo-fill1);border:1px solid var(--neo-line2);">${neoIcon("gauge", { size: 20, color: "var(--neo-text3)" })}</div>
-        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${msg}</div>
+        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${escapeHtml(msg)}</div>
       </div>`;
   }
 
@@ -1645,12 +1682,12 @@ class NeoDisplayCard extends NeoBaseCard {
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
         <div style="margin-top:auto;">
-          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
+          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${escapeHtml(name)}</div>
           <div style="display:flex;align-items:baseline;gap:3px;margin-top:4px;">
-            <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${value}</span>
-            <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
+            <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${escapeHtml(value)}</span>
+            <span style="font-size:13px;color:var(--neo-text2);">${escapeHtml(unit)}</span>
           </div>
-          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
+          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${escapeHtml(sub)}</div>` : ""}
         </div>
       </div>`;
   }
@@ -1676,12 +1713,12 @@ class NeoDisplayCard extends NeoBaseCard {
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
         <div style="margin-top:auto;">
-          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
+          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${escapeHtml(name)}</div>
           <div style="display:flex;align-items:baseline;gap:3px;margin-top:4px;">
-            <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${temp != null ? temp : "—"}</span>
-            <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
+            <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${escapeHtml(temp != null ? temp : "—")}</span>
+            <span style="font-size:13px;color:var(--neo-text2);">${escapeHtml(unit)}</span>
           </div>
-          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
+          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${escapeHtml(sub)}</div>` : ""}
         </div>
       </div>`;
   }
@@ -1716,9 +1753,9 @@ class NeoDisplayCard extends NeoBaseCard {
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
         <div style="margin-top:auto;">
-          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
-          <div style="font-size:16px;font-weight:600;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title}</div>
-          ${when ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${when}</div>` : ""}
+          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${escapeHtml(name)}</div>
+          <div style="font-size:16px;font-weight:600;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title)}</div>
+          ${when ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${escapeHtml(when)}</div>` : ""}
         </div>
       </div>`;
   }
@@ -1744,11 +1781,11 @@ class NeoDisplayCard extends NeoBaseCard {
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 20, color: acc.c })}</div>
         <div style="min-width:0;">
           <div style="display:flex;align-items:baseline;gap:3px;">
-            <span style="font-size:24px;font-weight:600;letter-spacing:-0.5px;">${value}</span>
-            <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
+            <span style="font-size:24px;font-weight:600;letter-spacing:-0.5px;">${escapeHtml(value)}</span>
+            <span style="font-size:13px;color:var(--neo-text2);">${escapeHtml(unit)}</span>
           </div>
           <div style="font-size:12px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.5px;
-            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(label)}</div>
         </div>
       </div>`;
   }
@@ -1774,7 +1811,7 @@ class NeoDisplayCard extends NeoBaseCard {
         background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
         backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
         border:1px solid var(--neo-line2);">
-        ${title ? `<div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${title}</div>` : ""}
+        ${title ? `<div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${escapeHtml(title)}</div>` : ""}
         <div style="font-size:14px;color:var(--neo-text1);line-height:1.5;">${body}</div>
       </div>`;
   }
@@ -1786,9 +1823,9 @@ class NeoDisplayCard extends NeoBaseCard {
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
     const name = this._config?.name || a.friendly_name || id || this._t("Kamera");
     const icon = this._config?.icon || "camera";
-    const pic = a.entity_picture;
+    const pic = safeUrl(a.entity_picture);
     const image = pic
-      ? `<img src="${pic}" alt="${name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" />`
+      ? `<img src="${escapeAttr(pic)}" alt="${escapeAttr(name)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" />`
       : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
            background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);">${neoIcon(icon, { size: 40, color: acc.c })}</div>`;
     return `
@@ -1843,7 +1880,7 @@ class NeoHeaderCard extends NeoBaseCard {
 
     if (variant === "divider") {
       const lbl = title
-        ? `<span style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--neo-text3);">${title}</span>
+        ? `<span style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--neo-text3);">${escapeHtml(title)}</span>
            <div style="flex:1;height:1px;background:var(--neo-line2);"></div>`
         : "";
       return `<div style="display:flex;align-items:center;gap:12px;padding:8px 2px;">
@@ -1862,8 +1899,8 @@ class NeoHeaderCard extends NeoBaseCard {
         ${lead}
         <div style="min-width:0;">
           <div style="font-size:18px;font-weight:700;letter-spacing:-.2px;color:var(--neo-text1);
-            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title}</div>
-          ${subtitle ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:1px;">${subtitle}</div>` : ""}
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title)}</div>
+          ${subtitle ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:1px;">${escapeHtml(subtitle)}</div>` : ""}
         </div>
       </div>`;
   }
@@ -2300,7 +2337,7 @@ class NeoCardEditor extends HTMLElement {
     item.className = "nmod-item";
     const badge = mod.author ? this._authorChip(mod.author) : "";
     const rm = this._isInstalled(mod.id)
-      ? `<button class="nmod-rm" title="${this._t("Modul entfernen")}" data-rm="${mod.id}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
+      ? `<button class="nmod-rm" title="${escapeAttr(this._t("Modul entfernen"))}" data-rm="${escapeAttr(mod.id)}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
       : "";
     const move = opts.reorder
       ? `<div class="nmod-move">
@@ -2311,10 +2348,10 @@ class NeoCardEditor extends HTMLElement {
     item.innerHTML = `
       <div class="nmod-row">
         ${move}
-        <span class="nmod-ic">${mod.icon || "🧩"}</span>
+        <span class="nmod-ic">${escapeHtml(mod.icon || "🧩")}</span>
         <div class="nmod-meta">
-          <div class="nmod-name">${mod.name || mod.id}${badge}</div>
-          ${mod.description ? `<div class="nmod-desc">${mod.description}</div>` : ""}
+          <div class="nmod-name">${escapeHtml(mod.name || mod.id)}${badge}</div>
+          ${mod.description ? `<div class="nmod-desc">${escapeHtml(mod.description)}</div>` : ""}
         </div>
         ${rm}
         <label class="nmod-sw">
@@ -2423,37 +2460,39 @@ class NeoCardEditor extends HTMLElement {
   _authorChip(author) {
     const a = author || "?";
     const cls = a === "Premium" ? "premium" : a === "Community" ? "community" : "standard";
-    return `<span class="nmod-auth ${cls}">👤 ${a}</span>`;
+    return `<span class="nmod-auth ${escapeAttr(cls)}">👤 ${escapeHtml(a)}</span>`;
   }
   // Kleine Vorschau: echtes Screenshot-Bild (image-Feld) ODER eine Icon-Kachel
   // als Fallback, damit jeder Eintrag visuell erkennbar ist.
   _previewTile(o) {
-    return o.image
-      ? `<div class="nmod-prev"><img src="${o.image}" loading="lazy" alt="" /></div>`
-      : `<div class="nmod-prev nmod-prev--icon"><span>${o.icon || "🧩"}</span></div>`;
+    const image = safeUrl(o.image);
+    return image
+      ? `<div class="nmod-prev"><img src="${escapeAttr(image)}" loading="lazy" alt="" /></div>`
+      : `<div class="nmod-prev nmod-prev--icon"><span>${escapeHtml(o.icon || "🧩")}</span></div>`;
   }
   _storeRow(o) {
+    const homepage = safeUrl(o.homepage);
     const status = o.installed
       ? (o.update
-          ? ` <span class="nmod-badge upd">⬆ ${this._t("Update")} → v${o.update}</span>`
+          ? ` <span class="nmod-badge upd">⬆ ${this._t("Update")} → v${escapeHtml(o.update)}</span>`
           : ` <span class="nmod-badge ok">${this._t("✓ Installiert")}</span>`)
       : "";
     return `<div class="nmod-store">
         ${this._previewTile(o)}
         <div class="nmod-store-h">
-          <span class="nmod-ic">${o.icon || "🧩"}</span>
+          <span class="nmod-ic">${escapeHtml(o.icon || "🧩")}</span>
           <div class="nmod-meta">
-            <div class="nmod-name">${o.name} <span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
-            <div class="nmod-sub">${this._authorChip(o.author)}${o.version ? `<span class="nmod-ver">v${o.version}</span>` : ""}</div>
+            <div class="nmod-name">${escapeHtml(o.name)} <span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
+            <div class="nmod-sub">${this._authorChip(o.author)}${o.version ? `<span class="nmod-ver">v${escapeHtml(o.version)}</span>` : ""}</div>
           </div>
         </div>
-        ${o.description ? `<div class="nmod-desc" style="margin-top:8px;">${o.description}</div>` : ""}
+        ${o.description ? `<div class="nmod-desc" style="margin-top:8px;">${escapeHtml(o.description)}</div>` : ""}
         <div class="nmod-store-row">
-          ${o.installAttr ? `<button class="nmod-mini" ${o.installAttr}>${this._t(o.installLabel)}</button>` : ""}
-          ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${o.uninstallId}">${this._t("Entfernen")}</button>` : ""}
-          ${o.homepage ? `<a class="nmod-mini ghost" href="${o.homepage}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
+          ${o.installId ? `<button class="nmod-mini" data-install-id="${escapeAttr(o.installId)}">${this._t(o.installLabel)}</button>` : ""}
+          ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${escapeAttr(o.uninstallId)}">${this._t("Entfernen")}</button>` : ""}
+          ${homepage ? `<a class="nmod-mini ghost" href="${escapeAttr(homepage)}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
         </div>
-        ${o.note ? `<div class="nmod-note" style="margin:6px 0 0;">${o.note}</div>` : ""}
+        ${o.note ? `<div class="nmod-note" style="margin:6px 0 0;">${escapeHtml(o.note)}</div>` : ""}
       </div>`;
   }
 
@@ -2519,7 +2558,7 @@ class NeoCardEditor extends HTMLElement {
         installed, update, homepage: it.homepage || it.repo, image: it.image, description: it.description,
         // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
         // gefilterte Liste zwischen Render und Klick ändert.
-        installAttr: showInstall ? `data-install-id="${it.id}"` : "", installLabel: installed ? "Aktualisieren" : "Installieren",
+        installId: showInstall ? it.id : "", installLabel: installed ? "Aktualisieren" : "Installieren",
         uninstallId: installed ? it.id : null,
       });
     });
@@ -2541,7 +2580,7 @@ class NeoCardEditor extends HTMLElement {
       ? ""
       : `<div class="nmod-note">${this._t("ℹ️ Ohne <b>Neo Dashboard Tools</b> wird das Modul nur für diese Sitzung geladen (nicht dauerhaft gespeichert).")}</div>`;
     return `${note}
-      <textarea id="nmod-code" placeholder="${this._t("Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …")}"></textarea>
+      <textarea id="nmod-code" placeholder="${escapeAttr(this._t("Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …"))}"></textarea>
       <button class="nmod-mini" id="nmod-paste-add">${this._t("Hinzufügen")}</button>`;
   }
 
@@ -2864,19 +2903,19 @@ class NeoCardEditor extends HTMLElement {
       </style>
       <div class="nt">
         <div class="nt-btn" id="nt-btn">
-          <span class="nt-lbl"><span class="nt-dot" style="background:${DOT[curCat]};"></span>
-            <span class="nt-ic">${m.icon || "✨"}</span><span class="nt-nm">${curName}</span></span>
+          <span class="nt-lbl"><span class="nt-dot" style="background:${escapeAttr(DOT[curCat])};"></span>
+            <span class="nt-ic">${escapeHtml(m.icon || "✨")}</span><span class="nt-nm">${escapeHtml(curName)}</span></span>
           <span class="nt-cv">▾</span>
         </div>
         <div class="nt-panel" id="nt-panel" style="display:none;">
-          <div class="nt-search"><input id="nt-search" type="text" placeholder="${this._t("🔍 Karte suchen …")}" /></div>
+          <div class="nt-search"><input id="nt-search" type="text" placeholder="${escapeAttr(this._t("🔍 Karte suchen …"))}" /></div>
           <div id="nt-list">
           ${groups.map((grp) => `
-            <div class="nt-section ${open(grp.group) ? "" : "collapsed"}" data-grp="${grp.group}">
-              <div class="nt-grp" data-grp="${grp.group}"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};"></span>${this._t(grp.group)}<span class="nt-gcount">${grp.items.length}</span><span class="nt-gcv">›</span></div>
+            <div class="nt-section ${open(grp.group) ? "" : "collapsed"}" data-grp="${escapeAttr(grp.group)}">
+              <div class="nt-grp" data-grp="${escapeAttr(grp.group)}"><span class="nt-dot" style="display:inline-block;background:${escapeAttr(DOT[grp.group])};"></span>${escapeHtml(this._t(grp.group))}<span class="nt-gcount">${grp.items.length}</span><span class="nt-gcv">›</span></div>
               <div class="nt-opts">
-              ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}" data-s="${(this._t(it.name) + " " + it.name + " " + it.value + " " + grp.group).toLowerCase()}">
-                <span class="nt-ic">${it.icon}</span><span class="nt-nm">${this._t(it.name)}</span>
+              ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${escapeAttr(it.value)}" data-s="${escapeAttr((this._t(it.name) + " " + it.name + " " + it.value + " " + grp.group).toLowerCase())}">
+                <span class="nt-ic">${escapeHtml(it.icon)}</span><span class="nt-nm">${escapeHtml(this._t(it.name))}</span>
               </div>`).join("")}
               </div>
             </div>`).join("")}
@@ -2986,7 +3025,7 @@ class NeoCard extends HTMLElement {
           ${neoLogo({ size: 56, radius: 16 })}
           <div style="font-size:16px;font-weight:600;color:var(--primary-text-color);">Neo Card</div>
           <div style="font-size:13px;color:var(--secondary-text-color);max-width:240px;line-height:1.4;">
-            Wähle im Editor unter <b>Kartentyp</b> die gewünschte Karte (Licht, Sensor, Szene …).
+            Wähle zuerst eine Karte: Header, Steuerung oder Anzeige. Danach wählst du den passenden Typ.
           </div>
         </ha-card>`;
       this._child = null;
@@ -2998,7 +3037,7 @@ class NeoCard extends HTMLElement {
       // Module may still be loading from the backend store — retry once ready
       this.innerHTML = `
         <ha-card style="padding:24px;text-align:center;color:var(--secondary-text-color);">
-          ${NeoStore._loaded ? `Unbekannter Neo-Kartentyp: ${type}` : "Modul wird geladen …"}
+          ${NeoStore._loaded ? `Unbekannter Neo-Kartentyp: ${escapeHtml(type)}` : "Modul wird geladen …"}
         </ha-card>`;
       if (!NeoStore._loaded && !this._waitingModules) {
         this._waitingModules = true;
@@ -3084,13 +3123,19 @@ Object.assign(window.NeoDashboard, {
   icon: neoIcon,
   accents: NEO_ACCENTS,
   makeEditor: makeNeoEditor,
+  makeTypedEditor: makeNeoTypedEditor,
+  capabilityType: neoCapabilityType,
+  typeDef: neoTypeDef,
   iconOptions: NEO_ICON_OPTIONS,
   accentOptions: NEO_ACCENT_OPTIONS,
   layoutOptions: NEO_LAYOUT_OPTS,
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.77", // beim Build aus package.json ersetzt
+  escapeHtml,
+  escapeAttr,
+  safeUrl,
+  version: "0.2.0-beta.79", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3184,7 +3229,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.77 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.79 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

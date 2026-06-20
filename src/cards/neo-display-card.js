@@ -7,6 +7,7 @@ import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "../core/tokens.js";
 import { neoIcon } from "../core/icons.js";
 import { makeNeoTypedEditor, neoCapabilityType, neoTypeDef } from "../core/capability.js";
 import { NEO_LAYOUT_FIELD } from "../core/layout.js";
+import { escapeAttr, escapeHtml, safeUrl } from "../core/html.js";
 
 // Anzeige-Typen — gemeinsame Capability-Map für Editor UND Rendering (eine
 // Quelle der Wahrheit). mode: "sensor" → Wert-Layout, "camera" → Kamera-Layout.
@@ -94,7 +95,7 @@ class NeoDisplayCard extends NeoBaseCard {
         border:1px dashed var(--neo-line2);">
         <div style="width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;
           background:var(--neo-fill1);border:1px solid var(--neo-line2);">${neoIcon("gauge", { size: 20, color: "var(--neo-text3)" })}</div>
-        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${msg}</div>
+        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${escapeHtml(msg)}</div>
       </div>`;
   }
 
@@ -118,12 +119,12 @@ class NeoDisplayCard extends NeoBaseCard {
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
         <div style="margin-top:auto;">
-          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
+          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${escapeHtml(name)}</div>
           <div style="display:flex;align-items:baseline;gap:3px;margin-top:4px;">
-            <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${value}</span>
-            <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
+            <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${escapeHtml(value)}</span>
+            <span style="font-size:13px;color:var(--neo-text2);">${escapeHtml(unit)}</span>
           </div>
-          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
+          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${escapeHtml(sub)}</div>` : ""}
         </div>
       </div>`;
   }
@@ -149,12 +150,12 @@ class NeoDisplayCard extends NeoBaseCard {
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
         <div style="margin-top:auto;">
-          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
+          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${escapeHtml(name)}</div>
           <div style="display:flex;align-items:baseline;gap:3px;margin-top:4px;">
-            <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${temp != null ? temp : "—"}</span>
-            <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
+            <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${escapeHtml(temp != null ? temp : "—")}</span>
+            <span style="font-size:13px;color:var(--neo-text2);">${escapeHtml(unit)}</span>
           </div>
-          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
+          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${escapeHtml(sub)}</div>` : ""}
         </div>
       </div>`;
   }
@@ -189,9 +190,9 @@ class NeoDisplayCard extends NeoBaseCard {
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
         <div style="margin-top:auto;">
-          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
-          <div style="font-size:16px;font-weight:600;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title}</div>
-          ${when ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${when}</div>` : ""}
+          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${escapeHtml(name)}</div>
+          <div style="font-size:16px;font-weight:600;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title)}</div>
+          ${when ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${escapeHtml(when)}</div>` : ""}
         </div>
       </div>`;
   }
@@ -217,11 +218,11 @@ class NeoDisplayCard extends NeoBaseCard {
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 20, color: acc.c })}</div>
         <div style="min-width:0;">
           <div style="display:flex;align-items:baseline;gap:3px;">
-            <span style="font-size:24px;font-weight:600;letter-spacing:-0.5px;">${value}</span>
-            <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
+            <span style="font-size:24px;font-weight:600;letter-spacing:-0.5px;">${escapeHtml(value)}</span>
+            <span style="font-size:13px;color:var(--neo-text2);">${escapeHtml(unit)}</span>
           </div>
           <div style="font-size:12px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.5px;
-            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(label)}</div>
         </div>
       </div>`;
   }
@@ -247,7 +248,7 @@ class NeoDisplayCard extends NeoBaseCard {
         background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
         backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
         border:1px solid var(--neo-line2);">
-        ${title ? `<div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${title}</div>` : ""}
+        ${title ? `<div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${escapeHtml(title)}</div>` : ""}
         <div style="font-size:14px;color:var(--neo-text1);line-height:1.5;">${body}</div>
       </div>`;
   }
@@ -259,9 +260,9 @@ class NeoDisplayCard extends NeoBaseCard {
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
     const name = this._config?.name || a.friendly_name || id || this._t("Kamera");
     const icon = this._config?.icon || "camera";
-    const pic = a.entity_picture;
+    const pic = safeUrl(a.entity_picture);
     const image = pic
-      ? `<img src="${pic}" alt="${name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" />`
+      ? `<img src="${escapeAttr(pic)}" alt="${escapeAttr(name)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" />`
       : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
            background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);">${neoIcon(icon, { size: 40, color: acc.c })}</div>`;
     return `

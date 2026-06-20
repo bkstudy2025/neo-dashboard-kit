@@ -10,6 +10,7 @@ import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "../core/tokens.js";
 import { neoIcon } from "../core/icons.js";
 import { makeNeoTypedEditor } from "../core/capability.js";
 import { NEO_LAYOUT_FIELD } from "../core/layout.js";
+import { escapeAttr, escapeHtml } from "../core/html.js";
 
 const DEFAULT_ICON = {
   light: "lightbulb", switch: "toggle", input_boolean: "toggle", fan: "fan",
@@ -81,16 +82,16 @@ class NeoControlCard extends NeoBaseCard {
   _badge(acc, active, text) {
     return `<span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;
       color:${active ? acc.c : "var(--neo-text2)"};background:${active ? acc.c + "1f" : "var(--neo-fill2)"};
-      border:1px solid ${active ? acc.c + "55" : "var(--neo-line2)"};">${text}</span>`;
+      border:1px solid ${active ? acc.c + "55" : "var(--neo-line2)"};">${escapeHtml(text)}</span>`;
   }
   _title(name, sub, extra) {
-    return `<div style="font-size:16px;font-weight:600;">${name}</div>
-      ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}${extra || ""}`;
+    return `<div style="font-size:16px;font-weight:600;">${escapeHtml(name)}</div>
+      ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${escapeHtml(sub)}</div>` : ""}${extra || ""}`;
   }
   _slider(idAttr, acc, pct, label) {
     return `<div style="margin-top:8px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--neo-text3);">
-        <span>${label}</span><span style="font-weight:600;">${pct}%</span></div>
+        <span>${escapeHtml(label)}</span><span style="font-weight:600;">${escapeHtml(pct)}%</span></div>
       <input type="range" id="${idAttr}" min="1" max="100" value="${pct || 1}" style="
         width:100%;height:26px;border-radius:9px;-webkit-appearance:none;appearance:none;cursor:pointer;
         background:linear-gradient(90deg,${acc.c}cc 0%,${acc.c} ${pct}%,var(--neo-line2) ${pct}%);
@@ -100,7 +101,7 @@ class NeoControlCard extends NeoBaseCard {
     return `<button ${attr}="${val}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;
       display:flex;align-items:center;justify-content:center;color:#fff;
       background:${primary ? acc.c : "var(--neo-fill2,rgba(255,255,255,.06))"};
-      border:1px solid ${primary ? "transparent" : "var(--neo-line2)"};">${label}</button>`;
+      border:1px solid ${primary ? "transparent" : "var(--neo-line2)"};">${escapeHtml(label)}</button>`;
   }
   _iconBtn(attr, val, sym, acc) {
     return `<button ${attr}="${val}" style="width:44px;height:44px;flex-shrink:0;border-radius:22px;cursor:pointer;
@@ -123,7 +124,7 @@ class NeoControlCard extends NeoBaseCard {
         border:1px dashed var(--neo-line2);">
         <div style="width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;
           background:var(--neo-fill1);border:1px solid var(--neo-line2);">${neoIcon("plus", { size: 20, color: "var(--neo-text3)" })}</div>
-        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${msg}</div>
+        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${escapeHtml(msg)}</div>
       </div>`;
   }
 
@@ -195,9 +196,9 @@ class NeoControlCard extends NeoBaseCard {
     return this._shell(acc, active, right, this._icon("cover"), this._title(this._name(s, "Rollladen"), "", row), 200);
   }
   _iconBtnTxt(val, glyph, title) {
-    return `<button data-cover="${val}" title="${title}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:16px;
+    return `<button data-cover="${val}" title="${escapeAttr(title)}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:16px;
       display:flex;align-items:center;justify-content:center;color:var(--neo-text1,#fff);
-      background:var(--neo-fill2,rgba(255,255,255,.06));border:1px solid var(--neo-line2);">${glyph}</button>`;
+      background:var(--neo-fill2,rgba(255,255,255,.06));border:1px solid var(--neo-line2);">${escapeHtml(glyph)}</button>`;
   }
 
   _renderClimate() {
@@ -217,9 +218,9 @@ class NeoControlCard extends NeoBaseCard {
     const cur = a.current_temperature;
     const row = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;">
         ${this._iconBtn("data-temp", "dec", "minus", accE)}
-        <div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${target != null ? target : "—"}</span><span style="font-size:15px;color:var(--neo-text2);">${unit}</span></div>
+        <div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${escapeHtml(target != null ? target : "—")}</span><span style="font-size:15px;color:var(--neo-text2);">${escapeHtml(unit)}</span></div>
         ${this._iconBtn("data-temp", "inc", "plus", accE)}
-      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">${this._t("Aktuell")} ${cur}${unit}</div>` : ""}`;
+      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">${escapeHtml(this._t("Aktuell"))} ${escapeHtml(cur)}${escapeHtml(unit)}</div>` : ""}`;
     return this._shell(accE, active, this._badge(accE, active, badge), this._icon("climate"), this._title(this._name(s, "Klima"), "", row), 200);
   }
 
@@ -239,8 +240,8 @@ class NeoControlCard extends NeoBaseCard {
         ${this._iconBtn("data-media", "media_previous_track", "prev", acc)}
         ${this._iconBtn("data-media", "media_play_pause", playing ? "pause" : "play", acc)}
         ${this._iconBtn("data-media", "media_next_track", "next", acc)}</div>`;
-    const body = `<div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || name}</div>
-      ${line2 ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${line2}</div>` : ""}${transport}`;
+    const body = `<div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title || name)}</div>
+      ${line2 ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(line2)}</div>` : ""}${transport}`;
     return this._shell(acc, active, this._badge(acc, false, this._t(MEDIA_LABEL[state] || state)), this._icon("media_player"), body, 200);
   }
 
