@@ -112,6 +112,8 @@ const EN = {
   "Sensor / Wert": "Sensor / Value", "Batterie": "Battery", "Status": "Status",
   "Person / Anwesenheit": "Person / Presence", "Wetter": "Weather",
   "Kalender / Termin": "Calendar / Event", "Kalender": "Calendar", "Keine Termine": "No events",
+  "Kennzahl": "Metric", "Titel (optional)": "Title (optional)",
+  "Text / Markdown eingeben …": "Enter text / markdown …",
   // Wetter-Zustände (Display: Wetter-Typ)
   "Sonnig": "Sunny", "Klar": "Clear", "Bewölkt": "Cloudy", "Teils bewölkt": "Partly cloudy",
   "Regen": "Rain", "Starkregen": "Heavy rain", "Schnee": "Snow", "Schneeregen": "Sleet",

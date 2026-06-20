@@ -19,6 +19,8 @@ const DISPLAY_TYPES = [
   { value: "presence", label: "Person / Anwesenheit", domains: ["person", "device_tracker"],          icon: "person",  mode: "sensor" },
   { value: "weather",  label: "Wetter",               domains: ["weather"],                           icon: "partly",  mode: "weather" },
   { value: "calendar", label: "Kalender / Termin",    domains: ["calendar"],                          icon: "calendar", mode: "calendar" },
+  { value: "badge",    label: "Badge / KPI",          domains: [],                                    icon: "gauge",   mode: "badge", unit: true },
+  { value: "markdown", label: "Text / Markdown",      domains: [], source: "text",                    icon: "info",    mode: "markdown" },
   { value: "camera",   label: "Kamera",               domains: ["camera"],                            icon: "camera",  mode: "camera" },
 ];
 // Wetter-Zustand → Label + Icon (basic). Pro-Wetter (Vorhersage etc.) ist Premium.
@@ -66,13 +68,19 @@ function normalizeDisplayConfig(config) {
   const t = cfg.display_type;
   if (!t) return cfg;
   const def = displayTypeDef(t);
+  if (def?.source === "text") { delete cfg.entity; return cfg; } // Text-Typ nutzt keine Entität
   const d = cfg.entity ? cfg.entity.split(".")[0] : "";
-  if (d && def && !def.domains.includes(d)) delete cfg.entity; // Typ/Entität-Mismatch → zurücksetzen
+  if (d && def && def.domains?.length && !def.domains.includes(d)) delete cfg.entity; // Mismatch (nur bei Domain-Filter)
   return cfg;
 }
 
 class NeoDisplayCard extends NeoBaseCard {
-  getCardSize() { return this._kind() === "camera" ? 3 : 2; }
+  getCardSize() {
+    const k = this._kind();
+    if (k === "camera") return 3;
+    if (k === "badge") return 1;
+    return 2;
+  }
 
   // Render-Art: empty (kein Typ & keine Entität), camera oder sensor.
   _kind() {
@@ -89,6 +97,8 @@ class NeoDisplayCard extends NeoBaseCard {
     if (k === "camera") return this._renderCamera();
     if (k === "weather") return this._renderWeather();
     if (k === "calendar") return this._renderCalendar();
+    if (k === "badge") return this._renderBadge();
+    if (k === "markdown") return this._renderMarkdown();
     return this._renderSensor();
   }
 
@@ -206,6 +216,62 @@ class NeoDisplayCard extends NeoBaseCard {
       </div>`;
   }
 
+  // Badge / KPI: kompakte Kennzahl (beliebige Entität). Klein, übersichtsgeeignet.
+  _renderBadge() {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const a = s?.attributes || {};
+    const acc = this._acc();
+    const value = s ? (s.state ?? "—") : "—";
+    const unit = this._config?.unit ?? a.unit_of_measurement ?? "";
+    const label = this._config?.name || a.friendly_name || id || this._t("Kennzahl");
+    const icon = this._config?.icon || "gauge";
+    return `
+      <div class="neo-card" id="card" role="button" style="
+        padding:16px;min-height:96px;display:flex;align-items:center;gap:14px;cursor:pointer;
+        background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
+        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
+        border:1px solid var(--neo-line2);">
+        <div style="width:40px;height:40px;border-radius:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+          background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
+          border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 20, color: acc.c })}</div>
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:baseline;gap:3px;">
+            <span style="font-size:24px;font-weight:600;letter-spacing:-0.5px;">${value}</span>
+            <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
+          </div>
+          <div style="font-size:12px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.5px;
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>
+        </div>
+      </div>`;
+  }
+
+  // Text / Markdown: freie Quelle, sichere Minimal-Darstellung (kein Template-Engine).
+  _mdSafe(text) {
+    const esc = String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return esc
+      .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+      .replace(/(^|[^*])\*([^*]+)\*/g, "$1<i>$2</i>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\n/g, "<br>");
+  }
+  _renderMarkdown() {
+    const title = this._config?.name || "";
+    const content = this._config?.content || "";
+    const body = content
+      ? this._mdSafe(content)
+      : `<span style="color:var(--neo-text3);">${this._t("Text / Markdown eingeben …")}</span>`;
+    return `
+      <div class="neo-card" id="card" style="
+        padding:16px;min-height:96px;display:flex;flex-direction:column;gap:6px;
+        background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
+        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
+        border:1px solid var(--neo-line2);">
+        ${title ? `<div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${title}</div>` : ""}
+        <div style="font-size:14px;color:var(--neo-text1);line-height:1.5;">${body}</div>
+      </div>`;
+  }
+
   _renderCamera() {
     const id = this._config?.entity;
     const s = this._state(id);
@@ -256,10 +322,16 @@ customElements.define("neo-display-card-editor", makeNeoEditor((config) => {
   const general = [
     { name: "display_type", label: "Typ", selector: { select: { mode: "dropdown", options: DISPLAY_TYPE_OPTIONS } } },
   ];
-  if (t || hasLegacyEntity) {
-    const entSel = def
+  if (def?.source === "text") {
+    // Text-/Markdown-Typ: freie Quelle statt Entität.
+    general.push(
+      { name: "content", label: "Text / Markdown", selector: { text: { multiline: true } } },
+      { name: "name", label: "Titel (optional)", selector: { text: {} } },
+    );
+  } else if (t || hasLegacyEntity) {
+    const entSel = def && def.domains?.length
       ? { domain: def.domains, ...(def.device_class ? { device_class: def.device_class } : {}) }
-      : {}; // Legacy/unbekannte Domain → ungefiltert, bleibt editierbar
+      : {}; // keine/leere Domains (Badge, Legacy) → ungefilterter Picker
     general.push(
       { name: "entity", label: "Entität", selector: { entity: entSel } },
       { name: "name", label: "Name (optional)", selector: { text: {} } },
@@ -267,7 +339,8 @@ customElements.define("neo-display-card-editor", makeNeoEditor((config) => {
     );
   }
 
-  const appearance = [{ name: "icon", label: "Icon", selector: { icon: {} } }];
+  const appearance = [];
+  if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: { icon: {} } });
   if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
   appearance.push(
     { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
