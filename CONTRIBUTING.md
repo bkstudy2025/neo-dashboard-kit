@@ -10,9 +10,17 @@ Thanks for your interest! Here's how to contribute.
 4. Test in Home Assistant by pointing your resource at your local build
 5. Open a PR with a clear description of what the card does
 
-## Community plugin cards (separate repos)
+## Community cards & modules (share / submit)
 
-Build your own card as a standalone HACS repo — see [docs/en/development.md](docs/en/development.md) ([Deutsch](docs/de/entwicklung.md)).
+Build a card or module, then share it with your community. The full workflow —
+publishing to the public Store (fork + PR), distributing Premium via Patreon
+(code only), or shipping your own HACS repo, plus a copy-paste announcement
+template — is documented here:
+
+- 🇬🇧 [docs/en/community.md](docs/en/community.md)
+- 🇩🇪 [docs/de/mitmachen.md](docs/de/mitmachen.md)
+
+How to write a card/module (API reference): [docs/en/development.md](docs/en/development.md) ([Deutsch](docs/de/entwicklung.md)).
 
 ## Code style
 

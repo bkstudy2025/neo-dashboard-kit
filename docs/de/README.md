@@ -10,6 +10,7 @@ die sich an dein Gerät anpasst. Erweiterbar über **Module** und **Premium**.
 - [Karten](karten.md) — die drei Karten erklärt
 - [Module & Store](module.md) — Karten erweitern
 - [Entwicklung](entwicklung.md) — eigene Karten/Module bauen
+- [Mitmachen](mitmachen.md) — Karten/Module teilen & einreichen
 
 ---
 

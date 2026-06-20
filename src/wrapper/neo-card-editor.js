@@ -388,7 +388,7 @@ class NeoCardEditor extends HTMLElement {
       const showInstall = !installed || !!update; // installiert & aktuell → nur Entfernen/Info
       return this._storeRow({
         icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
-        version: (installed && reg.version) || it.version, kind: reg.isCard ? "Karte" : "Modul",
+        version: (installed && reg.version) || it.version, kind: (reg.isCard || it.kind === "card") ? "Karte" : "Modul",
         installed, update, homepage: it.homepage || it.repo, image: it.image, description: it.description,
         // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
         // gefilterte Liste zwischen Render und Klick ändert.

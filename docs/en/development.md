@@ -35,7 +35,8 @@ before or after the core, always guard for the API and wait for the
 })();
 ```
 
-**How users install your file:**
+**How you distribute your file** (full workflow incl. Premium/Patreon &
+announcement template): **[Contributing](community.md)**. In short:
 - **Paste code** — editor → *Extensions* → *Paste code* (loads now, and is saved
   server-side by *Neo Dashboard Tools* so it loads on every start).
 - **Store** — published in a catalog `index.json` (see §7).

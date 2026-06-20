@@ -2823,7 +2823,7 @@ class NeoCardEditor extends HTMLElement {
       const showInstall = !installed || !!update; // installiert & aktuell → nur Entfernen/Info
       return this._storeRow({
         icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
-        version: (installed && reg.version) || it.version, kind: reg.isCard ? "Karte" : "Modul",
+        version: (installed && reg.version) || it.version, kind: (reg.isCard || it.kind === "card") ? "Karte" : "Modul",
         installed, update, homepage: it.homepage || it.repo, image: it.image, description: it.description,
         // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
         // gefilterte Liste zwischen Render und Klick ändert.
@@ -3376,7 +3376,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.60", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.61", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3470,7 +3470,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.60 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.61 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
