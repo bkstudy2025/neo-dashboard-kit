@@ -37,6 +37,11 @@ const EN = {
   "Erneut": "Retry",
   "Offizieller Store": "Official store",
   "Store aktualisieren": "Refresh store",
+  "Store wird aktualisiert …": "Refreshing store …",
+  "Erweiterungen führen JavaScript in Home Assistant aus. Installiere nur vertrauenswürdige Erweiterungen.":
+    "Extensions run JavaScript in Home Assistant. Only install extensions you trust.",
+  "Community-Beitrag vorschlagen": "Suggest a community contribution",
+  "Installiert (per Code eingefügt)": "Installed (pasted code)",
   "Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.":
     "No store modules available right now. Add premium cards (e.g. weather) via <b>Paste code</b>.",
   "✓ Installiert": "✓ Installed",
@@ -51,6 +56,9 @@ const EN = {
     "ℹ️ Without <b>Neo Dashboard Tools</b> the module loads for this session only (not saved permanently).",
   "Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …":
     "Paste module or card code (registerModule / registerCard, e.g. premium cards) …",
+  "Für Premium-Code (z. B. Patreon) oder privat geprüften Test-Code. Wird nicht über den öffentlichen Store verteilt.":
+    "For premium code (e.g. Patreon) or privately reviewed test code. Not distributed via the public store.",
+  "Premium- oder Test-Code einfügen": "Paste premium or test code",
   "Hinzufügen": "Add",
   // Meldungen
   "Bitte Code einfügen.": "Please paste some code.",

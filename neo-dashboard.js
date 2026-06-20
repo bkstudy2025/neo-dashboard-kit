@@ -506,6 +506,11 @@ const EN = {
   "Erneut": "Retry",
   "Offizieller Store": "Official store",
   "Store aktualisieren": "Refresh store",
+  "Store wird aktualisiert …": "Refreshing store …",
+  "Erweiterungen führen JavaScript in Home Assistant aus. Installiere nur vertrauenswürdige Erweiterungen.":
+    "Extensions run JavaScript in Home Assistant. Only install extensions you trust.",
+  "Community-Beitrag vorschlagen": "Suggest a community contribution",
+  "Installiert (per Code eingefügt)": "Installed (pasted code)",
   "Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.":
     "No store modules available right now. Add premium cards (e.g. weather) via <b>Paste code</b>.",
   "✓ Installiert": "✓ Installed",
@@ -520,6 +525,9 @@ const EN = {
     "ℹ️ Without <b>Neo Dashboard Tools</b> the module loads for this session only (not saved permanently).",
   "Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …":
     "Paste module or card code (registerModule / registerCard, e.g. premium cards) …",
+  "Für Premium-Code (z. B. Patreon) oder privat geprüften Test-Code. Wird nicht über den öffentlichen Store verteilt.":
+    "For premium code (e.g. Patreon) or privately reviewed test code. Not distributed via the public store.",
+  "Premium- oder Test-Code einfügen": "Paste premium or test code",
   "Hinzufügen": "Add",
   // Meldungen
   "Bitte Code einfügen.": "Please paste some code.",
@@ -2558,24 +2566,43 @@ class NeoCardEditor extends HTMLElement {
       </div>`;
   }
 
+  // Kompakter, dezenter Sicherheitshinweis vor der Installation.
+  _storeWarn() {
+    return `<div class="nmod-warn">🛈 ${this._t("Erweiterungen führen JavaScript in Home Assistant aus. Installiere nur vertrauenswürdige Erweiterungen.")}</div>`;
+  }
+  // Link zu GitHub Discussions — reiner Vorschlag/Showcase, KEINE Installquelle.
+  _storeSuggest() {
+    return `<a class="nmod-suggest" href="${escapeAttr(NEO_LINKS.newDiscussion)}" target="_blank" rel="noopener">💬 ${this._t("Community-Beitrag vorschlagen")}</a>`;
+  }
+  // Ruhiger Lade-Zustand: ein paar Platzhalter-Kacheln statt Progress-Screen.
+  _storeSkeleton() {
+    const tile = `<div class="nmod-skel">
+        <div class="nmod-skel-prev"></div>
+        <div class="nmod-skel-line w60"></div>
+        <div class="nmod-skel-line w35"></div>
+      </div>`;
+    return `<div class="nmod-skelwrap">${tile.repeat(3)}</div>
+      <div class="nmod-note nmod-note--muted">${this._t("Store wird aktualisiert …")}</div>`;
+  }
+
   _storeHtml() {
     const bar = this._storeBar();
     if (!NeoStore.available()) {
-      return bar + `<div class="nmod-note">${this._t("⚠️ Für den Store wird die Integration <b>Neo Dashboard Tools</b> benötigt (serverseitiges Speichern + Laden).")}</div>`;
+      return bar + `<div class="nmod-note">${this._t("⚠️ Für den Store wird die Integration <b>Neo Dashboard Tools</b> benötigt (serverseitiges Speichern + Laden).")}</div>` + this._storeSuggest();
     }
-    if (this._storeLoading) return bar + `<div class="nmod-note">${this._t("Lade Store …")}</div>`;
-    if (this._storeErr) return bar + `<div class="nmod-note nmod-note--err">${this._t(this._storeErr)}</div>`;
+    if (this._storeLoading) return bar + this._storeSkeleton();
+    if (this._storeErr) return bar + `<div class="nmod-note nmod-note--err">${this._t(this._storeErr)}</div>` + this._storeSuggest();
 
-    // Eine Liste: Katalog (Store) + installierte Add-ons, die NICHT im Katalog
-    // sind (z. B. eingefügte Premium-Karten) — mit Version, Aktualisieren/Entfernen.
+    // Katalog (offizieller Store) + installierte Add-ons, die NICHT im Katalog
+    // sind (z. B. eingefügte Premium-Karten) — getrennt dargestellt.
     const catalog = this._catalog();
     const seen = new Set(catalog.map((c) => c.id));
     const extra = Array.from(this._installed || []).filter((id) => !seen.has(id));
     if (!catalog.length && !extra.length) {
-      return bar + `<div class="nmod-note">${this._t("Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.")}</div>`;
+      return bar + `<div class="nmod-note">${this._t("Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.")}</div>` + this._storeSuggest();
     }
 
-    const rows = catalog.map((it) => {
+    const catalogRows = catalog.map((it) => {
       const installed = this._isInstalled(it.id);
       const reg = this._addonMeta(it.id);
       const update = installed && this._verGt(it.version, reg.version) ? it.version : null;
@@ -2590,24 +2617,32 @@ class NeoCardEditor extends HTMLElement {
         uninstallId: installed ? it.id : null,
       });
     });
-    // Installierte ohne Katalog-Eintrag (z. B. per Code eingefügt) — keine Quelle
-    // zum Aktualisieren; Hinweis erklärt den Weg.
-    extra.forEach((id) => {
+    // Installierte ohne Katalog-Eintrag (z. B. per Code eingefügt) — eigene,
+    // klar abgegrenzte Sektion; keine Store-Quelle zum Aktualisieren.
+    const extraRows = extra.map((id) => {
       const reg = this._addonMeta(id);
-      rows.push(this._storeRow({
+      return this._storeRow({
         icon: reg.icon, name: reg.name, author: reg.author, version: reg.version,
         kind: reg.isCard ? "Karte" : "Modul", installed: true, uninstallId: id,
         note: this._t("Per Code eingefügt — Update durch erneutes Einfügen."),
-      }));
+      });
     });
-    return bar + rows.join("");
+
+    return bar
+      + this._storeWarn()
+      + (catalogRows.length ? catalogRows.join("") : "")
+      + (extraRows.length ? `<div class="nmod-subh">${this._t("Installiert (per Code eingefügt)")}</div>` + extraRows.join("") : "")
+      + this._storeSuggest();
   }
 
   _pasteHtml() {
+    // Klarstellung: dieser Weg ist für Premium-/privat geprüften Code — NICHT
+    // der öffentliche Store. Installation aus dem Store bleibt der kuratierte Weg.
+    const intro = `<div class="nmod-note nmod-note--muted">${this._t("Für Premium-Code (z. B. Patreon) oder privat geprüften Test-Code. Wird nicht über den öffentlichen Store verteilt.")}</div>`;
     const note = NeoStore.available()
       ? ""
       : `<div class="nmod-note">${this._t("ℹ️ Ohne <b>Neo Dashboard Tools</b> wird das Modul nur für diese Sitzung geladen (nicht dauerhaft gespeichert).")}</div>`;
-    return `${note}
+    return `${intro}${note}
       <textarea id="nmod-code" placeholder="${escapeAttr(this._t("Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …"))}"></textarea>
       <button class="nmod-mini" id="nmod-paste-add">${this._t("Hinzufügen")}</button>`;
   }
@@ -2770,6 +2805,27 @@ class NeoCardEditor extends HTMLElement {
           color:var(--secondary-text-color,rgba(244,246,251,.72)); }
         .nmod-storebar .nmod-mini { margin-top:0; padding:6px 10px; }
         .nmod-storebar .nmod-mini[disabled] { opacity:.5; cursor:default; }
+        .nmod-note--muted { opacity:.7; }
+        .nmod-warn { display:flex; gap:7px; align-items:flex-start; font-size:11.5px; line-height:1.45;
+          color:var(--secondary-text-color,rgba(244,246,251,.72)); margin:0 0 10px; padding:8px 10px; border-radius:9px;
+          background:var(--neo-fill1,rgba(255,255,255,.03)); border:1px solid var(--divider-color,rgba(255,255,255,.1)); }
+        .nmod-subh { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+          color:var(--secondary-text-color,rgba(244,246,251,.72)); margin:14px 0 8px; }
+        .nmod-suggest { display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:7px 12px; border-radius:999px;
+          font-size:12.5px; font-weight:600; text-decoration:none; cursor:pointer;
+          color:var(--primary-text-color); background:var(--neo-fill2,rgba(255,255,255,.06));
+          border:1px solid var(--neo-line2,rgba(255,255,255,.1)); }
+        .nmod-suggest:hover { border-color:var(--primary-color,#7C9CFF); }
+        .nmod-skelwrap { display:flex; flex-direction:column; gap:8px; }
+        .nmod-skel { border:1px solid var(--divider-color,rgba(255,255,255,.08)); border-radius:12px; padding:10px; }
+        .nmod-skel-prev { height:48px; border-radius:8px; margin-bottom:9px; }
+        .nmod-skel-line { height:11px; border-radius:6px; margin-top:7px; }
+        .nmod-skel-line.w60 { width:60%; } .nmod-skel-line.w35 { width:35%; }
+        .nmod-skel-prev, .nmod-skel-line { background:linear-gradient(100deg,
+          var(--neo-fill1,rgba(255,255,255,.04)) 30%, var(--neo-fill2,rgba(255,255,255,.09)) 50%,
+          var(--neo-fill1,rgba(255,255,255,.04)) 70%); background-size:220% 100%; animation:nmod-shimmer 1.4s ease-in-out infinite; }
+        @keyframes nmod-shimmer { 0% { background-position:180% 0; } 100% { background-position:-40% 0; } }
+        @media (prefers-reduced-motion: reduce) { .nmod-skel-prev, .nmod-skel-line { animation:none; } }
         .nmod-store { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; padding:10px; margin-bottom:8px; }
         .nmod-store-h { display:flex; align-items:flex-start; gap:9px; }
         .nmod-sub { display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
@@ -3222,7 +3278,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.81", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.82", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3316,7 +3372,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.81 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.82 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
