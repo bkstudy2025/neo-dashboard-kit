@@ -52,6 +52,24 @@ Everything else is added through **modules** and **Premium** — see the docs ab
 
 ---
 
+---
+
+## 🧪 Beta & updates
+
+This project is currently published as **beta (pre-releases)**. HACS **hides
+pre-releases by default**, so updates only appear once you enable
+**“Show beta versions”** for this repository in HACS
+(repository → 3-dot menu → *Redownload* / settings → enable beta). A stable
+release will be cut later.
+
+> ℹ️ **First-open note:** When you open the repository in HACS for the first
+> time, the description box may briefly show *“the developer has not provided
+> further information”* until HACS has fetched and cached it — reopen once and
+> the README/info appears. This is HACS-side lazy-loading/caching and is **not**
+> configurable from the repository.
+
+---
+
 ## ❤️ Support
 Built with love in my spare time. If you enjoy it, any support is huge
 motivation — links are in the editor’s **“Info & Support”** panel and on
