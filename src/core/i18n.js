@@ -107,6 +107,7 @@ const EN = {
   "Szene": "Scene", "Taster": "Button", "Skript": "Script", "Aktion": "Action",
   "an": "on",
   "Wert": "Value", "Kamera": "Camera", "Sensor": "Sensor", "Licht-Gruppe": "Light group",
+  "Wähle einen Gerätetyp, um die Vorschau zu starten": "Pick a device type to start the preview",
 
   // ── Editor: Feld-Labels & Abschnitte (zentral in makeEditor übersetzt) ──
   "Allgemein": "General", "Darstellung": "Appearance",
