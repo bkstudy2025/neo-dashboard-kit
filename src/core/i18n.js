@@ -115,6 +115,7 @@ const EN = {
   "Icon": "Icon", "Icon (optional)": "Icon (optional)",
   "Akzentfarbe": "Accent color", "Akzentfarbe (optional)": "Accent color (optional)",
   "Einheit (optional)": "Unit (optional)", "Lichter": "Lights",
+  "Temperaturschritt (optional)": "Temperature step (optional)",
   "Code (optional, falls erforderlich)": "Code (optional, if required)",
   "Typ": "Type", "Titel (bei Trenner optional)": "Title (optional for divider)",
   "Inhalt": "Content", "Titel": "Title",
