@@ -60,6 +60,14 @@ Beispiel.
 
 ## Eigenes Modul einreichen
 
+> **Community-Beiträge** werden zuerst in den GitHub-Discussions vorgeschlagen
+> (Kategorie **„Community Cards & Modules"**), von einem Admin geprüft und erst
+> nach Übernahme ins Repo veröffentlicht. Discussions sind **keine**
+> Installationsquelle. Der Ablauf steht in
+> [`CONTRIBUTING.md`](../CONTRIBUTING.md). Die folgenden Schritte sind der
+> **Admin-Teil** (Übernahme eines geprüften Beitrags). **Premium**-Karten
+> gehören **nicht** in diesen Katalog.
+
 1. Lege `store/modules/<deine-id>.js` an (Muster wie oben, eigenständig).
 2. Ergänze einen Eintrag in `store/index.json`:
 
