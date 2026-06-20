@@ -10,6 +10,7 @@ import { makeNeoEditor } from "./editor-factory.js";
 import { makeNeoTypedEditor, neoCapabilityType, neoTypeDef } from "./capability.js";
 import { NEO_LAYOUT_OPTS, normalizeLayout, neoViewportLayout } from "./layout.js";
 import { neoRenderReorder } from "./reorder.js";
+import { escapeAttr, escapeHtml, safeUrl } from "./html.js";
 
 Object.assign(window.NeoDashboard, {
   BaseCard: NeoBaseCard,
@@ -25,6 +26,9 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
+  escapeHtml,
+  escapeAttr,
+  safeUrl,
   version: "__NEO_VERSION__", // beim Build aus package.json ersetzt
   ready: true,
 });

@@ -16,6 +16,7 @@
 //     makeTypedEditor(spec, meta),       // Typed-Editor aus Capability-Spec
 //     capabilityType(config, spec),      // Typ aus typeKey/Legacy-Entity ableiten
 //     typeDef(spec, type),               // Typ-Definition aus derselben Registry
+//     escapeHtml, escapeAttr, safeUrl,   // Ausgabe-/URL-Sicherheit
 //   }
 //
 // Empfehlung für neue Premium-/Community-Karten:
@@ -25,6 +26,33 @@
 //   Legacy-Migration, Domain-Filter und Pruning identisch zur Standard-UX.
 // - Einfache Einzelzweck-Karten können weiter makeEditor(schema, meta) nutzen.
 // ════════════════════════════════════════════════════════════════
+
+
+// ── Typed-Card Mini-Referenz (Kommentar, keine aktive Premium-Funktion) ──
+// Einfache Karte: nutze makeEditor(schema, meta), wenn die Karte genau einen
+// festen Zweck hat und nur normale ha-form-Felder braucht.
+//
+// Getypte Karte: nutze makeTypedEditor(spec, meta), wenn die Karte mehrere
+// Untertypen, Quellen oder Entity-Domains hat. Das Spec ist die einzige Quelle
+// für Editor, Preview-Mode und Legacy-Ableitung:
+//   const TYPED_SPEC = {
+//     typeKey: "example_type",
+//     typeLabel: "Typ",
+//     entityLabel: "Entität",
+//     types: [
+//       { value: "value", label: "Wert", domains: ["sensor"], mode: "sensor" },
+//       { value: "text", label: "Text", source: "text", mode: "text" },
+//     ],
+//     appearance: [
+//       { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: accentOptions } } },
+//     ],
+//   };
+//   const type = capabilityType(this._config, TYPED_SPEC);
+//   const def = typeDef(TYPED_SPEC, type);
+//   customElements.define(ED_TAG, makeTypedEditor(TYPED_SPEC, meta));
+//
+// Wichtig: Externe Texte vor innerHTML escapen und externe URLs nur nach
+// Validierung rendern (escapeHtml/escapeAttr/safeUrl aus window.NeoDashboard).
 
 (function () {
   function init() {
@@ -81,12 +109,8 @@
     }
 
     // ── Der Editor (HA-native ha-form über die Factory) ──────────
-    // Für getypte Premium-/Community-Karten kann statt makeEditor ein Spec
-    // verwendet werden:
-    //   const SPEC = { typeKey: "example_type", types: [...], appearance: [...] };
-    //   customElements.define(ED_TAG, makeTypedEditor(SPEC, meta));
-    // Rendering kann dann denselben Spec über capabilityType(config, SPEC) und
-    // typeDef(SPEC, type) nutzen. Das vermeidet Sonder-UX gegenüber Core-Karten.
+    // Dieses aktive Beispiel ist bewusst eine einfache Karte: makeEditor reicht.
+    // Für getypte Karten siehe die Typed-Card Mini-Referenz oben.
     void makeTypedEditor; void capabilityType; void typeDef;
     // WICHTIG: Editor unter VERSIONIERTEM Tag definieren (nicht festem!). So
     // gehen auch Editor-Änderungen beim Modul-Update OHNE Browser-Reload live —

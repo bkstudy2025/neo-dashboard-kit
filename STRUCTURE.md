@@ -102,3 +102,21 @@ Capability-Spec und nutzt die öffentliche API `window.NeoDashboard.makeTypedEdi
 `window.NeoDashboard.capabilityType` und `window.NeoDashboard.typeDef`. Damit bleiben
 Typ-Auswahl, Empty-State, Legacy-Migration, Domain-Filter und Pruning konsistent mit
 Display und Control.
+
+
+### Editor-API und Sicherheit für externe Karten
+
+- `makeEditor(schema, meta)` ist für einfache Karten gedacht: ein fester
+  Kartenzweck, statische oder leicht konditionale ha-form-Felder, keine eigene
+  Typ-/Domain-Matrix.
+- `makeTypedEditor(spec, meta)` ist das Muster für Karten mit Untertypen,
+  mehreren Quellen oder Entity-Domains. Ein Capability-Spec enthält mindestens
+  `typeKey`, `types` und optional `typeLabel`, `entityLabel` sowie `appearance`.
+  Jeder Eintrag in `types` beschreibt `value`, `label`, passende `domains` oder
+  `source: "text"`, optional `mode`, `fields`, `multi`, `entityLabel` und
+  `unit`. Rendering nutzt denselben Spec über `capabilityType(config, spec)` und
+  `typeDef(spec, type)`.
+- Sicherheitsregel: Alle externen oder nutzer-/HA-basierten Texte vor `innerHTML`
+  escapen (`window.NeoDashboard.escapeHtml`/`escapeAttr`). Externe `href`-/`src`-Werte nie direkt
+  rendern, sondern zuerst über `window.NeoDashboard.safeUrl` führen; erlaubt sind nur `http:`,
+  `https:` und relative Pfade wie `/local/...`.

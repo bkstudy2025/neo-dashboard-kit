@@ -7,7 +7,7 @@ import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "../core/tokens.js";
 import { neoIcon } from "../core/icons.js";
 import { makeNeoTypedEditor, neoCapabilityType, neoTypeDef } from "../core/capability.js";
 import { NEO_LAYOUT_FIELD } from "../core/layout.js";
-import { escapeAttr, escapeHtml } from "../core/html.js";
+import { escapeAttr, escapeHtml, safeUrl } from "../core/html.js";
 
 // Anzeige-Typen — gemeinsame Capability-Map für Editor UND Rendering (eine
 // Quelle der Wahrheit). mode: "sensor" → Wert-Layout, "camera" → Kamera-Layout.
@@ -260,7 +260,7 @@ class NeoDisplayCard extends NeoBaseCard {
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
     const name = this._config?.name || a.friendly_name || id || this._t("Kamera");
     const icon = this._config?.icon || "camera";
-    const pic = a.entity_picture;
+    const pic = safeUrl(a.entity_picture);
     const image = pic
       ? `<img src="${escapeAttr(pic)}" alt="${escapeAttr(name)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" />`
       : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
