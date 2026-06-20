@@ -19,7 +19,7 @@ neo-dashboard.js      ← GEBAUTES Bundle (von Rollup erzeugt, in HACS ausgelief
 package.json          ← Version (Single Source of Truth) + Build-Skripte
 rollup.config.js      ← Build-Konfiguration
 hacs.json             ← HACS-Metadaten (content_in_root → Bundle liegt im Root)
-info.md / README.md   ← HACS-Beschreibung / GitHub-Readme
+README.md             ← HACS-Beschreibung (render_readme) + GitHub-Readme
 icon.png / logo.png   ← HACS-Branding
 src/                  ← QUELLCODE (siehe unten)
 docs/de/ · docs/en/   ← zweisprachige Doku (README, Karten, Module, Entwicklung)
