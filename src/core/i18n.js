@@ -108,6 +108,9 @@ const EN = {
   "an": "on",
   "Wert": "Value", "Kamera": "Camera", "Sensor": "Sensor", "Licht-Gruppe": "Light group",
   "Wähle einen Gerätetyp, um die Vorschau zu starten": "Pick a device type to start the preview",
+  "Wähle einen Anzeige-Typ, um die Vorschau zu starten": "Pick a display type to start the preview",
+  "Sensor / Wert": "Sensor / Value", "Batterie": "Battery", "Status": "Status",
+  "Person / Anwesenheit": "Person / Presence",
 
   // ── Editor: Feld-Labels & Abschnitte (zentral in makeEditor übersetzt) ──
   "Allgemein": "General", "Darstellung": "Appearance",
