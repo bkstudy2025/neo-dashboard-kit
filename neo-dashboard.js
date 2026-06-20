@@ -580,6 +580,7 @@ const EN = {
   "Icon": "Icon", "Icon (optional)": "Icon (optional)",
   "Akzentfarbe": "Accent color", "Akzentfarbe (optional)": "Accent color (optional)",
   "Einheit (optional)": "Unit (optional)", "Lichter": "Lights",
+  "Temperaturschritt (optional)": "Temperature step (optional)",
   "Code (optional, falls erforderlich)": "Code (optional, if required)",
   "Typ": "Type", "Titel (bei Trenner optional)": "Title (optional for divider)",
   "Inhalt": "Content", "Titel": "Title",
@@ -1012,6 +1013,15 @@ const DEFAULT_ICON = {
   cover: "blinds", climate: "thermo", media_player: "speaker", lock: "lock",
   scene: "scenes", script: "robot", button: "robot", lightgroup: "lightbulb",
 };
+
+// Domain-Ableitung — einzige Quelle der Wahrheit für Render UND Editor.
+// (Mehrere Entitäten ⇒ Licht-Gruppe; sonst die Domain der gewählten Entität.)
+// So zeigt der Editor exakt die Optionen, die das Rendering für diese Domain nutzt.
+function neoControlDomain(config) {
+  if (Array.isArray(config?.entities) && config.entities.length) return "lightgroup";
+  const id = config?.entity;
+  return id ? id.split(".")[0] : "";
+}
 const ALARM_STATES = {
   disarmed: { label: "Unscharf", accent: "mint", icon: "unlock" },
   armed_home: { label: "Scharf · Zuhause", accent: "amber", icon: "lock" },
@@ -1028,11 +1038,7 @@ const COVER_LABEL = { open: "Offen", closed: "Geschlossen", opening: "Öffnet", 
 class NeoControlCard extends NeoBaseCard {
   getCardSize() { return this._domain() === "media_player" ? 3 : 2; }
 
-  _domain() {
-    if (Array.isArray(this._config?.entities) && this._config.entities.length) return "lightgroup";
-    const id = this._config?.entity;
-    return id ? id.split(".")[0] : "";
-  }
+  _domain() { return neoControlDomain(this._config); }
   _acc() { return NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue; }
   _name(s, fallback) { return this._config?.name || s?.attributes?.friendly_name || this._config?.entity || this._t(fallback); }
 
@@ -1308,25 +1314,41 @@ class NeoControlCard extends NeoBaseCard {
   static getStubConfig() { return {}; }
 }
 
-// ── Editor: bewusst minimal (Laien-tauglich) — Entität wählen, fertig. ──
-customElements.define("neo-control-card-editor", makeNeoEditor([
-  {
-    type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "entity", label: "Entität (Gerät)", selector: { entity: {} } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-      { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-      NEO_LAYOUT_FIELD,
-    ],
-  },
-], { name: "Neo Steuerung", description: "Eine Karte für alle Geräte — passt sich an", icon: "🎛️" }));
+// ── Editor: konditionales Schema (Referenzmuster aus neo-header-card) ──
+// Komponente → Entität/Domain → passende Optionen: nach Wahl der Entität werden
+// nur die für deren Domain relevanten Felder eingeblendet (climate ⇒ Schritt,
+// Alarm ⇒ Code). Bewusst minimal/Laien-tauglich — Entität wählen genügt.
+//
+// Rebuild-Guard: KEINE expliziten rebuildKeys, da die Struktur von der
+// ABGELEITETEN Domain abhängt (nicht von einem einzelnen Config-Key). makeNeoEditor
+// fällt dann auf den Feld-Signatur-Vergleich zurück → das Formular wird nur neu
+// gebaut, wenn sich die sichtbaren Felder tatsächlich ändern (Domain-Wechsel),
+// nicht beim Entitätswechsel innerhalb derselben Domain oder bei Texteingaben.
+customElements.define("neo-control-card-editor", makeNeoEditor((config) => {
+  const d = neoControlDomain(config);
+  const general = [
+    { name: "entity", label: "Entität (Gerät)", selector: { entity: {} } },
+    { name: "name", label: "Name (optional)", selector: { text: {} } },
+    { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
+  ];
+  // Domain-spezifische Optionen — exakt die Keys, die das Rendering auswertet.
+  if (d === "climate")
+    general.push({ name: "step", label: "Temperaturschritt (optional)", selector: { number: { min: 0.1, max: 5, step: 0.1, mode: "box" } } });
+  if (d === "alarm_control_panel")
+    general.push({ name: "code", label: "Code (optional, falls erforderlich)", selector: { text: {} } });
+
+  return [
+    { type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true, schema: general },
+    {
+      type: "expandable", title: "Darstellung", icon: "mdi:palette",
+      schema: [
+        { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
+        { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+        NEO_LAYOUT_FIELD,
+      ],
+    },
+  ];
+}, { name: "Neo Steuerung", description: "Eine Karte für alle Geräte — passt sich an", icon: "🎛️" }));
 
 NeoDashboardRegistry.registerCard("neo-control-card", NeoControlCard, {
   name: "Neo Steuerung",
@@ -2704,7 +2726,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.65", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.66", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -2798,7 +2820,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.65 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.66 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
