@@ -117,6 +117,8 @@ const EN = {
   "Einheit (optional)": "Unit (optional)", "Lichter": "Lights",
   "Code (optional, falls erforderlich)": "Code (optional, if required)",
   "Typ": "Type", "Titel (bei Trenner optional)": "Title (optional for divider)",
+  "Inhalt": "Content", "Titel": "Title",
+  "Trenner-Label (optional)": "Divider label (optional)",
   "Layout / Gerät": "Layout / device",
   // Optionen
   "Blau": "Blue", "Amber": "Amber", "Mint": "Mint", "Violett": "Violet", "Rosé": "Rosé",

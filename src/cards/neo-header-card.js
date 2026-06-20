@@ -46,27 +46,50 @@ class NeoHeaderCard extends NeoBaseCard {
   static getStubConfig() { return { variant: "header", title: "Überschrift" }; }
 }
 
-// ── Editor: geteiltes Sektions-Muster (Inhalt/Darstellung) ──
-customElements.define("neo-header-card-editor", makeNeoEditor([
-  { name: "variant", label: "Typ", selector: { select: { mode: "dropdown", options: [
+// ── Editor: konditionales Schema (Referenzmuster für Progressive Disclosure) ──
+// Erst "Typ" wählen → danach erscheinen nur die für die Variante relevanten Felder.
+// Schema ist eine Funktion (config) => schema[]; makeNeoEditor baut das Formular
+// dank rebuildKeys:["variant"] nur bei Varianten-Wechsel neu (kein Fokusverlust)
+// und entfernt beim Wechsel die nicht mehr gültigen Keys aus der Config.
+const variantField = {
+  name: "variant", label: "Typ", selector: { select: { mode: "dropdown", options: [
     { value: "header", label: "Überschrift" },
     { value: "divider", label: "Trenner" },
-  ] } } },
-  {
-    type: "expandable", title: "Inhalt", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "title", label: "Titel (bei Trenner optional)", selector: { text: {} } },
-      { name: "subtitle", label: "Untertitel (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-    ],
-  },
-], { name: "Neo Header", description: "Überschrift / Trenner", icon: "🔖" }));
+  ] } },
+};
+
+customElements.define("neo-header-card-editor", makeNeoEditor((config) => {
+  // Trenner: nur das optionale Label ist relevant — keine Titel/Untertitel/Icon/Farbe.
+  if (config?.variant === "divider") {
+    return [
+      variantField,
+      {
+        type: "expandable", title: "Inhalt", icon: "mdi:tune-variant", expanded: true,
+        schema: [
+          { name: "title", label: "Trenner-Label (optional)", selector: { text: {} } },
+        ],
+      },
+    ];
+  }
+  // Überschrift: vollständige Inhalts- und Darstellungs-Optionen.
+  return [
+    variantField,
+    {
+      type: "expandable", title: "Inhalt", icon: "mdi:tune-variant", expanded: true,
+      schema: [
+        { name: "title", label: "Titel", selector: { text: {} } },
+        { name: "subtitle", label: "Untertitel (optional)", selector: { text: {} } },
+      ],
+    },
+    {
+      type: "expandable", title: "Darstellung", icon: "mdi:palette",
+      schema: [
+        { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
+        { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+      ],
+    },
+  ];
+}, { name: "Neo Header", description: "Überschrift / Trenner", icon: "🔖", rebuildKeys: ["variant"] }));
 
 NeoDashboardRegistry.registerCard("neo-header-card", NeoHeaderCard, {
   name: "Neo Header",
