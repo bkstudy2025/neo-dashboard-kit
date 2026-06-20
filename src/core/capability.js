@@ -17,6 +17,8 @@
 //       domains?: [],                 // erlaubte Entitäts-Domains (Picker-Filter + Typ-Ableitung)
 //       device_class?: "",            // optionaler Entity-device_class-Filter
 //       source?: "text",              // 'text' → Content-Feld statt Entität
+//       multi?: true,                 // Multi-Entity → 'entities' statt 'entity' (z. B. Licht-Gruppe)
+//       entityLabel?: "Lichter",      // eigenes Label für den (Multi-)Picker
 //       fields?: [],                  // zusätzliche allgemeine Felder dieses Typs (z. B. step/code)
 //       unit?: true,                  // Einheiten-Feld (Darstellung)
 //     } ],
@@ -41,24 +43,32 @@ function typeByDomain(spec, d) {
   return hit ? hit.value : "";
 }
 
-// Effektiver Typ: expliziter typeKey, sonst aus der Entitäts-Domain abgeleitet.
+// Effektiver Typ: expliziter typeKey, sonst aus Entität/Entities abgeleitet.
 export function neoCapabilityType(config, spec) {
-  return config?.[spec.typeKey] || typeByDomain(spec, domainOf(config?.entity)) || "";
+  if (config?.[spec.typeKey]) return config[spec.typeKey];
+  if (config?.entities?.length) {
+    const m = spec.types.find((x) => x.multi);
+    if (m) return m.value; // Multi-Entity-Typ (z. B. Licht-Gruppe)
+  }
+  return typeByDomain(spec, domainOf(config?.entity)) || "";
 }
 
-// Invarianten: Legacy → Typ migrieren; Entität passend zum Typ halten/verwerfen.
+// Invarianten: Legacy → Typ migrieren; Quelle (Entität/Entities) passend halten.
 export function neoCapabilityNormalize(config, spec) {
   const cfg = { ...config };
   if (!cfg[spec.typeKey]) {
-    const t = typeByDomain(spec, domainOf(cfg.entity));
-    if (t) cfg[spec.typeKey] = t;
+    const m = spec.types.find((x) => x.multi);
+    if (cfg.entities?.length && m) cfg[spec.typeKey] = m.value;
+    else { const t = typeByDomain(spec, domainOf(cfg.entity)); if (t) cfg[spec.typeKey] = t; }
   }
   const t = cfg[spec.typeKey];
   if (!t) return cfg;
   const def = neoTypeDef(spec, t);
-  if (def?.source === "text") { delete cfg.entity; return cfg; } // Text-Quelle nutzt keine Entität
+  if (def?.source === "text") { delete cfg.entity; delete cfg.entities; return cfg; } // Text-Quelle: keine Entität
+  if (def?.multi) { delete cfg.entity; return cfg; }   // Multi nutzt 'entities'
+  delete cfg.entities;                                 // Single-Typ nutzt 'entity'
   const d = domainOf(cfg.entity);
-  if (d && def && def.domains?.length && !def.domains.includes(d)) delete cfg.entity; // Mismatch (nur bei Domain-Filter)
+  if (d && def && def.domains?.length && !def.domains.includes(d)) delete cfg.entity; // Mismatch-Reset
   return cfg;
 }
 
@@ -66,7 +76,8 @@ export function neoCapabilityNormalize(config, spec) {
 function buildCapabilitySchema(config, spec) {
   const t = neoCapabilityType(config, spec);
   const def = neoTypeDef(spec, t);
-  const hasLegacyEntity = !!config?.entity;
+  const hasLegacyEntity = !!(config?.entity || config?.entities?.length);
+  const entityLabel = (def && def.entityLabel) || spec.entityLabel || "Entität";
   const general = [
     {
       name: spec.typeKey, label: spec.typeLabel || "Typ",
@@ -78,12 +89,21 @@ function buildCapabilitySchema(config, spec) {
       { name: "content", label: "Text / Markdown", selector: { text: { multiline: true } } },
       { name: "name", label: "Titel (optional)", selector: { text: {} } },
     );
+  } else if (def?.multi) {
+    // Multi-Entity (z. B. Licht-Gruppe) → 'entities' statt 'entity'.
+    general.push(
+      { name: "entities", label: entityLabel,
+        selector: { entity: { ...(def.domains?.length ? { domain: def.domains } : {}), multiple: true } } },
+      { name: "name", label: "Name (optional)", selector: { text: {} } },
+      { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
+    );
+    (def.fields || []).forEach((f) => general.push(f));
   } else if (t || hasLegacyEntity) {
     const entSel = def && def.domains?.length
       ? { domain: def.domains, ...(def.device_class ? { device_class: def.device_class } : {}) }
       : {}; // keine/leere Domains (z. B. Badge, Legacy) → ungefilterter Picker
     general.push(
-      { name: "entity", label: spec.entityLabel || "Entität", selector: { entity: entSel } },
+      { name: "entity", label: entityLabel, selector: { entity: entSel } },
       { name: "name", label: "Name (optional)", selector: { text: {} } },
       { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
     );
