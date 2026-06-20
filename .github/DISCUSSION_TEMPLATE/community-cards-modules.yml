@@ -1,0 +1,87 @@
+# Discussion form for submitting a community card or module.
+# NOTE: GitHub renders this form only for the Discussion category whose slug
+# matches this file name. Create a category named "Community Cards & Modules"
+# (slug: community-cards-modules) in the repo's Discussions settings.
+# Discussions are a PROPOSAL channel only — nothing is installed from here.
+title: "[Submission] <card or module name>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a card or module! 🎉
+
+        **Please read first:**
+        - This is a **proposal**, not an installation. **Nothing is installed
+          automatically from Discussions.**
+        - Only entries an **admin reviews and merges** into the repo appear in
+          the official Store (the single curated 1-click install source).
+        - **Premium** cards do **not** belong here. Share Premium code
+          privately (e.g. Patreon); users add it via *Paste code*.
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      placeholder: e.g. "Neo Weather Mini"
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type
+      description: Card (registerCard) or layer Module (registerModule)?
+      options:
+        - Card (registerCard)
+        - Module (registerModule)
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does it do and which use case does it solve?
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag & drop one or more images here.
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: Code or repo/gist link (for review)
+      description: >-
+        Paste the standalone `.js` code, or link a public repo/gist. Required so
+        an admin can review it. Code must be readable (not obfuscated/minified).
+      render: javascript
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: e.g. 2025.6
+    validations:
+      required: true
+  - type: textarea
+    id: domains
+    attributes:
+      label: Required entities / domains
+      description: Which entity domains/attributes does it need? (e.g. sensor, light, weather)
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Security & license confirmation
+      options:
+        - label: This is my own code, or I have the right to share it under the MIT license.
+          required: true
+        - label: The code is readable (not obfuscated/minified) and can be reviewed.
+          required: true
+        - label: It contains no secrets, private tokens or private links.
+          required: true
+        - label: I understand extensions run JavaScript in Home Assistant, and that only an admin-reviewed merge adds it to the official Store.
+          required: true

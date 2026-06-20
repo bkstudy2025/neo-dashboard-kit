@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🧩 Submit a community card or module
+    url: https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules
+    about: >-
+      Propose a card or module in Discussions. Submissions are reviewed by an
+      admin and, if accepted, added to the curated Store. Nothing is installed
+      automatically from Discussions.
+  - name: 💬 Questions & showcase
+    url: https://github.com/bkstudy2025/neo-dashboard-kit/discussions
+    about: Ask for help, share your dashboard, or discuss ideas.
