@@ -9,8 +9,9 @@ export const NEO_LINKS = {
   kofi: "https://ko-fi.com/",
   // Community-Diskussionen (Support/Showcase/Wünsche). Hinweis: der Store
   // installiert NICHT aus Discussions, sondern aus dem kuratierten Katalog
-  // (modulesIndex) — geprüft, versioniert, CDN-ausgeliefert.
-  newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
+  // (modulesIndex) — geprüft, versioniert, CDN-ausgeliefert. Der Link führt
+  // direkt in die Einreichungs-Kategorie "Community Cards & Modules".
+  newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules",
   // Neo Module Store — Katalog liegt im Repo unter store/.
   // index.json wird LIVE über raw.githubusercontent.com geladen: Änderungen auf
   // main erscheinen in ~5 min bzw. sofort per "Store aktualisieren" (Cache-Bust),

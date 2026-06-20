@@ -284,8 +284,9 @@ const NEO_LINKS = {
   kofi: "https://ko-fi.com/",
   // Community-Diskussionen (Support/Showcase/Wünsche). Hinweis: der Store
   // installiert NICHT aus Discussions, sondern aus dem kuratierten Katalog
-  // (modulesIndex) — geprüft, versioniert, CDN-ausgeliefert.
-  newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
+  // (modulesIndex) — geprüft, versioniert, CDN-ausgeliefert. Der Link führt
+  // direkt in die Einreichungs-Kategorie "Community Cards & Modules".
+  newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules",
   // Neo Module Store — Katalog liegt im Repo unter store/.
   // index.json wird LIVE über raw.githubusercontent.com geladen: Änderungen auf
   // main erscheinen in ~5 min bzw. sofort per "Store aktualisieren" (Cache-Bust),
@@ -3289,7 +3290,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.83", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.84", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3383,7 +3384,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.83 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.84 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
