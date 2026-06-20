@@ -2671,6 +2671,13 @@ class NeoCardEditor extends HTMLElement {
 
   async _loadStoreIndex() {
     if (!NeoStore.available()) { this._renderAddArea(); return; }
+    // Mindest-Sichtbarkeit des Skeleton-States: Der serverseitige Fetch ist oft
+    // <50 ms (Cache) — ohne Mindestzeit würde der Lade-Zustand nur aufblitzen.
+    // 400 ms geben ruhiges, klares Feedback, ohne sich künstlich langsam
+    // anzufühlen. (Betrifft Timing, nicht Animation — Shimmer respektiert
+    // prefers-reduced-motion weiterhin per CSS.)
+    const MIN_SKELETON_MS = 400;
+    const started = Date.now();
     this._storeLoading = true; this._storeErr = null; this._renderAddArea();
     try {
       // Cache-Busting: erzwingt den frischen Live-Katalog (raw.githubusercontent),
@@ -2683,6 +2690,10 @@ class NeoCardEditor extends HTMLElement {
       this._storeItems = [];
       this._storeErr = "Store-Index konnte nicht geladen werden. Prüfe die Internetverbindung und versuche es erneut.";
     }
+    // Schnelle Antworten trotzdem kurz als Lade-Zustand zeigen; langsame nicht
+    // zusätzlich verzögern.
+    const remaining = MIN_SKELETON_MS - (Date.now() - started);
+    if (remaining > 0) await new Promise((r) => setTimeout(r, remaining));
     this._storeLoading = false;
     this._renderAddArea();
   }
@@ -3278,7 +3289,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.82", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.83", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3372,7 +3383,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.82 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.83 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

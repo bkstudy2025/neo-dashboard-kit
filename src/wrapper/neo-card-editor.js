@@ -516,6 +516,13 @@ class NeoCardEditor extends HTMLElement {
 
   async _loadStoreIndex() {
     if (!NeoStore.available()) { this._renderAddArea(); return; }
+    // Mindest-Sichtbarkeit des Skeleton-States: Der serverseitige Fetch ist oft
+    // <50 ms (Cache) — ohne Mindestzeit würde der Lade-Zustand nur aufblitzen.
+    // 400 ms geben ruhiges, klares Feedback, ohne sich künstlich langsam
+    // anzufühlen. (Betrifft Timing, nicht Animation — Shimmer respektiert
+    // prefers-reduced-motion weiterhin per CSS.)
+    const MIN_SKELETON_MS = 400;
+    const started = Date.now();
     this._storeLoading = true; this._storeErr = null; this._renderAddArea();
     try {
       // Cache-Busting: erzwingt den frischen Live-Katalog (raw.githubusercontent),
@@ -528,6 +535,10 @@ class NeoCardEditor extends HTMLElement {
       this._storeItems = [];
       this._storeErr = "Store-Index konnte nicht geladen werden. Prüfe die Internetverbindung und versuche es erneut.";
     }
+    // Schnelle Antworten trotzdem kurz als Lade-Zustand zeigen; langsame nicht
+    // zusätzlich verzögern.
+    const remaining = MIN_SKELETON_MS - (Date.now() - started);
+    if (remaining > 0) await new Promise((r) => setTimeout(r, remaining));
     this._storeLoading = false;
     this._renderAddArea();
   }
