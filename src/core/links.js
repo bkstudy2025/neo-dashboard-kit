@@ -11,9 +11,13 @@ export const NEO_LINKS = {
   // installiert NICHT aus Discussions, sondern aus dem kuratierten Katalog
   // (modulesIndex) — geprüft, versioniert, CDN-ausgeliefert.
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new",
-  // Neo Module Store — Katalog liegt im Repo unter store/, ausgeliefert über
-  // jsDelivr-CDN. index.json = [{ id, name, description, target, author, version, icon, image, url }]
-  // (Lässt sich später ohne Code-Änderung in ein eigenes neo-modules-Repo auslagern.)
-  modulesIndex: "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/index.json",
+  // Neo Module Store — Katalog liegt im Repo unter store/.
+  // index.json wird LIVE über raw.githubusercontent.com geladen: Änderungen auf
+  // main erscheinen in ~5 min bzw. sofort per "Store aktualisieren" (Cache-Bust),
+  // ganz OHNE neuen Kit-Release oder neues neo-dashboard.js-Bundle.
+  // Die einzelnen Modul-/Karten-Dateien (url im index.json) liegen weiter auf dem
+  // jsDelivr-CDN — neue Einträge sind neue Dateien (neue URL), also nie stale.
+  // index.json = [{ id, kind?, name, description, target, author, version, icon, image, url, homepage }]
+  modulesIndex: "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/store/index.json",
   modulesRepo: "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store",
 };
