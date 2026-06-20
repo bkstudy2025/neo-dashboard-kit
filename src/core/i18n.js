@@ -73,6 +73,16 @@ const EN = {
   "Standard": "Standard",
   "Premium": "Premium",
   "Community": "Community",
+  // Progressive Kartenauswahl (Bereich → Karte)
+  "Bereich wählen": "Choose a category",
+  "Karte wählen": "Choose a card",
+  "Karte wählen …": "Choose a card …",
+  "Wähle zuerst einen Bereich, um die passenden Karten zu sehen.":
+    "Pick a category first to see the matching cards.",
+  "In diesem Bereich gibt es noch keine Karten.":
+    "There are no cards in this category yet.",
+  "Premium- und Community-Karten fügst du unten über <b>Erweiterungen</b> hinzu.":
+    "Add premium and community cards via <b>Extensions</b> below.",
   // Info & Support
   "Info &amp; Support": "Info &amp; Support",
   "Ressourcen &amp; Hilfe": "Resources &amp; help",
