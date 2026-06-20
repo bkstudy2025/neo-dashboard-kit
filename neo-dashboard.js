@@ -572,6 +572,7 @@ const EN = {
   "Szene": "Scene", "Taster": "Button", "Skript": "Script", "Aktion": "Action",
   "an": "on",
   "Wert": "Value", "Kamera": "Camera", "Sensor": "Sensor", "Licht-Gruppe": "Light group",
+  "Wähle einen Gerätetyp, um die Vorschau zu starten": "Pick a device type to start the preview",
 
   // ── Editor: Feld-Labels & Abschnitte (zentral in makeEditor übersetzt) ──
   "Allgemein": "General", "Darstellung": "Appearance",
@@ -1120,9 +1121,27 @@ class NeoControlCard extends NeoBaseCard {
 
   _icon(d, fb) { return this._config?.icon || DEFAULT_ICON[d] || fb || "dot"; }
 
+  // Neutraler Empty-State: kein Typ gewählt (und keine Entität) → keine
+  // implizite Schalter-/Default-Karte, sondern eine Aufforderung.
+  _renderEmpty() {
+    const msg = this._t("Wähle einen Gerätetyp, um die Vorschau zu starten");
+    return `
+      <div class="neo-card" style="
+        padding:16px;min-height:160px;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;gap:12px;text-align:center;
+        background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
+        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
+        border:1px dashed var(--neo-line2);">
+        <div style="width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+          background:var(--neo-fill1);border:1px solid var(--neo-line2);">${neoIcon("plus", { size: 20, color: "var(--neo-text3)" })}</div>
+        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${msg}</div>
+      </div>`;
+  }
+
   // ── Render-Dispatch ────────────────────────────────────────
   render() {
     const d = this._domain();
+    if (!d) return this._renderEmpty(); // kein Typ & keine Entität
     switch (d) {
       case "fan": return this._renderFan();
       case "cover": return this._renderCover();
@@ -2802,7 +2821,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.69", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.70", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -2896,7 +2915,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.69 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.70 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

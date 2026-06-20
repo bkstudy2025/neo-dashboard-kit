@@ -110,9 +110,27 @@ class NeoControlCard extends NeoBaseCard {
 
   _icon(d, fb) { return this._config?.icon || DEFAULT_ICON[d] || fb || "dot"; }
 
+  // Neutraler Empty-State: kein Typ gewählt (und keine Entität) → keine
+  // implizite Schalter-/Default-Karte, sondern eine Aufforderung.
+  _renderEmpty() {
+    const msg = this._t("Wähle einen Gerätetyp, um die Vorschau zu starten");
+    return `
+      <div class="neo-card" style="
+        padding:16px;min-height:160px;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;gap:12px;text-align:center;
+        background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
+        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
+        border:1px dashed var(--neo-line2);">
+        <div style="width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+          background:var(--neo-fill1);border:1px solid var(--neo-line2);">${neoIcon("plus", { size: 20, color: "var(--neo-text3)" })}</div>
+        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${msg}</div>
+      </div>`;
+  }
+
   // ── Render-Dispatch ────────────────────────────────────────
   render() {
     const d = this._domain();
+    if (!d) return this._renderEmpty(); // kein Typ & keine Entität
     switch (d) {
       case "fan": return this._renderFan();
       case "cover": return this._renderCover();
