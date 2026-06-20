@@ -17,14 +17,33 @@ const DISPLAY_TYPES = [
   { value: "status",   label: "Status",               domains: ["binary_sensor"],                     icon: "info",    mode: "sensor" },
   { value: "battery",  label: "Batterie",             domains: ["sensor"], device_class: "battery",    icon: "battery", mode: "sensor", unit: true },
   { value: "presence", label: "Person / Anwesenheit", domains: ["person", "device_tracker"],          icon: "person",  mode: "sensor" },
+  { value: "weather",  label: "Wetter",               domains: ["weather"],                           icon: "partly",  mode: "weather" },
   { value: "camera",   label: "Kamera",               domains: ["camera"],                            icon: "camera",  mode: "camera" },
 ];
+// Wetter-Zustand → Label + Icon (basic). Pro-Wetter (Vorhersage etc.) ist Premium.
+const WEATHER_COND = {
+  "sunny": { label: "Sonnig", icon: "sun" },
+  "clear-night": { label: "Klar", icon: "moon" },
+  "cloudy": { label: "Bewölkt", icon: "cloud" },
+  "partlycloudy": { label: "Teils bewölkt", icon: "partly" },
+  "rainy": { label: "Regen", icon: "rain" },
+  "pouring": { label: "Starkregen", icon: "rain" },
+  "snowy": { label: "Schnee", icon: "snow" },
+  "snowy-rainy": { label: "Schneeregen", icon: "snow" },
+  "windy": { label: "Windig", icon: "wind" },
+  "windy-variant": { label: "Windig", icon: "wind" },
+  "fog": { label: "Nebel", icon: "fog" },
+  "hail": { label: "Hagel", icon: "snow" },
+  "lightning": { label: "Gewitter", icon: "storm" },
+  "lightning-rainy": { label: "Gewitter", icon: "storm" },
+  "exceptional": { label: "Extrem", icon: "warning" },
+};
 const DISPLAY_TYPE_OPTIONS = DISPLAY_TYPES.map(({ value, label }) => ({ value, label }));
 // Entitäts-Domain → Anzeige-Typ (für Legacy-Migration ohne expliziten Typ).
 const DISPLAY_TYPE_BY_DOMAIN = {
   sensor: "value", input_number: "value", number: "value",
   binary_sensor: "status", camera: "camera",
-  person: "presence", device_tracker: "presence",
+  person: "presence", device_tracker: "presence", weather: "weather",
 };
 const displayTypeDef = (t) => DISPLAY_TYPES.find((x) => x.value === t);
 // Effektiver Typ: expliziter display_type, sonst aus der Entitäts-Domain abgeleitet.
@@ -66,7 +85,9 @@ class NeoDisplayCard extends NeoBaseCard {
   render() {
     const k = this._kind();
     if (k === "empty") return this._renderEmpty(); // kein Typ & keine Entität
-    return k === "camera" ? this._renderCamera() : this._renderSensor();
+    if (k === "camera") return this._renderCamera();
+    if (k === "weather") return this._renderWeather();
+    return this._renderSensor();
   }
 
   // Neutraler Empty-State: kein Typ gewählt → keine implizite Default-Karte.
@@ -108,6 +129,37 @@ class NeoDisplayCard extends NeoBaseCard {
           <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
           <div style="display:flex;align-items:baseline;gap:3px;margin-top:4px;">
             <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${value}</span>
+            <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
+          </div>
+          ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  _renderWeather() {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const a = s?.attributes || {};
+    const meta = WEATHER_COND[s?.state] || { label: s?.state || "—", icon: "cloud" };
+    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
+    const unit = this._config?.unit || this._hass?.config?.unit_system?.temperature || "°";
+    const temp = a.temperature;
+    const name = this._config?.name || a.friendly_name || id || this._t("Wetter");
+    const icon = this._config?.icon || meta.icon;
+    const sub = this._config?.sub || this._t(meta.label);
+    return `
+      <div class="neo-card" id="card" role="button" style="
+        padding:16px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;
+        background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
+        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
+        border:1px solid var(--neo-line2);">
+        <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
+          background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
+          border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
+        <div style="margin-top:auto;">
+          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
+          <div style="display:flex;align-items:baseline;gap:3px;margin-top:4px;">
+            <span style="font-size:26px;font-weight:500;letter-spacing:-0.5px;">${temp != null ? temp : "—"}</span>
             <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
           </div>
           ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
