@@ -239,6 +239,9 @@ const NEO_CSS = `
     overflow: hidden;
     font-family: var(--neo-font);
     color: var(--neo-text1);
+    /* Glow zentral: Karten setzen --neo-glow (mit Akzentfarbe) inline; sonst
+       greift dieser neutrale Default. */
+    box-shadow: var(--neo-glow, 0 18px 40px -16px var(--neo-shadow1));
     transition: all 240ms cubic-bezier(.2,.8,.2,1);
   }
   .neo-card[role="button"]:active { transform: scale(0.975); }
@@ -253,6 +256,12 @@ const NEO_CSS = `
      nur ein Boden → kleiner = kompakter, Inhalt wird nie abgeschnitten. */
   :host([data-neo-layout="tablet"]) .neo-card { padding:14px !important; min-height:140px !important; }
   :host([data-neo-layout="mobile"]) .neo-card { padding:12px !important; min-height:118px !important; }
+  /* Auf dem Smartphone liegen die Karten nahezu randlos am Bildschirmrand – ein
+     40px breiter Glow läuft dort über die Viewport-Kante und wirkt „abgeschnitten".
+     Mobil daher ein engerer Schatten, der innerhalb des Karten-Abstands bleibt. */
+  :host([data-neo-layout="mobile"]) .neo-card {
+    box-shadow: var(--neo-glow-m, 0 8px 22px -14px var(--neo-shadow1)) !important;
+  }
 `;
 
 // Akzent-Dropdown, von allen Karten-Editoren geteilt.
@@ -961,7 +970,8 @@ class NeoControlCard extends NeoBaseCard {
         background:${active ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
         backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
         border:1px solid ${active ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${active ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
+        --neo-glow:0 18px 40px -16px ${active ? glow : "var(--neo-shadow1)"};
+        --neo-glow-m:0 8px 22px -14px ${active ? glow : "var(--neo-shadow1)"};">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
           <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
             background:${iconBg};border:1px solid ${active ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: active ? "#fff" : acc.c })}</div>
@@ -1279,7 +1289,7 @@ class NeoDisplayCard extends NeoBaseCard {
         padding:16px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;
         background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
         backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid var(--neo-line2);box-shadow:0 18px 40px -16px var(--neo-shadow1);">
+        border:1px solid var(--neo-line2);">
         <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
@@ -1309,7 +1319,7 @@ class NeoDisplayCard extends NeoBaseCard {
     return `
       <div class="neo-card" id="card" role="button" style="
         position:relative;overflow:hidden;min-height:190px;display:flex;cursor:pointer;
-        border:1px solid var(--neo-line2);box-shadow:0 18px 40px -16px var(--neo-shadow1);">
+        border:1px solid var(--neo-line2);">
         ${image}
         <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 14px;display:flex;align-items:center;gap:8px;
           background:linear-gradient(0deg,rgba(0,0,0,.65) 0%,rgba(0,0,0,.15) 60%,transparent 100%);">
@@ -2595,7 +2605,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.63", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.64", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -2689,7 +2699,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.63 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.64 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

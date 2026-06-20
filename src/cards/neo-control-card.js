@@ -50,7 +50,8 @@ class NeoControlCard extends NeoBaseCard {
         background:${active ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
         backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
         border:1px solid ${active ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${active ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
+        --neo-glow:0 18px 40px -16px ${active ? glow : "var(--neo-shadow1)"};
+        --neo-glow-m:0 8px 22px -14px ${active ? glow : "var(--neo-shadow1)"};">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
           <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
             background:${iconBg};border:1px solid ${active ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: active ? "#fff" : acc.c })}</div>

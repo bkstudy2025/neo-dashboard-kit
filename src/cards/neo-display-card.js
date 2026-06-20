@@ -36,7 +36,7 @@ class NeoDisplayCard extends NeoBaseCard {
         padding:16px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;
         background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
         backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid var(--neo-line2);box-shadow:0 18px 40px -16px var(--neo-shadow1);">
+        border:1px solid var(--neo-line2);">
         <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
@@ -66,7 +66,7 @@ class NeoDisplayCard extends NeoBaseCard {
     return `
       <div class="neo-card" id="card" role="button" style="
         position:relative;overflow:hidden;min-height:190px;display:flex;cursor:pointer;
-        border:1px solid var(--neo-line2);box-shadow:0 18px 40px -16px var(--neo-shadow1);">
+        border:1px solid var(--neo-line2);">
         ${image}
         <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 14px;display:flex;align-items:center;gap:8px;
           background:linear-gradient(0deg,rgba(0,0,0,.65) 0%,rgba(0,0,0,.15) 60%,transparent 100%);">
