@@ -280,7 +280,11 @@ class NeoCardEditor extends HTMLElement {
   // Katalog-Einträge, gefiltert nach aktueller Karte (auf der Startseite: alle).
   _catalog() {
     const type = this._config.card_type;
-    return (this._storeItems || []).filter((it) => !type || NeoModules.matches(it.target, type));
+    // Karten (kind:"card") sind eigenständige neue Kartentypen → immer zeigen.
+    // Nur Module werden nach der aktuell gewählten Karte (target) gefiltert.
+    return (this._storeItems || []).filter(
+      (it) => it.kind === "card" || !type || NeoModules.matches(it.target, type),
+    );
   }
   // Meta eines installierten Add-ons aus der Karten- bzw. Modul-Registry.
   _addonMeta(id) {

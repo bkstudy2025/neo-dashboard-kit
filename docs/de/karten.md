@@ -60,5 +60,7 @@ Reiner Layout-Baustein (kein Gerät) zum Strukturieren.
 **Module:** Jede Karte lässt sich mit Modulen erweitern (z. B. Status-Badge,
 Leuchtrahmen). Siehe **[Module & Store](module.md)**.
 
-> Hinweis: Ältere Kartentypen (z. B. `neo-button-card`, `neo-climate-card`)
-> funktionieren weiter — sie sind jetzt versteckte Aliasse der drei Karten.
+> Hinweis: Es gibt bewusst **nur diese drei** Karten. Gerätespezifisches
+> (Licht, Klima, Rollladen, Media …) übernimmt die **Steuerung**-Karte
+> automatisch je nach Entität. Zusätzliche Kartentypen kommen über den
+> **Store** oder **Premium**.

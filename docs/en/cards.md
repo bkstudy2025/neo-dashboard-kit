@@ -60,5 +60,7 @@ Pure layout block (no device) to structure the dashboard.
 **Modules:** every card can be extended with modules (e.g. status badge, glow).
 See **[Modules & Store](modules.md)**.
 
-> Note: older card types (e.g. `neo-button-card`, `neo-climate-card`) still work —
-> they are now hidden aliases of the three cards.
+> Note: there are intentionally **only these three** cards. Device-specific
+> behaviour (light, climate, cover, media …) is handled by the **Control** card
+> automatically based on the entity. Extra card types come from the **Store**
+> or **Premium**.

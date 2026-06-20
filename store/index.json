@@ -14,7 +14,7 @@
     "id": "neo-cover-position",
     "name": "Cover-Positions-Slider",
     "description": "Positions-Slider (%) für Rollläden — exakt anfahren.",
-    "target": ["neo-control-card", "neo-cover-card"],
+    "target": "neo-control-card",
     "author": "Community",
     "version": "1.0.0",
     "icon": "🪟",
