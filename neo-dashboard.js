@@ -573,6 +573,9 @@ const EN = {
   "an": "on",
   "Wert": "Value", "Kamera": "Camera", "Sensor": "Sensor", "Licht-Gruppe": "Light group",
   "Wähle einen Gerätetyp, um die Vorschau zu starten": "Pick a device type to start the preview",
+  "Wähle einen Anzeige-Typ, um die Vorschau zu starten": "Pick a display type to start the preview",
+  "Sensor / Wert": "Sensor / Value", "Batterie": "Battery", "Status": "Status",
+  "Person / Anwesenheit": "Person / Presence",
 
   // ── Editor: Feld-Labels & Abschnitte (zentral in makeEditor übersetzt) ──
   "Allgemein": "General", "Darstellung": "Appearance",
@@ -1454,17 +1457,81 @@ NeoDashboardRegistry.registerCard("neo-control-card", NeoControlCard, {
 // EINE universelle Anzeige-Karte: erkennt die Domain und zeigt Sensorwert,
 // Kamera-Snapshot oder Status. Reine Darstellung; Tap → More-Info.
 
-class NeoDisplayCard extends NeoBaseCard {
-  getCardSize() { return this._domain() === "camera" ? 3 : 2; }
+// Anzeige-Typen — gemeinsame Capability-Map für Editor UND Rendering (eine
+// Quelle der Wahrheit). mode: "sensor" → Wert-Layout, "camera" → Kamera-Layout.
+// domains = erlaubte Entitäts-Domains (Editor-Filter + Mismatch-Reset),
+// icon = Default-Icon, unit = ob eine Einheit/Format-Option sinnvoll ist.
+const DISPLAY_TYPES = [
+  { value: "value",    label: "Sensor / Wert",        domains: ["sensor", "input_number", "number"], icon: "gauge",   mode: "sensor", unit: true },
+  { value: "status",   label: "Status",               domains: ["binary_sensor"],                     icon: "info",    mode: "sensor" },
+  { value: "battery",  label: "Batterie",             domains: ["sensor"], device_class: "battery",    icon: "battery", mode: "sensor", unit: true },
+  { value: "presence", label: "Person / Anwesenheit", domains: ["person", "device_tracker"],          icon: "person",  mode: "sensor" },
+  { value: "camera",   label: "Kamera",               domains: ["camera"],                            icon: "camera",  mode: "camera" },
+];
+const DISPLAY_TYPE_OPTIONS = DISPLAY_TYPES.map(({ value, label }) => ({ value, label }));
+// Entitäts-Domain → Anzeige-Typ (für Legacy-Migration ohne expliziten Typ).
+const DISPLAY_TYPE_BY_DOMAIN = {
+  sensor: "value", input_number: "value", number: "value",
+  binary_sensor: "status", camera: "camera",
+  person: "presence", device_tracker: "presence",
+};
+const displayTypeDef = (t) => DISPLAY_TYPES.find((x) => x.value === t);
+// Effektiver Typ: expliziter display_type, sonst aus der Entitäts-Domain abgeleitet.
+function neoDisplayType(config) {
+  if (config?.display_type) return config.display_type;
+  const id = config?.entity;
+  const d = id ? id.split(".")[0] : "";
+  return DISPLAY_TYPE_BY_DOMAIN[d] || "";
+}
 
-  _domain() {
-    const id = this._config?.entity;
-    return id ? id.split(".")[0] : "";
+// Invarianten: Legacy → Typ migrieren; Entität passend zum Typ halten.
+function normalizeDisplayConfig(config) {
+  const cfg = { ...config };
+  if (!cfg.display_type) {
+    const id = cfg.entity; const d = id ? id.split(".")[0] : "";
+    const t = DISPLAY_TYPE_BY_DOMAIN[d];
+    if (t) cfg.display_type = t;
   }
+  const t = cfg.display_type;
+  if (!t) return cfg;
+  const def = displayTypeDef(t);
+  const d = cfg.entity ? cfg.entity.split(".")[0] : "";
+  if (d && def && !def.domains.includes(d)) delete cfg.entity; // Typ/Entität-Mismatch → zurücksetzen
+  return cfg;
+}
+
+class NeoDisplayCard extends NeoBaseCard {
+  getCardSize() { return this._kind() === "camera" ? 3 : 2; }
+
+  // Render-Art: empty (kein Typ & keine Entität), camera oder sensor.
+  _kind() {
+    const t = neoDisplayType(this._config);
+    if (t) return displayTypeDef(t)?.mode || "sensor";
+    return this._config?.entity ? "sensor" : "empty"; // Legacy-Entität ohne Typ bleibt sichtbar
+  }
+  _typeIcon() { return displayTypeDef(neoDisplayType(this._config))?.icon || "gauge"; }
   _acc() { return NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.mint; }
 
   render() {
-    return this._domain() === "camera" ? this._renderCamera() : this._renderSensor();
+    const k = this._kind();
+    if (k === "empty") return this._renderEmpty(); // kein Typ & keine Entität
+    return k === "camera" ? this._renderCamera() : this._renderSensor();
+  }
+
+  // Neutraler Empty-State: kein Typ gewählt → keine implizite Default-Karte.
+  _renderEmpty() {
+    const msg = this._t("Wähle einen Anzeige-Typ, um die Vorschau zu starten");
+    return `
+      <div class="neo-card" style="
+        padding:16px;min-height:160px;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;gap:12px;text-align:center;
+        background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
+        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
+        border:1px dashed var(--neo-line2);">
+        <div style="width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+          background:var(--neo-fill1);border:1px solid var(--neo-line2);">${neoIcon("gauge", { size: 20, color: "var(--neo-text3)" })}</div>
+        <div style="font-size:14px;color:var(--neo-text2);max-width:220px;line-height:1.4;">${msg}</div>
+      </div>`;
   }
 
   _renderSensor() {
@@ -1474,7 +1541,7 @@ class NeoDisplayCard extends NeoBaseCard {
     const value = s?.state ?? "—";
     const unit = this._config?.unit ?? a.unit_of_measurement ?? "";
     const name = this._config?.name || a.friendly_name || id || this._t("Wert");
-    const icon = this._config?.icon || "thermo";
+    const icon = this._config?.icon || this._typeIcon();
     const acc = this._acc();
     const sub = this._config?.sub || "";
     return `
@@ -1535,25 +1602,44 @@ class NeoDisplayCard extends NeoBaseCard {
   static getStubConfig() { return {}; }
 }
 
-customElements.define("neo-display-card-editor", makeNeoEditor([
-  {
-    type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "entity", label: "Entität", selector: { entity: { domain: ["sensor", "binary_sensor", "input_number", "number", "camera"] } } },
+// ── Editor: expliziter Typ-Schritt (Referenzmuster aus neo-control-card) ──
+// Flow: Typ wählen → nur passende Entitäten → nur passende Format-Optionen.
+// device_type-Pendant hier: `display_type` (eigener Key; `type` ist von Lovelace
+// belegt). rebuildKeys + normalizeConfig liefern Empty-State-, Reset- und
+// Pruning-Verhalten analog zur Control-Karte.
+customElements.define("neo-display-card-editor", makeNeoEditor((config) => {
+  const t = neoDisplayType(config);
+  const def = displayTypeDef(t);
+  const hasLegacyEntity = !!config?.entity;
+  const general = [
+    { name: "display_type", label: "Typ", selector: { select: { mode: "dropdown", options: DISPLAY_TYPE_OPTIONS } } },
+  ];
+  if (t || hasLegacyEntity) {
+    const entSel = def
+      ? { domain: def.domains, ...(def.device_class ? { device_class: def.device_class } : {}) }
+      : {}; // Legacy/unbekannte Domain → ungefiltert, bleibt editierbar
+    general.push(
+      { name: "entity", label: "Entität", selector: { entity: entSel } },
       { name: "name", label: "Name (optional)", selector: { text: {} } },
       { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon", selector: { icon: {} } },
-      { name: "unit", label: "Einheit (optional)", selector: { text: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-      NEO_LAYOUT_FIELD,
-    ],
-  },
-], { name: "Neo Anzeige", description: "Sensor · Kamera · Status", icon: "📊" }));
+    );
+  }
+
+  const appearance = [{ name: "icon", label: "Icon", selector: { icon: {} } }];
+  if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
+  appearance.push(
+    { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+    NEO_LAYOUT_FIELD,
+  );
+
+  return [
+    { type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true, schema: general },
+    { type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance },
+  ];
+}, {
+  name: "Neo Anzeige", description: "Sensor · Kamera · Status", icon: "📊",
+  rebuildKeys: ["display_type"], normalizeConfig: normalizeDisplayConfig,
+}));
 
 NeoDashboardRegistry.registerCard("neo-display-card", NeoDisplayCard, {
   name: "Neo Anzeige",
@@ -2821,7 +2907,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.71", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.72", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -2915,7 +3001,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.71 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.72 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
