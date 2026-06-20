@@ -14,11 +14,23 @@
     "id": "neo-cover-position",
     "name": "Cover-Positions-Slider",
     "description": "Positions-Slider (%) für Rollläden — exakt anfahren.",
-    "target": ["neo-control-card", "neo-cover-card"],
+    "target": "neo-control-card",
     "author": "Community",
     "version": "1.0.0",
     "icon": "🪟",
     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-cover-position.js",
+    "homepage": "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store"
+  },
+  {
+    "id": "neo-homelab-card",
+    "kind": "card",
+    "name": "Homelab Card",
+    "description": "Homelab-Übersicht: Header, Gauge-Karussell, Ressourcen, Kacheln & Status — voll konfigurierbar.",
+    "target": "neo-homelab-card",
+    "author": "Community",
+    "version": "0.6.1",
+    "icon": "🖥️",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-homelab-card.js",
     "homepage": "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store"
   }
 ]

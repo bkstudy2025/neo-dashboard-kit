@@ -51,7 +51,7 @@ src/core/              ← Kern-Infrastruktur (keine konkreten Karten)
   branding.js            Logo-Markup
   links.js               Zentrale URLs (Repo, Spenden, Store-Index)
   theme-fallback.js      Fallback-Variablen, falls kein HA-Theme greift
-src/cards/             ← Eine Datei pro Kartentyp (registriert via registerCard)
+src/cards/             ← Die drei Kern-Karten (control/display/header), je registerCard
 src/modules/           ← Mitgelieferte Beispiel-Module (registerModule)
 src/store/             ← Modul-Persistenz & -Laden
   module-store.js        NeoStore: WS-Calls an neo-dashboard-tools (list/save/…)

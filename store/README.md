@@ -26,7 +26,7 @@ window.NeoDashboard.registerModule({
   name: "Mein Modul",
   description: "Was es macht.",
   icon: "✨",
-  target: "neo-button-card",     // Ziel-Karte · Liste · "*" für alle
+  target: "neo-control-card",    // Ziel-Karte · Liste · "*" für alle
   version: "1.0.0",
   author: "Community",           // Badge: Community / Premium / …
   config: [                       // optionales ha-form-Schema (Einstellungen)
@@ -51,7 +51,7 @@ Beispiel.
      "id": "neo-mein-modul",
      "name": "Mein Modul",
      "description": "Kurzbeschreibung.",
-     "target": "neo-button-card",
+     "target": "neo-control-card",
      "author": "Community",
      "version": "1.0.0",
      "icon": "✨",

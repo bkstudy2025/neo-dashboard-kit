@@ -20,29 +20,13 @@ import "./core/reorder.js";
 import "./core/base-card.js";
 
 // 4. Core cards — each registers itself into the dropdown on import.
-//    Three universal cards are shown in the picker:
+//    Three universal cards make up the whole picker:
 //      Neo Steuerung (control, domain-adaptive) · Neo Anzeige (display) · Neo Header
-//    All device-specific types below are kept HIDDEN as aliases so existing
-//    dashboards keep rendering.
+//    Device-specific behaviour lives INSIDE the control card (domain dispatch);
+//    extra card types come from the Store / Premium, not the core bundle.
 import "./cards/neo-control-card.js";
 import "./cards/neo-display-card.js";
 import "./cards/neo-header-card.js";
-// Hidden aliases (backward compatibility — render existing configs)
-import "./cards/neo-button-card.js";
-import "./cards/neo-sensor-card.js";
-import "./cards/neo-climate-card.js";
-import "./cards/neo-cover-card.js";
-import "./cards/neo-media-card.js";
-import "./cards/neo-camera-card.js";
-import "./cards/neo-fan-card.js";
-import "./cards/neo-alarm-card.js";
-import "./cards/neo-light-group-card.js";
-import "./cards/neo-hero-card.js";
-import "./cards/neo-status-card.js";
-// Legacy (hidden, render-only for existing configs)
-import "./cards/neo-light-card.js";
-import "./cards/neo-scene-card.js";
-import "./cards/neo-quick-action-card.js";
 
 // 4b. Built-in example modules (card-scoped extensions)
 import "./modules/neo-badge.js";

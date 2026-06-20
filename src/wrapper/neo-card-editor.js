@@ -280,7 +280,11 @@ class NeoCardEditor extends HTMLElement {
   // Katalog-Einträge, gefiltert nach aktueller Karte (auf der Startseite: alle).
   _catalog() {
     const type = this._config.card_type;
-    return (this._storeItems || []).filter((it) => !type || NeoModules.matches(it.target, type));
+    // Karten (kind:"card") sind eigenständige neue Kartentypen → immer zeigen.
+    // Nur Module werden nach der aktuell gewählten Karte (target) gefiltert.
+    return (this._storeItems || []).filter(
+      (it) => it.kind === "card" || !type || NeoModules.matches(it.target, type),
+    );
   }
   // Meta eines installierten Add-ons aus der Karten- bzw. Modul-Registry.
   _addonMeta(id) {
@@ -388,7 +392,7 @@ class NeoCardEditor extends HTMLElement {
       const showInstall = !installed || !!update; // installiert & aktuell → nur Entfernen/Info
       return this._storeRow({
         icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
-        version: (installed && reg.version) || it.version, kind: reg.isCard ? "Karte" : "Modul",
+        version: (installed && reg.version) || it.version, kind: (reg.isCard || it.kind === "card") ? "Karte" : "Modul",
         installed, update, homepage: it.homepage || it.repo, image: it.image, description: it.description,
         // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
         // gefilterte Liste zwischen Render und Klick ändert.

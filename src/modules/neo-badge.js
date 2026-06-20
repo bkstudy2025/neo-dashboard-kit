@@ -1,5 +1,5 @@
 // Neo Module — Status-Badge
-// Beispiel für ein DECORATE-Modul, gebunden an die Button-Karte.
+// Beispiel für ein DECORATE-Modul, gebunden an die Steuerungs-Karte.
 // Zeigt eine kleine Eck-Badge mit dem Status/Wert einer Entität.
 import { NeoModules } from "../core/modules.js";
 import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "../core/tokens.js";
@@ -9,7 +9,7 @@ NeoModules.register({
   name: "Status-Badge",
   description: "Kleine Eck-Badge mit dem Wert/Status einer Entität.",
   icon: "🏷️",
-  target: "neo-button-card",
+  target: "neo-control-card",
   version: "1.0.0",
   author: "Neo",
   config: [

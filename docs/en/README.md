@@ -10,6 +10,7 @@ that adapts to your device. Extensible via **modules** and **Premium**.
 - [Cards](cards.md) — the three cards explained
 - [Modules & Store](modules.md) — extend your cards
 - [Development](development.md) — build your own cards/modules
+- [Contributing](community.md) — share & submit cards/modules
 
 ---
 

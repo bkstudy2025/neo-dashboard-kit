@@ -36,7 +36,8 @@ Event `neo-dashboard-ready` warten:
 })();
 ```
 
-**Wie Nutzer deine Datei installieren:**
+**Wie du deine Datei verteilst** (kompletter Workflow inkl. Premium/Patreon &
+Ankündigungs-Vorlage): **[Mitmachen](mitmachen.md)**. Kurz:
 - **Code einfügen** — Editor → *Erweiterungen* → *Code einfügen* (lädt sofort und
   wird von *Neo Dashboard Tools* serverseitig gespeichert → lädt bei jedem Start).
 - **Store** — veröffentlicht in einem Katalog `index.json` (siehe §7).

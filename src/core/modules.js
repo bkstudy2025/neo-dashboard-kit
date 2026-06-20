@@ -8,7 +8,7 @@
 //   {
 //     id: "neo-badge",            // eindeutig (Pflicht)
 //     name, description, icon,    // Anzeige
-//     target: "neo-button-card",  // Ziel-Karte, Liste, oder "*" für alle
+//     target: "neo-control-card", // Ziel-Karte, Liste, oder "*" für alle
 //     version, author,            // Meta (author = Badge: Premium/Community/…)
 //     config: [ ...ha-form-Schema... ],   // eigene Einstellungen (optional)
 //     // Hooks (alle optional):
