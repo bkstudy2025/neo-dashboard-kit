@@ -5,7 +5,7 @@ import { NeoBaseCard } from "../core/base-card.js";
 import { NeoDashboardRegistry } from "../core/registry.js";
 import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "../core/tokens.js";
 import { neoIcon } from "../core/icons.js";
-import { makeNeoEditor } from "../core/editor-factory.js";
+import { makeNeoTypedEditor, neoCapabilityType, neoTypeDef } from "../core/capability.js";
 import { NEO_LAYOUT_FIELD } from "../core/layout.js";
 
 // Anzeige-Typen — gemeinsame Capability-Map für Editor UND Rendering (eine
@@ -41,38 +41,18 @@ const WEATHER_COND = {
   "lightning-rainy": { label: "Gewitter", icon: "storm" },
   "exceptional": { label: "Extrem", icon: "warning" },
 };
-const DISPLAY_TYPE_OPTIONS = DISPLAY_TYPES.map(({ value, label }) => ({ value, label }));
-// Entitäts-Domain → Anzeige-Typ (für Legacy-Migration ohne expliziten Typ).
-const DISPLAY_TYPE_BY_DOMAIN = {
-  sensor: "value", input_number: "value", number: "value",
-  binary_sensor: "status", camera: "camera",
-  person: "presence", device_tracker: "presence", weather: "weather", calendar: "calendar",
+// Capability-Spec: treibt Editor (Generator) UND Rendering aus einer Quelle.
+const DISPLAY_SPEC = {
+  typeKey: "display_type", typeLabel: "Typ", entityLabel: "Entität",
+  types: DISPLAY_TYPES,
+  appearance: [
+    { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+    NEO_LAYOUT_FIELD,
+  ],
 };
-const displayTypeDef = (t) => DISPLAY_TYPES.find((x) => x.value === t);
-// Effektiver Typ: expliziter display_type, sonst aus der Entitäts-Domain abgeleitet.
-export function neoDisplayType(config) {
-  if (config?.display_type) return config.display_type;
-  const id = config?.entity;
-  const d = id ? id.split(".")[0] : "";
-  return DISPLAY_TYPE_BY_DOMAIN[d] || "";
-}
-
-// Invarianten: Legacy → Typ migrieren; Entität passend zum Typ halten.
-function normalizeDisplayConfig(config) {
-  const cfg = { ...config };
-  if (!cfg.display_type) {
-    const id = cfg.entity; const d = id ? id.split(".")[0] : "";
-    const t = DISPLAY_TYPE_BY_DOMAIN[d];
-    if (t) cfg.display_type = t;
-  }
-  const t = cfg.display_type;
-  if (!t) return cfg;
-  const def = displayTypeDef(t);
-  if (def?.source === "text") { delete cfg.entity; return cfg; } // Text-Typ nutzt keine Entität
-  const d = cfg.entity ? cfg.entity.split(".")[0] : "";
-  if (d && def && def.domains?.length && !def.domains.includes(d)) delete cfg.entity; // Mismatch (nur bei Domain-Filter)
-  return cfg;
-}
+const displayTypeDef = (t) => neoTypeDef(DISPLAY_SPEC, t);
+// Effektiver Typ — Render-seitig (Editor nutzt dieselbe Ableitung über das Spec).
+export function neoDisplayType(config) { return neoCapabilityType(config, DISPLAY_SPEC); }
 
 class NeoDisplayCard extends NeoBaseCard {
   getCardSize() {
@@ -310,50 +290,11 @@ class NeoDisplayCard extends NeoBaseCard {
   static getStubConfig() { return {}; }
 }
 
-// ── Editor: expliziter Typ-Schritt (Referenzmuster aus neo-control-card) ──
-// Flow: Typ wählen → nur passende Entitäten → nur passende Format-Optionen.
-// device_type-Pendant hier: `display_type` (eigener Key; `type` ist von Lovelace
-// belegt). rebuildKeys + normalizeConfig liefern Empty-State-, Reset- und
-// Pruning-Verhalten analog zur Control-Karte.
-customElements.define("neo-display-card-editor", makeNeoEditor((config) => {
-  const t = neoDisplayType(config);
-  const def = displayTypeDef(t);
-  const hasLegacyEntity = !!config?.entity;
-  const general = [
-    { name: "display_type", label: "Typ", selector: { select: { mode: "dropdown", options: DISPLAY_TYPE_OPTIONS } } },
-  ];
-  if (def?.source === "text") {
-    // Text-/Markdown-Typ: freie Quelle statt Entität.
-    general.push(
-      { name: "content", label: "Text / Markdown", selector: { text: { multiline: true } } },
-      { name: "name", label: "Titel (optional)", selector: { text: {} } },
-    );
-  } else if (t || hasLegacyEntity) {
-    const entSel = def && def.domains?.length
-      ? { domain: def.domains, ...(def.device_class ? { device_class: def.device_class } : {}) }
-      : {}; // keine/leere Domains (Badge, Legacy) → ungefilterter Picker
-    general.push(
-      { name: "entity", label: "Entität", selector: { entity: entSel } },
-      { name: "name", label: "Name (optional)", selector: { text: {} } },
-      { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
-    );
-  }
-
-  const appearance = [];
-  if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: { icon: {} } });
-  if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
-  appearance.push(
-    { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-    NEO_LAYOUT_FIELD,
-  );
-
-  return [
-    { type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true, schema: general },
-    { type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance },
-  ];
-}, {
+// ── Editor: aus dem Capability-Spec generiert (Referenz für Premium/Community) ──
+// Typ-Schritt, gefilterter Picker, Empty-State, Reset & Pruning kommen komplett
+// aus makeNeoTypedEditor — die Karte liefert nur DISPLAY_SPEC.
+customElements.define("neo-display-card-editor", makeNeoTypedEditor(DISPLAY_SPEC, {
   name: "Neo Anzeige", description: "Sensor · Kamera · Status", icon: "📊",
-  rebuildKeys: ["display_type"], normalizeConfig: normalizeDisplayConfig,
 }));
 
 NeoDashboardRegistry.registerCard("neo-display-card", NeoDisplayCard, {
