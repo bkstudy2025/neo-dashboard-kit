@@ -1178,6 +1178,22 @@ function escapeAttr(value) {
   return escapeHtml(value);
 }
 
+function safeUrl(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  // Relative HA/local paths are allowed; protocol-relative and malformed values
+  // are intentionally not allowed for card/store-rendered links and images.
+  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+
+  try {
+    const url = new URL(raw);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+  } catch (_err) {
+    return "";
+  }
+}
+
 // Neo Dashboard Kit — Control Card ("Neo Steuerung")
 // EINE universelle Steuerungs-Karte: erkennt die Domain der gewählten Entität
 // und zeigt automatisch die passende Bedienung (Toggle, +/-, Auf/Stopp/Zu,
@@ -1807,7 +1823,7 @@ class NeoDisplayCard extends NeoBaseCard {
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
     const name = this._config?.name || a.friendly_name || id || this._t("Kamera");
     const icon = this._config?.icon || "camera";
-    const pic = a.entity_picture;
+    const pic = safeUrl(a.entity_picture);
     const image = pic
       ? `<img src="${escapeAttr(pic)}" alt="${escapeAttr(name)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" />`
       : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -2449,11 +2465,13 @@ class NeoCardEditor extends HTMLElement {
   // Kleine Vorschau: echtes Screenshot-Bild (image-Feld) ODER eine Icon-Kachel
   // als Fallback, damit jeder Eintrag visuell erkennbar ist.
   _previewTile(o) {
-    return o.image
-      ? `<div class="nmod-prev"><img src="${escapeAttr(o.image)}" loading="lazy" alt="" /></div>`
+    const image = safeUrl(o.image);
+    return image
+      ? `<div class="nmod-prev"><img src="${escapeAttr(image)}" loading="lazy" alt="" /></div>`
       : `<div class="nmod-prev nmod-prev--icon"><span>${escapeHtml(o.icon || "🧩")}</span></div>`;
   }
   _storeRow(o) {
+    const homepage = safeUrl(o.homepage);
     const status = o.installed
       ? (o.update
           ? ` <span class="nmod-badge upd">⬆ ${this._t("Update")} → v${escapeHtml(o.update)}</span>`
@@ -2472,7 +2490,7 @@ class NeoCardEditor extends HTMLElement {
         <div class="nmod-store-row">
           ${o.installId ? `<button class="nmod-mini" data-install-id="${escapeAttr(o.installId)}">${this._t(o.installLabel)}</button>` : ""}
           ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${escapeAttr(o.uninstallId)}">${this._t("Entfernen")}</button>` : ""}
-          ${o.homepage ? `<a class="nmod-mini ghost" href="${escapeAttr(o.homepage)}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
+          ${homepage ? `<a class="nmod-mini ghost" href="${escapeAttr(homepage)}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
         </div>
         ${o.note ? `<div class="nmod-note" style="margin:6px 0 0;">${escapeHtml(o.note)}</div>` : ""}
       </div>`;
@@ -3114,7 +3132,10 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.78", // beim Build aus package.json ersetzt
+  escapeHtml,
+  escapeAttr,
+  safeUrl,
+  version: "0.2.0-beta.79", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3208,7 +3229,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.78 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.79 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

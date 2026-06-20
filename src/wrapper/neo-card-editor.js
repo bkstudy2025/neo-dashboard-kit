@@ -8,7 +8,7 @@ import { NeoModules } from "../core/modules.js";
 import { NeoStore } from "../store/module-store.js";
 import { neoLoadModule } from "../store/module-loader.js";
 import { neoT, neoLang } from "../core/i18n.js";
-import { escapeAttr, escapeHtml } from "../core/html.js";
+import { escapeAttr, escapeHtml, safeUrl } from "../core/html.js";
 
 class NeoCardEditor extends HTMLElement {
   // Übersetzungs-Helfer: folgt der HA-Sprache (EN Standard, DE wenn HA Deutsch).
@@ -336,11 +336,13 @@ class NeoCardEditor extends HTMLElement {
   // Kleine Vorschau: echtes Screenshot-Bild (image-Feld) ODER eine Icon-Kachel
   // als Fallback, damit jeder Eintrag visuell erkennbar ist.
   _previewTile(o) {
-    return o.image
-      ? `<div class="nmod-prev"><img src="${escapeAttr(o.image)}" loading="lazy" alt="" /></div>`
+    const image = safeUrl(o.image);
+    return image
+      ? `<div class="nmod-prev"><img src="${escapeAttr(image)}" loading="lazy" alt="" /></div>`
       : `<div class="nmod-prev nmod-prev--icon"><span>${escapeHtml(o.icon || "🧩")}</span></div>`;
   }
   _storeRow(o) {
+    const homepage = safeUrl(o.homepage);
     const status = o.installed
       ? (o.update
           ? ` <span class="nmod-badge upd">⬆ ${this._t("Update")} → v${escapeHtml(o.update)}</span>`
@@ -359,7 +361,7 @@ class NeoCardEditor extends HTMLElement {
         <div class="nmod-store-row">
           ${o.installId ? `<button class="nmod-mini" data-install-id="${escapeAttr(o.installId)}">${this._t(o.installLabel)}</button>` : ""}
           ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${escapeAttr(o.uninstallId)}">${this._t("Entfernen")}</button>` : ""}
-          ${o.homepage ? `<a class="nmod-mini ghost" href="${escapeAttr(o.homepage)}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
+          ${homepage ? `<a class="nmod-mini ghost" href="${escapeAttr(homepage)}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
         </div>
         ${o.note ? `<div class="nmod-note" style="margin:6px 0 0;">${escapeHtml(o.note)}</div>` : ""}
       </div>`;
