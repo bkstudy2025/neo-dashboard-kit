@@ -53,7 +53,10 @@ src/core/              ← Kern-Infrastruktur (keine konkreten Karten)
   capability.js          Deklarative Capability-Registry + Generator
                          (makeNeoTypedEditor): card_type → types → entity_domains
                          → editor_schema → preview(mode) → prune. Standard/Premium/
-                         Community nutzen dieselbe Infrastruktur. Referenz: Display.
+                         Community nutzen dieselbe Infrastruktur. Referenz für
+                         Display UND Control; neue externe Karten sollen dieses
+                         Muster verwenden, wenn sie Untertypen/Domains abbilden.
+  html.js                Kleine Escape-Helper für HTML-/Attribut-Ausgaben.
   tokens.js              Design-Tokens + globales CSS (NEO_CSS)
   layout.js              Responsive-Layout-Helfer
   reorder.js             Drag-&-Drop-Reorder-Helfer
@@ -90,3 +93,12 @@ npm run lint      # ESLint über src/
 Version steht nur in `package.json` + Banner in `src/neo-dashboard.js`.
 Ein Git-Tag `vX.Y.Z` löst den Release-Workflow (`.github/workflows/release.yml`)
 aus.
+
+## Premium/Community-Editoren
+
+Premium- und Community-Karten sollen keine eigene Sonder-UX für Untertypen bauen.
+Wenn eine Karte mehrere Modi oder Entitäts-Domains unterstützt, definiert sie ein
+Capability-Spec und nutzt die öffentliche API `window.NeoDashboard.makeTypedEditor`,
+`window.NeoDashboard.capabilityType` und `window.NeoDashboard.typeDef`. Damit bleiben
+Typ-Auswahl, Empty-State, Legacy-Migration, Domain-Filter und Pruning konsistent mit
+Display und Control.

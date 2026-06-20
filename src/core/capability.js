@@ -110,15 +110,21 @@ function buildCapabilitySchema(config, spec) {
     (def?.fields || []).forEach((f) => general.push(f));
   }
 
-  const appearance = [];
-  if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: { icon: {} } });
-  if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
-  (spec.appearance || []).forEach((f) => appearance.push(f));
-
-  return [
+  const sections = [
     { type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true, schema: general },
-    { type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance },
   ];
+
+  // Empty-State: ohne gewählten Typ und ohne Legacy-Entität nur den Typ-Picker
+  // anzeigen. Darstellungsfelder würden sonst versteckte Optionen suggerieren.
+  if (t || hasLegacyEntity) {
+    const appearance = [];
+    if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: { icon: {} } });
+    if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
+    (spec.appearance || []).forEach((f) => appearance.push(f));
+    sections.push({ type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance });
+  }
+
+  return sections;
 }
 
 // Erzeugt die Editor-Custom-Element-Klasse aus einem Capability-Spec.

@@ -13,7 +13,17 @@
 //     accents, accentOptions,            // Akzentfarben
 //     iconOptions,                       // Icon-Liste für Editoren
 //     makeEditor(schema, meta),          // Editor-Factory (ha-form)
+//     makeTypedEditor(spec, meta),       // Typed-Editor aus Capability-Spec
+//     capabilityType(config, spec),      // Typ aus typeKey/Legacy-Entity ableiten
+//     typeDef(spec, type),               // Typ-Definition aus derselben Registry
 //   }
+//
+// Empfehlung für neue Premium-/Community-Karten:
+// - Wenn eine Karte mehrere Untertypen/Entitäts-Domains unterstützt, definiere
+//   ein Capability-Spec wie die Core-Karten Display/Control und nutze
+//   makeTypedEditor(spec, meta). So bleiben Typ-Picker, Empty-State,
+//   Legacy-Migration, Domain-Filter und Pruning identisch zur Standard-UX.
+// - Einfache Einzelzweck-Karten können weiter makeEditor(schema, meta) nutzen.
 // ════════════════════════════════════════════════════════════════
 
 (function () {
@@ -27,7 +37,7 @@
     }
     if (customElements.get("neo-example-card")) return; // schon registriert
 
-    const { BaseCard, icon, accents, registerCard, makeEditor, accentOptions, iconOptions } = NEO;
+    const { BaseCard, icon, accents, registerCard, makeEditor, makeTypedEditor, capabilityType, typeDef, accentOptions, iconOptions } = NEO;
     const layoutOptions = NEO.layoutOptions || [{ value: "auto", label: "Automatisch" }];
 
     // ── Die Karte ────────────────────────────────────────────────
@@ -71,6 +81,13 @@
     }
 
     // ── Der Editor (HA-native ha-form über die Factory) ──────────
+    // Für getypte Premium-/Community-Karten kann statt makeEditor ein Spec
+    // verwendet werden:
+    //   const SPEC = { typeKey: "example_type", types: [...], appearance: [...] };
+    //   customElements.define(ED_TAG, makeTypedEditor(SPEC, meta));
+    // Rendering kann dann denselben Spec über capabilityType(config, SPEC) und
+    // typeDef(SPEC, type) nutzen. Das vermeidet Sonder-UX gegenüber Core-Karten.
+    void makeTypedEditor; void capabilityType; void typeDef;
     // WICHTIG: Editor unter VERSIONIERTEM Tag definieren (nicht festem!). So
     // gehen auch Editor-Änderungen beim Modul-Update OHNE Browser-Reload live —
     // getConfigElement() nutzt immer den aktuellen Tag. Ein fester Tag würde
