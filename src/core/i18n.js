@@ -126,6 +126,7 @@ const EN = {
   "Automatisch (Bildschirmbreite)": "Automatic (screen width)",
   "Mobil (kompakt)": "Mobile (compact)", "Tablet": "Tablet", "Desktop (groß)": "Desktop (large)",
   "Überschrift": "Heading", "Trenner": "Divider",
+  "Licht": "Light", "Szene / Skript / Taster": "Scene / Script / Button",
   // Karten-Namen & -Beschreibungen (Picker + Editor-Kopf)
   "Neo Steuerung": "Neo Control", "Neo Anzeige": "Neo Display",
   "Neo Ventilator": "Neo Fan", "Neo Kamera": "Neo Camera", "Neo Klima": "Neo Climate",

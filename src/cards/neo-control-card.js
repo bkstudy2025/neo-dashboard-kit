@@ -317,28 +317,81 @@ class NeoControlCard extends NeoBaseCard {
   static getStubConfig() { return {}; }
 }
 
-// ── Editor: konditionales Schema (Referenzmuster aus neo-header-card) ──
-// Komponente → Entität/Domain → passende Optionen: nach Wahl der Entität werden
-// nur die für deren Domain relevanten Felder eingeblendet (climate ⇒ Schritt,
-// Alarm ⇒ Code). Bewusst minimal/Laien-tauglich — Entität wählen genügt.
-//
-// Rebuild-Guard: KEINE expliziten rebuildKeys, da die Struktur von der
-// ABGELEITETEN Domain abhängt (nicht von einem einzelnen Config-Key). makeNeoEditor
-// fällt dann auf den Feld-Signatur-Vergleich zurück → das Formular wird nur neu
-// gebaut, wenn sich die sichtbaren Felder tatsächlich ändern (Domain-Wechsel),
-// nicht beim Entitätswechsel innerhalb derselben Domain oder bei Texteingaben.
+// ── Editor: expliziter Typ-Schritt (Referenzmuster wie neo-header-card) ──
+// Flow: Typ wählen → nur passende Entitäten → nur passende Optionen.
+//   1. "Typ" (device_type) ist das strukturbestimmende Feld → rebuildKeys.
+//   2. Der Entity-Picker wird per HA-Selector auf die Domains des Typs gefiltert.
+//   3. Optionen hängen am Typ (climate ⇒ Schritt, alarm ⇒ Code).
+// Hinweis: eigener Key `device_type` — `type` ist von Lovelace/Wrapper belegt.
+// Kompatibilität: Bestandskarten ohne `device_type` werden über normalizeConfig
+// aus der Entitäts-Domain migriert; das Rendering bleibt entitäts-domain-basiert.
+const CONTROL_TYPES = [
+  { value: "light", label: "Licht", domains: ["light"] },
+  { value: "switch", label: "Schalter", domains: ["switch", "input_boolean"] },
+  { value: "climate", label: "Klima", domains: ["climate"] },
+  { value: "cover", label: "Cover", domains: ["cover"] },
+  { value: "fan", label: "Ventilator", domains: ["fan"] },
+  { value: "media_player", label: "Media", domains: ["media_player"] },
+  { value: "lock", label: "Schloss", domains: ["lock"] },
+  { value: "alarm_control_panel", label: "Alarm", domains: ["alarm_control_panel"] },
+  { value: "action", label: "Szene / Skript / Taster", domains: ["scene", "script", "button"] },
+  { value: "lightgroup", label: "Licht-Gruppe", domains: ["light"] },
+];
+const CONTROL_TYPE_OPTIONS = CONTROL_TYPES.map(({ value, label }) => ({ value, label }));
+// Entitäts-Domain → Typ (mehrere Domains können auf denselben Typ zeigen).
+const CONTROL_TYPE_BY_DOMAIN = {
+  light: "light", switch: "switch", input_boolean: "switch", fan: "fan",
+  cover: "cover", climate: "climate", media_player: "media_player", lock: "lock",
+  alarm_control_panel: "alarm_control_panel",
+  scene: "action", script: "action", button: "action", lightgroup: "lightgroup",
+};
+const controlTypeDef = (t) => CONTROL_TYPES.find((x) => x.value === t);
+// Effektiver Typ: expliziter device_type, sonst aus der Entitäts-Domain abgeleitet.
+const controlTypeOf = (config) => config?.device_type || CONTROL_TYPE_BY_DOMAIN[neoControlDomain(config)] || "";
+
+// Invarianten: Legacy → Typ migrieren; Entität passend zum Typ halten.
+function normalizeControlConfig(config) {
+  const cfg = { ...config };
+  if (!cfg.device_type) {
+    const t = CONTROL_TYPE_BY_DOMAIN[neoControlDomain(cfg)];
+    if (t) cfg.device_type = t;
+  }
+  const t = cfg.device_type;
+  if (!t) return cfg;
+  if (t === "lightgroup") {
+    delete cfg.entity; // Gruppe nutzt `entities`
+  } else {
+    delete cfg.entities;
+    const d = cfg.entity ? cfg.entity.split(".")[0] : "";
+    if (d && CONTROL_TYPE_BY_DOMAIN[d] !== t) delete cfg.entity; // Typ/Entität-Mismatch → zurücksetzen
+  }
+  return cfg;
+}
+
 customElements.define("neo-control-card-editor", makeNeoEditor((config) => {
-  const d = neoControlDomain(config);
+  const t = controlTypeOf(config);
+  // Legacy-Karte mit nicht-gemappter Domain bleibt editierbar (ungefilterter Picker).
+  const hasLegacyEntity = !!(config?.entity || (Array.isArray(config?.entities) && config.entities.length));
   const general = [
-    { name: "entity", label: "Entität (Gerät)", selector: { entity: {} } },
-    { name: "name", label: "Name (optional)", selector: { text: {} } },
-    { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
+    { name: "device_type", label: "Typ", selector: { select: { mode: "dropdown", options: CONTROL_TYPE_OPTIONS } } },
   ];
-  // Domain-spezifische Optionen — exakt die Keys, die das Rendering auswertet.
-  if (d === "climate")
-    general.push({ name: "step", label: "Temperaturschritt (optional)", selector: { number: { min: 0.1, max: 5, step: 0.1, mode: "box" } } });
-  if (d === "alarm_control_panel")
-    general.push({ name: "code", label: "Code (optional, falls erforderlich)", selector: { text: {} } });
+  if (t || hasLegacyEntity) {
+    if (t === "lightgroup")
+      general.push({ name: "entities", label: "Lichter", selector: { entity: { domain: "light", multiple: true } } });
+    else {
+      const def = controlTypeDef(t);
+      general.push({ name: "entity", label: "Entität (Gerät)", selector: { entity: def?.domains?.length ? { domain: def.domains } : {} } });
+    }
+    general.push(
+      { name: "name", label: "Name (optional)", selector: { text: {} } },
+      { name: "sub", label: "Untertitel (optional)", selector: { text: {} } },
+    );
+    // Typ-spezifische Optionen — exakt die Keys, die das Rendering auswertet.
+    if (t === "climate")
+      general.push({ name: "step", label: "Temperaturschritt (optional)", selector: { number: { min: 0.1, max: 5, step: 0.1, mode: "box" } } });
+    if (t === "alarm_control_panel")
+      general.push({ name: "code", label: "Code (optional, falls erforderlich)", selector: { text: {} } });
+  }
 
   return [
     { type: "expandable", title: "Allgemein", icon: "mdi:tune-variant", expanded: true, schema: general },
@@ -351,7 +404,10 @@ customElements.define("neo-control-card-editor", makeNeoEditor((config) => {
       ],
     },
   ];
-}, { name: "Neo Steuerung", description: "Eine Karte für alle Geräte — passt sich an", icon: "🎛️" }));
+}, {
+  name: "Neo Steuerung", description: "Eine Karte für alle Geräte — passt sich an", icon: "🎛️",
+  rebuildKeys: ["device_type"], normalizeConfig: normalizeControlConfig,
+}));
 
 NeoDashboardRegistry.registerCard("neo-control-card", NeoControlCard, {
   name: "Neo Steuerung",

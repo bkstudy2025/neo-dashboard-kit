@@ -47,7 +47,9 @@ src/core/              ← Kern-Infrastruktur (keine konkreten Karten)
                          Schema = Array (statisch) ODER Funktion (config,hass)=>schema[]
                          für konditionale Felder (Progressive Disclosure). Mit
                          meta.rebuildKeys gezielter Rebuild + Pruning veralteter Keys.
-                         Referenz: neo-header-card (Komponente→Variante→Optionen).
+                         meta.normalizeConfig migriert/normalisiert Configs (Legacy,
+                         Key-Reset bei Typwechsel). Referenz: neo-header-card
+                         (Variante) und neo-control-card (expliziter Typ→Entität).
   tokens.js              Design-Tokens + globales CSS (NEO_CSS)
   layout.js              Responsive-Layout-Helfer
   reorder.js             Drag-&-Drop-Reorder-Helfer
