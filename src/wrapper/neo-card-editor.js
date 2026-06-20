@@ -8,6 +8,7 @@ import { NeoModules } from "../core/modules.js";
 import { NeoStore } from "../store/module-store.js";
 import { neoLoadModule } from "../store/module-loader.js";
 import { neoT, neoLang } from "../core/i18n.js";
+import { escapeAttr, escapeHtml } from "../core/html.js";
 
 class NeoCardEditor extends HTMLElement {
   // Übersetzungs-Helfer: folgt der HA-Sprache (EN Standard, DE wenn HA Deutsch).
@@ -207,7 +208,7 @@ class NeoCardEditor extends HTMLElement {
     item.className = "nmod-item";
     const badge = mod.author ? this._authorChip(mod.author) : "";
     const rm = this._isInstalled(mod.id)
-      ? `<button class="nmod-rm" title="${this._t("Modul entfernen")}" data-rm="${mod.id}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
+      ? `<button class="nmod-rm" title="${escapeAttr(this._t("Modul entfernen"))}" data-rm="${escapeAttr(mod.id)}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
       : "";
     const move = opts.reorder
       ? `<div class="nmod-move">
@@ -218,10 +219,10 @@ class NeoCardEditor extends HTMLElement {
     item.innerHTML = `
       <div class="nmod-row">
         ${move}
-        <span class="nmod-ic">${mod.icon || "🧩"}</span>
+        <span class="nmod-ic">${escapeHtml(mod.icon || "🧩")}</span>
         <div class="nmod-meta">
-          <div class="nmod-name">${mod.name || mod.id}${badge}</div>
-          ${mod.description ? `<div class="nmod-desc">${mod.description}</div>` : ""}
+          <div class="nmod-name">${escapeHtml(mod.name || mod.id)}${badge}</div>
+          ${mod.description ? `<div class="nmod-desc">${escapeHtml(mod.description)}</div>` : ""}
         </div>
         ${rm}
         <label class="nmod-sw">
@@ -330,37 +331,37 @@ class NeoCardEditor extends HTMLElement {
   _authorChip(author) {
     const a = author || "?";
     const cls = a === "Premium" ? "premium" : a === "Community" ? "community" : "standard";
-    return `<span class="nmod-auth ${cls}">👤 ${a}</span>`;
+    return `<span class="nmod-auth ${escapeAttr(cls)}">👤 ${escapeHtml(a)}</span>`;
   }
   // Kleine Vorschau: echtes Screenshot-Bild (image-Feld) ODER eine Icon-Kachel
   // als Fallback, damit jeder Eintrag visuell erkennbar ist.
   _previewTile(o) {
     return o.image
-      ? `<div class="nmod-prev"><img src="${o.image}" loading="lazy" alt="" /></div>`
-      : `<div class="nmod-prev nmod-prev--icon"><span>${o.icon || "🧩"}</span></div>`;
+      ? `<div class="nmod-prev"><img src="${escapeAttr(o.image)}" loading="lazy" alt="" /></div>`
+      : `<div class="nmod-prev nmod-prev--icon"><span>${escapeHtml(o.icon || "🧩")}</span></div>`;
   }
   _storeRow(o) {
     const status = o.installed
       ? (o.update
-          ? ` <span class="nmod-badge upd">⬆ ${this._t("Update")} → v${o.update}</span>`
+          ? ` <span class="nmod-badge upd">⬆ ${this._t("Update")} → v${escapeHtml(o.update)}</span>`
           : ` <span class="nmod-badge ok">${this._t("✓ Installiert")}</span>`)
       : "";
     return `<div class="nmod-store">
         ${this._previewTile(o)}
         <div class="nmod-store-h">
-          <span class="nmod-ic">${o.icon || "🧩"}</span>
+          <span class="nmod-ic">${escapeHtml(o.icon || "🧩")}</span>
           <div class="nmod-meta">
-            <div class="nmod-name">${o.name} <span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
-            <div class="nmod-sub">${this._authorChip(o.author)}${o.version ? `<span class="nmod-ver">v${o.version}</span>` : ""}</div>
+            <div class="nmod-name">${escapeHtml(o.name)} <span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
+            <div class="nmod-sub">${this._authorChip(o.author)}${o.version ? `<span class="nmod-ver">v${escapeHtml(o.version)}</span>` : ""}</div>
           </div>
         </div>
-        ${o.description ? `<div class="nmod-desc" style="margin-top:8px;">${o.description}</div>` : ""}
+        ${o.description ? `<div class="nmod-desc" style="margin-top:8px;">${escapeHtml(o.description)}</div>` : ""}
         <div class="nmod-store-row">
-          ${o.installAttr ? `<button class="nmod-mini" ${o.installAttr}>${this._t(o.installLabel)}</button>` : ""}
-          ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${o.uninstallId}">${this._t("Entfernen")}</button>` : ""}
-          ${o.homepage ? `<a class="nmod-mini ghost" href="${o.homepage}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
+          ${o.installId ? `<button class="nmod-mini" data-install-id="${escapeAttr(o.installId)}">${this._t(o.installLabel)}</button>` : ""}
+          ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${escapeAttr(o.uninstallId)}">${this._t("Entfernen")}</button>` : ""}
+          ${o.homepage ? `<a class="nmod-mini ghost" href="${escapeAttr(o.homepage)}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
         </div>
-        ${o.note ? `<div class="nmod-note" style="margin:6px 0 0;">${o.note}</div>` : ""}
+        ${o.note ? `<div class="nmod-note" style="margin:6px 0 0;">${escapeHtml(o.note)}</div>` : ""}
       </div>`;
   }
 
@@ -426,7 +427,7 @@ class NeoCardEditor extends HTMLElement {
         installed, update, homepage: it.homepage || it.repo, image: it.image, description: it.description,
         // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
         // gefilterte Liste zwischen Render und Klick ändert.
-        installAttr: showInstall ? `data-install-id="${it.id}"` : "", installLabel: installed ? "Aktualisieren" : "Installieren",
+        installId: showInstall ? it.id : "", installLabel: installed ? "Aktualisieren" : "Installieren",
         uninstallId: installed ? it.id : null,
       });
     });
@@ -448,7 +449,7 @@ class NeoCardEditor extends HTMLElement {
       ? ""
       : `<div class="nmod-note">${this._t("ℹ️ Ohne <b>Neo Dashboard Tools</b> wird das Modul nur für diese Sitzung geladen (nicht dauerhaft gespeichert).")}</div>`;
     return `${note}
-      <textarea id="nmod-code" placeholder="${this._t("Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …")}"></textarea>
+      <textarea id="nmod-code" placeholder="${escapeAttr(this._t("Modul- oder Karten-Code einfügen (registerModule / registerCard, z. B. Premium-Karten) …"))}"></textarea>
       <button class="nmod-mini" id="nmod-paste-add">${this._t("Hinzufügen")}</button>`;
   }
 
@@ -771,19 +772,19 @@ class NeoCardEditor extends HTMLElement {
       </style>
       <div class="nt">
         <div class="nt-btn" id="nt-btn">
-          <span class="nt-lbl"><span class="nt-dot" style="background:${DOT[curCat]};"></span>
-            <span class="nt-ic">${m.icon || "✨"}</span><span class="nt-nm">${curName}</span></span>
+          <span class="nt-lbl"><span class="nt-dot" style="background:${escapeAttr(DOT[curCat])};"></span>
+            <span class="nt-ic">${escapeHtml(m.icon || "✨")}</span><span class="nt-nm">${escapeHtml(curName)}</span></span>
           <span class="nt-cv">▾</span>
         </div>
         <div class="nt-panel" id="nt-panel" style="display:none;">
-          <div class="nt-search"><input id="nt-search" type="text" placeholder="${this._t("🔍 Karte suchen …")}" /></div>
+          <div class="nt-search"><input id="nt-search" type="text" placeholder="${escapeAttr(this._t("🔍 Karte suchen …"))}" /></div>
           <div id="nt-list">
           ${groups.map((grp) => `
-            <div class="nt-section ${open(grp.group) ? "" : "collapsed"}" data-grp="${grp.group}">
-              <div class="nt-grp" data-grp="${grp.group}"><span class="nt-dot" style="display:inline-block;background:${DOT[grp.group]};"></span>${this._t(grp.group)}<span class="nt-gcount">${grp.items.length}</span><span class="nt-gcv">›</span></div>
+            <div class="nt-section ${open(grp.group) ? "" : "collapsed"}" data-grp="${escapeAttr(grp.group)}">
+              <div class="nt-grp" data-grp="${escapeAttr(grp.group)}"><span class="nt-dot" style="display:inline-block;background:${escapeAttr(DOT[grp.group])};"></span>${escapeHtml(this._t(grp.group))}<span class="nt-gcount">${grp.items.length}</span><span class="nt-gcv">›</span></div>
               <div class="nt-opts">
-              ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${it.value}" data-s="${(this._t(it.name) + " " + it.name + " " + it.value + " " + grp.group).toLowerCase()}">
-                <span class="nt-ic">${it.icon}</span><span class="nt-nm">${this._t(it.name)}</span>
+              ${grp.items.map((it) => `<div class="nt-opt ${it.value === cur ? "sel" : ""}" data-v="${escapeAttr(it.value)}" data-s="${escapeAttr((this._t(it.name) + " " + it.name + " " + it.value + " " + grp.group).toLowerCase())}">
+                <span class="nt-ic">${escapeHtml(it.icon)}</span><span class="nt-nm">${escapeHtml(this._t(it.name))}</span>
               </div>`).join("")}
               </div>
             </div>`).join("")}

@@ -6,6 +6,7 @@ import { NeoDashboardRegistry } from "../core/registry.js";
 import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "../core/tokens.js";
 import { neoIcon } from "../core/icons.js";
 import { makeNeoEditor } from "../core/editor-factory.js";
+import { escapeHtml } from "../core/html.js";
 
 class NeoHeaderCard extends NeoBaseCard {
   getCardSize() { return 1; }
@@ -17,7 +18,7 @@ class NeoHeaderCard extends NeoBaseCard {
 
     if (variant === "divider") {
       const lbl = title
-        ? `<span style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--neo-text3);">${title}</span>
+        ? `<span style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--neo-text3);">${escapeHtml(title)}</span>
            <div style="flex:1;height:1px;background:var(--neo-line2);"></div>`
         : "";
       return `<div style="display:flex;align-items:center;gap:12px;padding:8px 2px;">
@@ -36,8 +37,8 @@ class NeoHeaderCard extends NeoBaseCard {
         ${lead}
         <div style="min-width:0;">
           <div style="font-size:18px;font-weight:700;letter-spacing:-.2px;color:var(--neo-text1);
-            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title}</div>
-          ${subtitle ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:1px;">${subtitle}</div>` : ""}
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title)}</div>
+          ${subtitle ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:1px;">${escapeHtml(subtitle)}</div>` : ""}
         </div>
       </div>`;
   }

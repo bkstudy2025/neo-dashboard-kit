@@ -7,6 +7,7 @@ import { NeoBaseCard } from "./base-card.js";
 import { neoIcon, NEO_ICON_OPTIONS } from "./icons.js";
 import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "./tokens.js";
 import { makeNeoEditor } from "./editor-factory.js";
+import { makeNeoTypedEditor, neoCapabilityType, neoTypeDef } from "./capability.js";
 import { NEO_LAYOUT_OPTS, normalizeLayout, neoViewportLayout } from "./layout.js";
 import { neoRenderReorder } from "./reorder.js";
 
@@ -15,6 +16,9 @@ Object.assign(window.NeoDashboard, {
   icon: neoIcon,
   accents: NEO_ACCENTS,
   makeEditor: makeNeoEditor,
+  makeTypedEditor: makeNeoTypedEditor,
+  capabilityType: neoCapabilityType,
+  typeDef: neoTypeDef,
   iconOptions: NEO_ICON_OPTIONS,
   accentOptions: NEO_ACCENT_OPTIONS,
   layoutOptions: NEO_LAYOUT_OPTS,
