@@ -111,6 +111,7 @@ const EN = {
   "Wähle einen Anzeige-Typ, um die Vorschau zu starten": "Pick a display type to start the preview",
   "Sensor / Wert": "Sensor / Value", "Batterie": "Battery", "Status": "Status",
   "Person / Anwesenheit": "Person / Presence", "Wetter": "Weather",
+  "Kalender / Termin": "Calendar / Event", "Kalender": "Calendar", "Keine Termine": "No events",
   // Wetter-Zustände (Display: Wetter-Typ)
   "Sonnig": "Sunny", "Klar": "Clear", "Bewölkt": "Cloudy", "Teils bewölkt": "Partly cloudy",
   "Regen": "Rain", "Starkregen": "Heavy rain", "Schnee": "Snow", "Schneeregen": "Sleet",
