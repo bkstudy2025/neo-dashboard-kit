@@ -582,6 +582,8 @@ const EN = {
   "Einheit (optional)": "Unit (optional)", "Lichter": "Lights",
   "Code (optional, falls erforderlich)": "Code (optional, if required)",
   "Typ": "Type", "Titel (bei Trenner optional)": "Title (optional for divider)",
+  "Inhalt": "Content", "Titel": "Title",
+  "Trenner-Label (optional)": "Divider label (optional)",
   "Layout / Gerät": "Layout / device",
   // Optionen
   "Blau": "Blue", "Amber": "Amber", "Mint": "Mint", "Violett": "Violet", "Rosé": "Rosé",
@@ -627,6 +629,14 @@ function neoT(hass, de) {
 //
 // Labels, Abschnitts-Titel und Select-Optionen werden über i18n nach der
 // HA-Sprache übersetzt (Deutsch = Quelle, Englisch = Standard).
+//
+// ── Konditionale Schemas (Referenzmuster, siehe neo-header-card) ──
+// `schema` darf entweder ein statisches Array sein (abwärtskompatibel) oder eine
+// Funktion (config, hass) => schema[]. Letztere erlaubt Progressive Disclosure:
+// erst Komponente/Variante wählen, dann erscheinen nur die passenden Felder.
+// Damit der Tippfokus erhalten bleibt, wird das ha-form NICHT bei jeder Eingabe
+// neu gebaut, sondern nur wenn sich ein „strukturbestimmendes" Feld ändert
+// (meta.rebuildKeys, z. B. ["variant"]). Sonst wird nur .schema/.data aktualisiert.
 
 // Übersetzt label / title / select-options eines ha-form-Schemas (rekursiv).
 function neoTranslateSchema(hass, schema) {
@@ -650,12 +660,73 @@ function neoTranslateSchema(hass, schema) {
   });
 }
 
+// Sammelt rekursiv alle Feld-Namen eines Schemas (inkl. expandable/grid-Gruppen).
+// Dient dem Pruning: nur Keys, die dieser Editor verwaltet, dürfen entfernt werden.
+function neoCollectFieldNames(schema, acc = new Set()) {
+  for (const item of schema || []) {
+    if (item && item.name) acc.add(item.name);
+    if (item && Array.isArray(item.schema)) neoCollectFieldNames(item.schema, acc);
+  }
+  return acc;
+}
+
 function makeNeoEditor(schema, meta = {}) {
+  const isFn = typeof schema === "function";
+  const rebuildKeys = Array.isArray(meta.rebuildKeys) ? meta.rebuildKeys : [];
+
   return class extends HTMLElement {
+    constructor() {
+      super();
+      // Vereinigung aller je angezeigten Feld-Namen → Universum der „verwalteten" Keys.
+      // Nur diese dürfen beim Varianten-Wechsel geprunt werden (nie fremde/Meta-Keys).
+      this._managedKeys = new Set();
+    }
+
+    // Schema für den aktuellen Zustand auflösen (Array = statisch, Funktion = konditional).
+    _resolveSchema(config) {
+      return isFn ? (schema(config || {}, this._hass) || []) : schema;
+    }
+
+    // Strukturbestimmende Änderung? Dann muss das ha-form neu bestückt werden.
+    // Statisches Schema ändert nie seine Struktur → nie Rebuild bei Eingaben.
+    _isStructuralChange(next) {
+      if (!isFn) return false;
+      if (rebuildKeys.length)
+        return rebuildKeys.some((k) => next?.[k] !== this._config?.[k]);
+      // Fallback ohne explizite rebuildKeys: Feld-Namen-Signatur vergleichen.
+      return this._fieldSig(next) !== this._fieldSig(this._config);
+    }
+    _fieldSig(config) {
+      return [...neoCollectFieldNames(this._resolveSchema(config))].sort().join("|");
+    }
+
+    // Entfernt verwaltete Keys, die im aktuellen Zustand nicht (mehr) gültig sind.
+    // So schleppt die Config keine unsichtbaren Felder einer anderen Variante mit.
+    _pruneStaleKeys() {
+      const valid = neoCollectFieldNames(this._resolveSchema(this._config));
+      for (const k of this._managedKeys)
+        if (!valid.has(k) && k in this._config) delete this._config[k];
+    }
+
+    // ha-form mit aufgelöstem + übersetztem Schema und aktuellen Daten bestücken.
+    _applySchema() {
+      const resolved = this._resolveSchema(this._config);
+      neoCollectFieldNames(resolved, this._managedKeys); // Universum erweitern
+      this._form.schema = neoTranslateSchema(this._hass, resolved);
+      this._form.data = this._config || {};
+      this._structSig = this._sig(this._config);
+    }
+    _sig(config) {
+      return rebuildKeys.map((k) => String(config?.[k])).join(" ");
+    }
+
     setConfig(config) {
       this._config = { ...config };
-      if (this._form) this._form.data = this._config;
-      else this._build();
+      if (!this._form) { this._build(); return; }
+      // Rebuild-Guard: Schema nur neu setzen, wenn sich die Struktur ändert
+      // (sonst nur .data → ha-form behält Fokus/Cursorposition).
+      if (isFn && this._sig(this._config) !== this._structSig) this._applySchema();
+      else this._form.data = this._config;
     }
     set hass(hass) {
       const langChanged = this._lang !== undefined && this._lang !== neoLang(hass);
@@ -707,17 +778,22 @@ function makeNeoEditor(schema, meta = {}) {
       this.appendChild(header);
 
       this._form = document.createElement("ha-form");
-      this._form.schema = neoTranslateSchema(this._hass, schema);
-      this._form.data = this._config || {};
       if (this._hass) this._form.hass = this._hass;
       this._form.computeLabel = (s) => neoT(this._hass, s.label || s.name);
       this._form.addEventListener("value-changed", (e) => {
-        this._config = e.detail.value;
+        const next = { ...e.detail.value };
+        const structural = this._isStructuralChange(next);
+        this._config = next;
+        if (structural) {
+          this._pruneStaleKeys(); // veraltete Felder der Vorvariante verwerfen
+          this._applySchema();    // passende Felder einblenden (gezielter Rebuild)
+        }
         this.dispatchEvent(new CustomEvent("config-changed", {
           detail: { config: this._config },
           bubbles: true, composed: true,
         }));
       });
+      this._applySchema(); // initiales Schema (statisch oder konditional) bestücken
       this.appendChild(this._form);
     }
   };
@@ -1410,27 +1486,50 @@ class NeoHeaderCard extends NeoBaseCard {
   static getStubConfig() { return { variant: "header", title: "Überschrift" }; }
 }
 
-// ── Editor: geteiltes Sektions-Muster (Inhalt/Darstellung) ──
-customElements.define("neo-header-card-editor", makeNeoEditor([
-  { name: "variant", label: "Typ", selector: { select: { mode: "dropdown", options: [
+// ── Editor: konditionales Schema (Referenzmuster für Progressive Disclosure) ──
+// Erst "Typ" wählen → danach erscheinen nur die für die Variante relevanten Felder.
+// Schema ist eine Funktion (config) => schema[]; makeNeoEditor baut das Formular
+// dank rebuildKeys:["variant"] nur bei Varianten-Wechsel neu (kein Fokusverlust)
+// und entfernt beim Wechsel die nicht mehr gültigen Keys aus der Config.
+const variantField = {
+  name: "variant", label: "Typ", selector: { select: { mode: "dropdown", options: [
     { value: "header", label: "Überschrift" },
     { value: "divider", label: "Trenner" },
-  ] } } },
-  {
-    type: "expandable", title: "Inhalt", icon: "mdi:tune-variant", expanded: true,
-    schema: [
-      { name: "title", label: "Titel (bei Trenner optional)", selector: { text: {} } },
-      { name: "subtitle", label: "Untertitel (optional)", selector: { text: {} } },
-    ],
-  },
-  {
-    type: "expandable", title: "Darstellung", icon: "mdi:palette",
-    schema: [
-      { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
-      { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-    ],
-  },
-], { name: "Neo Header", description: "Überschrift / Trenner", icon: "🔖" }));
+  ] } },
+};
+
+customElements.define("neo-header-card-editor", makeNeoEditor((config) => {
+  // Trenner: nur das optionale Label ist relevant — keine Titel/Untertitel/Icon/Farbe.
+  if (config?.variant === "divider") {
+    return [
+      variantField,
+      {
+        type: "expandable", title: "Inhalt", icon: "mdi:tune-variant", expanded: true,
+        schema: [
+          { name: "title", label: "Trenner-Label (optional)", selector: { text: {} } },
+        ],
+      },
+    ];
+  }
+  // Überschrift: vollständige Inhalts- und Darstellungs-Optionen.
+  return [
+    variantField,
+    {
+      type: "expandable", title: "Inhalt", icon: "mdi:tune-variant", expanded: true,
+      schema: [
+        { name: "title", label: "Titel", selector: { text: {} } },
+        { name: "subtitle", label: "Untertitel (optional)", selector: { text: {} } },
+      ],
+    },
+    {
+      type: "expandable", title: "Darstellung", icon: "mdi:palette",
+      schema: [
+        { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
+        { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
+      ],
+    },
+  ];
+}, { name: "Neo Header", description: "Überschrift / Trenner", icon: "🔖", rebuildKeys: ["variant"] }));
 
 NeoDashboardRegistry.registerCard("neo-header-card", NeoHeaderCard, {
   name: "Neo Header",
@@ -2605,7 +2704,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.64", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.65", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -2699,7 +2798,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.64 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.65 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
