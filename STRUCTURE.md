@@ -50,6 +50,10 @@ src/core/              ← Kern-Infrastruktur (keine konkreten Karten)
                          meta.normalizeConfig migriert/normalisiert Configs (Legacy,
                          Key-Reset bei Typwechsel). Referenz: neo-header-card
                          (Variante) und neo-control-card (expliziter Typ→Entität).
+  capability.js          Deklarative Capability-Registry + Generator
+                         (makeNeoTypedEditor): card_type → types → entity_domains
+                         → editor_schema → preview(mode) → prune. Standard/Premium/
+                         Community nutzen dieselbe Infrastruktur. Referenz: Display.
   tokens.js              Design-Tokens + globales CSS (NEO_CSS)
   layout.js              Responsive-Layout-Helfer
   reorder.js             Drag-&-Drop-Reorder-Helfer
