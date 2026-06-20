@@ -239,6 +239,9 @@ const NEO_CSS = `
     overflow: hidden;
     font-family: var(--neo-font);
     color: var(--neo-text1);
+    /* Glow zentral: Karten setzen --neo-glow (mit Akzentfarbe) inline; sonst
+       greift dieser neutrale Default. */
+    box-shadow: var(--neo-glow, 0 18px 40px -16px var(--neo-shadow1));
     transition: all 240ms cubic-bezier(.2,.8,.2,1);
   }
   .neo-card[role="button"]:active { transform: scale(0.975); }
@@ -253,6 +256,12 @@ const NEO_CSS = `
      nur ein Boden → kleiner = kompakter, Inhalt wird nie abgeschnitten. */
   :host([data-neo-layout="tablet"]) .neo-card { padding:14px !important; min-height:140px !important; }
   :host([data-neo-layout="mobile"]) .neo-card { padding:12px !important; min-height:118px !important; }
+  /* Auf dem Smartphone liegen die Karten nahezu randlos am Bildschirmrand – ein
+     40px breiter Glow läuft dort über die Viewport-Kante und wirkt „abgeschnitten".
+     Mobil daher ein engerer Schatten, der innerhalb des Karten-Abstands bleibt. */
+  :host([data-neo-layout="mobile"]) .neo-card {
+    box-shadow: var(--neo-glow-m, 0 8px 22px -14px var(--neo-shadow1)) !important;
+  }
 `;
 
 // Akzent-Dropdown, von allen Karten-Editoren geteilt.
@@ -961,7 +970,8 @@ class NeoControlCard extends NeoBaseCard {
         background:${active ? `linear-gradient(160deg,${glow} 0%,var(--neo-fill1) 60%,var(--neo-fill0) 100%)` : "linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%)"};
         backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
         border:1px solid ${active ? "var(--neo-line6)" : "var(--neo-line2)"};
-        box-shadow:${active ? `0 18px 40px -16px ${glow}` : "0 18px 40px -16px var(--neo-shadow1)"};">
+        --neo-glow:0 18px 40px -16px ${active ? glow : "var(--neo-shadow1)"};
+        --neo-glow-m:0 8px 22px -14px ${active ? glow : "var(--neo-shadow1)"};">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
           <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
             background:${iconBg};border:1px solid ${active ? "rgba(255,255,255,0.25)" : acc.c + "33"};">${neoIcon(icon, { size: 19, color: active ? "#fff" : acc.c })}</div>
@@ -1279,7 +1289,7 @@ class NeoDisplayCard extends NeoBaseCard {
         padding:16px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;
         background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
         backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
-        border:1px solid var(--neo-line2);box-shadow:0 18px 40px -16px var(--neo-shadow1);">
+        border:1px solid var(--neo-line2);">
         <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
           background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
           border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
@@ -1309,7 +1319,7 @@ class NeoDisplayCard extends NeoBaseCard {
     return `
       <div class="neo-card" id="card" role="button" style="
         position:relative;overflow:hidden;min-height:190px;display:flex;cursor:pointer;
-        border:1px solid var(--neo-line2);box-shadow:0 18px 40px -16px var(--neo-shadow1);">
+        border:1px solid var(--neo-line2);">
         ${image}
         <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 14px;display:flex;align-items:center;gap:8px;
           background:linear-gradient(0deg,rgba(0,0,0,.65) 0%,rgba(0,0,0,.15) 60%,transparent 100%);">
@@ -1633,15 +1643,31 @@ class NeoCardEditor extends HTMLElement {
     if (this._builtLang !== lang) { this._builtLang = lang; if (this._built) this._build(); }
   }
 
-  // Re-render der Modul-Sektion, wenn (Store-)Module geladen/aktualisiert werden.
+  // Re-render der Editor-Sektionen, wenn Karten/Module registriert, aktualisiert
+  // oder entfernt werden (Store-Install, Code einfügen, Entfernen, Live-Update).
   connectedCallback() {
-    this._onMods = () => { this._renderModulesSection(); };
+    this._onMods = () => this._scheduleReactiveRefresh();
     window.addEventListener("neo-module-changed", this._onMods);
     window.addEventListener("neo-modules-loaded", this._onMods);
   }
   disconnectedCallback() {
     window.removeEventListener("neo-module-changed", this._onMods);
     window.removeEventListener("neo-modules-loaded", this._onMods);
+  }
+
+  // Aktualisiert Kartentyp-Picker + Modul-Sektion sofort, aber sicher & sparsam:
+  // mehrere Events im selben Frame werden zu EINEM Rebuild zusammengefasst (rAF),
+  // und der Picker wird nie neu gebaut, während sein Dropdown offen ist (es würde
+  // sonst zuklappen).
+  _scheduleReactiveRefresh() {
+    if (this._refreshScheduled) return;
+    this._refreshScheduled = true;
+    requestAnimationFrame(() => {
+      this._refreshScheduled = false;
+      if (!this._built) return;
+      if (this._typeBox && !this._typeMenuOpen) this._renderTypePicker();
+      this._renderModulesSection();
+    });
   }
 
   _build() {
@@ -1787,7 +1813,7 @@ class NeoCardEditor extends HTMLElement {
     const on = !!opts.active;
     const item = document.createElement("div");
     item.className = "nmod-item";
-    const badge = mod.author ? `<span class="nmod-badge">${mod.author}</span>` : "";
+    const badge = mod.author ? this._authorChip(mod.author) : "";
     const rm = this._isInstalled(mod.id)
       ? `<button class="nmod-rm" title="${this._t("Modul entfernen")}" data-rm="${mod.id}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
       : "";
@@ -1907,6 +1933,20 @@ class NeoCardEditor extends HTMLElement {
     }
     return false;
   }
+  // Autor als farbiger Chip (Premium=Gold, Community=Türkis, sonst Standard) —
+  // damit Herkunft/Vertrauen auf einen Blick erkennbar ist.
+  _authorChip(author) {
+    const a = author || "?";
+    const cls = a === "Premium" ? "premium" : a === "Community" ? "community" : "standard";
+    return `<span class="nmod-auth ${cls}">👤 ${a}</span>`;
+  }
+  // Kleine Vorschau: echtes Screenshot-Bild (image-Feld) ODER eine Icon-Kachel
+  // als Fallback, damit jeder Eintrag visuell erkennbar ist.
+  _previewTile(o) {
+    return o.image
+      ? `<div class="nmod-prev"><img src="${o.image}" loading="lazy" alt="" /></div>`
+      : `<div class="nmod-prev nmod-prev--icon"><span>${o.icon || "🧩"}</span></div>`;
+  }
   _storeRow(o) {
     const status = o.installed
       ? (o.update
@@ -1914,15 +1954,15 @@ class NeoCardEditor extends HTMLElement {
           : ` <span class="nmod-badge ok">${this._t("✓ Installiert")}</span>`)
       : "";
     return `<div class="nmod-store">
+        ${this._previewTile(o)}
         <div class="nmod-store-h">
           <span class="nmod-ic">${o.icon || "🧩"}</span>
           <div class="nmod-meta">
             <div class="nmod-name">${o.name} <span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
-            <div class="nmod-desc">${this._t("von")} ${o.author || "?"}${o.version ? " · v" + o.version : ""}</div>
+            <div class="nmod-sub">${this._authorChip(o.author)}${o.version ? `<span class="nmod-ver">v${o.version}</span>` : ""}</div>
           </div>
         </div>
-        ${o.image ? `<img class="nmod-img" src="${o.image}" loading="lazy" />` : ""}
-        ${o.description ? `<div class="nmod-desc" style="margin-top:6px;">${o.description}</div>` : ""}
+        ${o.description ? `<div class="nmod-desc" style="margin-top:8px;">${o.description}</div>` : ""}
         <div class="nmod-store-row">
           ${o.installAttr ? `<button class="nmod-mini" ${o.installAttr}>${this._t(o.installLabel)}</button>` : ""}
           ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${o.uninstallId}">${this._t("Entfernen")}</button>` : ""}
@@ -2103,9 +2143,19 @@ class NeoCardEditor extends HTMLElement {
       try { await NeoStore.delete(id); }
       catch (e) { return this._msg(this._t("Entfernen fehlgeschlagen: {err}").replace("{err}", e?.message || e), true); }
     }
-    // Layer-Modul sofort live entladen; Karten brauchen einen Reload.
-    if (!isCard && NeoModules.get(id)) NeoModules.unregister(id);
-    // Aus der aktiven Konfiguration nehmen, falls aktiviert.
+    // Sofort live aus der Registry nehmen — beide feuern "neo-module-changed",
+    // wodurch Picker + Modul-Sektion umgehend (und sicher) aktualisiert werden.
+    // Karten lassen sich später erneut installieren (versionierte Tags).
+    if (isCard) NeoDashboardRegistry.unregisterCard(id);
+    else if (NeoModules.get(id)) NeoModules.unregister(id);
+    // War die entfernte Karte gerade ausgewählt, Auswahl zurücksetzen.
+    if (isCard && this._config.card_type === id) {
+      this._config = { type: this._config.type };
+      this._mountSub();
+      this._updateGuidedState();
+      this._fire();
+    }
+    // Aus der aktiven Konfiguration nehmen, falls als Modul aktiviert.
     if (this._isModEnabled(id)) {
       const list = this._enabledList().filter((m) => m.id !== id);
       this._config = { ...this._config };
@@ -2113,7 +2163,7 @@ class NeoCardEditor extends HTMLElement {
       this._fire();
     }
     await this._refreshInstalled();
-    this._msg(this._t(isCard ? "Karte entfernt — zum vollständigen Entladen einmal neu laden." : "Modul entfernt."));
+    this._msg(this._t(isCard ? "Karte entfernt." : "Modul entfernt."));
   }
 
   _modStyles() {
@@ -2160,7 +2210,19 @@ class NeoCardEditor extends HTMLElement {
         .nmod-note { font-size:12px; color:var(--secondary-text-color); line-height:1.45; margin:4px 0 8px; }
         .nmod-store { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:12px; padding:10px; margin-bottom:8px; }
         .nmod-store-h { display:flex; align-items:flex-start; gap:9px; }
-        .nmod-img { width:100%; border-radius:8px; margin-top:8px; display:block; }
+        .nmod-sub { display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
+        .nmod-ver { font-size:11.5px; color:var(--secondary-text-color); }
+        .nmod-auth { font-size:10px; font-weight:700; padding:1px 7px; border-radius:999px;
+          display:inline-flex; align-items:center; gap:3px; white-space:nowrap; }
+        .nmod-auth.standard { color:#c3c7cf; background:rgba(154,160,166,.16); border:1px solid rgba(154,160,166,.4); }
+        .nmod-auth.premium { color:#F0B429; background:rgba(240,180,41,.14); border:1px solid rgba(240,180,41,.45); }
+        .nmod-auth.community { color:#5EDCB8; background:rgba(94,220,184,.14); border:1px solid rgba(94,220,184,.42); }
+        .nmod-prev { border-radius:10px; overflow:hidden; margin-bottom:9px;
+          border:1px solid var(--divider-color,rgba(255,255,255,.08)); }
+        .nmod-prev img { width:100%; display:block; }
+        .nmod-prev--icon { height:64px; display:flex; align-items:center; justify-content:center;
+          background:linear-gradient(135deg, rgba(124,156,255,.20), rgba(94,220,184,.12)); }
+        .nmod-prev--icon span { font-size:34px; line-height:1; filter:drop-shadow(0 3px 8px rgba(0,0,0,.3)); }
         .nmod textarea { width:100%; box-sizing:border-box; min-height:100px; resize:vertical; border-radius:10px;
           border:1px solid var(--divider-color,rgba(255,255,255,.15)); background:var(--secondary-background-color,#0d1020);
           color:var(--primary-text-color); font-family:ui-monospace,monospace; font-size:12px; padding:10px; }
@@ -2543,7 +2605,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.62", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.64", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -2637,7 +2699,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.62 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.64 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

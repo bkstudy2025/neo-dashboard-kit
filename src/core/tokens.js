@@ -37,6 +37,9 @@ export const NEO_CSS = `
     overflow: hidden;
     font-family: var(--neo-font);
     color: var(--neo-text1);
+    /* Glow zentral: Karten setzen --neo-glow (mit Akzentfarbe) inline; sonst
+       greift dieser neutrale Default. */
+    box-shadow: var(--neo-glow, 0 18px 40px -16px var(--neo-shadow1));
     transition: all 240ms cubic-bezier(.2,.8,.2,1);
   }
   .neo-card[role="button"]:active { transform: scale(0.975); }
@@ -51,6 +54,12 @@ export const NEO_CSS = `
      nur ein Boden → kleiner = kompakter, Inhalt wird nie abgeschnitten. */
   :host([data-neo-layout="tablet"]) .neo-card { padding:14px !important; min-height:140px !important; }
   :host([data-neo-layout="mobile"]) .neo-card { padding:12px !important; min-height:118px !important; }
+  /* Auf dem Smartphone liegen die Karten nahezu randlos am Bildschirmrand – ein
+     40px breiter Glow läuft dort über die Viewport-Kante und wirkt „abgeschnitten".
+     Mobil daher ein engerer Schatten, der innerhalb des Karten-Abstands bleibt. */
+  :host([data-neo-layout="mobile"]) .neo-card {
+    box-shadow: var(--neo-glow-m, 0 8px 22px -14px var(--neo-shadow1)) !important;
+  }
 `;
 
 // Akzent-Dropdown, von allen Karten-Editoren geteilt.
