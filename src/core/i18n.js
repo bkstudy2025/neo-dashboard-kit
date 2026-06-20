@@ -32,7 +32,11 @@ const EN = {
     "⚠️ The store needs the <b>Neo Dashboard Tools</b> integration (server-side save + load).",
   "Lade Store …": "Loading store …",
   "Store-Index konnte nicht geladen werden.": "Could not load the store index.",
+  "Store-Index konnte nicht geladen werden. Prüfe die Internetverbindung und versuche es erneut.":
+    "Could not load the store index. Check your internet connection and try again.",
   "Erneut": "Retry",
+  "Offizieller Store": "Official store",
+  "Store aktualisieren": "Refresh store",
   "Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.":
     "No store modules available right now. Add premium cards (e.g. weather) via <b>Paste code</b>.",
   "✓ Installiert": "✓ Installed",
