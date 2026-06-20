@@ -17,13 +17,20 @@ const DEFAULT_ICON = {
   scene: "scenes", script: "robot", button: "robot", lightgroup: "lightbulb",
 };
 
+// device_type → Render-Domain (nur die abweichenden Fälle; die übrigen Typ-Werte
+// sind bereits identisch mit der Render-Domain). Für die Typ-Vorschau ohne Entität.
+const DEVICE_TYPE_DOMAIN = { action: "scene", lightgroup: "lightgroup" };
+
 // Domain-Ableitung — einzige Quelle der Wahrheit für Render UND Editor.
-// (Mehrere Entitäten ⇒ Licht-Gruppe; sonst die Domain der gewählten Entität.)
-// So zeigt der Editor exakt die Optionen, die das Rendering für diese Domain nutzt.
+// Reihenfolge: mehrere Entitäten ⇒ Licht-Gruppe; echte Entität gewinnt; sonst
+// fällt die Vorschau auf den gewählten Typ (device_type) zurück, damit die
+// Live-Vorschau sofort zum Typ passt – auch wenn noch keine Entität gewählt ist.
 export function neoControlDomain(config) {
   if (Array.isArray(config?.entities) && config.entities.length) return "lightgroup";
   const id = config?.entity;
-  return id ? id.split(".")[0] : "";
+  if (id) return id.split(".")[0];
+  const dt = config?.device_type;
+  return dt ? (DEVICE_TYPE_DOMAIN[dt] || dt) : "";
 }
 const ALARM_STATES = {
   disarmed: { label: "Unscharf", accent: "mint", icon: "unlock" },
@@ -242,7 +249,7 @@ class NeoControlCard extends NeoBaseCard {
   }
 
   _renderLightGroup() {
-    const ids = this._config.entities.filter(Boolean);
+    const ids = (this._config.entities || []).filter(Boolean); // Typ-Vorschau ohne Entitäten
     let onCount = 0, briSum = 0, briN = 0;
     ids.forEach((id) => { const s = this._state(id); if (s?.state === "on") { onCount++; const b = s.attributes?.brightness; if (typeof b === "number") { briSum += b; briN++; } } });
     const bri = briN ? Math.round((briSum / briN / 255) * 100) : 0;
@@ -261,7 +268,7 @@ class NeoControlCard extends NeoBaseCard {
 
     sr.getElementById("toggle")?.addEventListener("click", (e) => { e.stopPropagation(); this._primaryToggle(d); });
     sr.getElementById("bri")?.addEventListener("change", (e) => {
-      const ids = d === "lightgroup" ? this._config.entities.filter(Boolean) : id;
+      const ids = d === "lightgroup" ? (this._config.entities || []).filter(Boolean) : id;
       if (ids) this._callService("light", "turn_on", { entity_id: ids, brightness_pct: +e.target.value });
     });
     sr.getElementById("pct")?.addEventListener("change", (e) => { if (id) this._callService("fan", "set_percentage", { entity_id: id, percentage: +e.target.value }); });
@@ -283,7 +290,7 @@ class NeoControlCard extends NeoBaseCard {
   _primaryToggle(d) {
     const id = this._config?.entity;
     if (d === "lightgroup") {
-      const ids = this._config.entities.filter(Boolean);
+      const ids = (this._config.entities || []).filter(Boolean);
       const anyOn = ids.some((x) => this._state(x)?.state === "on");
       if (ids.length) this._callService("light", anyOn ? "turn_off" : "turn_on", { entity_id: ids });
       return;
