@@ -576,6 +576,7 @@ const EN = {
   "Wähle einen Anzeige-Typ, um die Vorschau zu starten": "Pick a display type to start the preview",
   "Sensor / Wert": "Sensor / Value", "Batterie": "Battery", "Status": "Status",
   "Person / Anwesenheit": "Person / Presence", "Wetter": "Weather",
+  "Kalender / Termin": "Calendar / Event", "Kalender": "Calendar", "Keine Termine": "No events",
   // Wetter-Zustände (Display: Wetter-Typ)
   "Sonnig": "Sunny", "Klar": "Clear", "Bewölkt": "Cloudy", "Teils bewölkt": "Partly cloudy",
   "Regen": "Rain", "Starkregen": "Heavy rain", "Schnee": "Snow", "Schneeregen": "Sleet",
@@ -1471,6 +1472,7 @@ const DISPLAY_TYPES = [
   { value: "battery",  label: "Batterie",             domains: ["sensor"], device_class: "battery",    icon: "battery", mode: "sensor", unit: true },
   { value: "presence", label: "Person / Anwesenheit", domains: ["person", "device_tracker"],          icon: "person",  mode: "sensor" },
   { value: "weather",  label: "Wetter",               domains: ["weather"],                           icon: "partly",  mode: "weather" },
+  { value: "calendar", label: "Kalender / Termin",    domains: ["calendar"],                          icon: "calendar", mode: "calendar" },
   { value: "camera",   label: "Kamera",               domains: ["camera"],                            icon: "camera",  mode: "camera" },
 ];
 // Wetter-Zustand → Label + Icon (basic). Pro-Wetter (Vorhersage etc.) ist Premium.
@@ -1496,7 +1498,7 @@ const DISPLAY_TYPE_OPTIONS = DISPLAY_TYPES.map(({ value, label }) => ({ value, l
 const DISPLAY_TYPE_BY_DOMAIN = {
   sensor: "value", input_number: "value", number: "value",
   binary_sensor: "status", camera: "camera",
-  person: "presence", device_tracker: "presence", weather: "weather",
+  person: "presence", device_tracker: "presence", weather: "weather", calendar: "calendar",
 };
 const displayTypeDef = (t) => DISPLAY_TYPES.find((x) => x.value === t);
 // Effektiver Typ: expliziter display_type, sonst aus der Entitäts-Domain abgeleitet.
@@ -1540,6 +1542,7 @@ class NeoDisplayCard extends NeoBaseCard {
     if (k === "empty") return this._renderEmpty(); // kein Typ & keine Entität
     if (k === "camera") return this._renderCamera();
     if (k === "weather") return this._renderWeather();
+    if (k === "calendar") return this._renderCalendar();
     return this._renderSensor();
   }
 
@@ -1616,6 +1619,43 @@ class NeoDisplayCard extends NeoBaseCard {
             <span style="font-size:13px;color:var(--neo-text2);">${unit}</span>
           </div>
           ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${sub}</div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  // Kalender: nächster Termin (Titel + Zeitpunkt). Bewusst keine Agenda/Liste.
+  _calWhen(a) {
+    const raw = a.start_time;
+    if (!raw) return "";
+    const d = new Date(String(raw).replace(" ", "T"));
+    if (isNaN(d.getTime())) return String(raw);
+    const lang = this._hass?.locale?.language || this._hass?.language || "de";
+    const date = d.toLocaleDateString(lang, { weekday: "short", day: "2-digit", month: "2-digit" });
+    if (a.all_day) return date;
+    return `${date} · ${d.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}`;
+  }
+  _renderCalendar() {
+    const id = this._config?.entity;
+    const s = this._state(id);
+    const a = s?.attributes || {};
+    const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.violet;
+    const name = this._config?.name || a.friendly_name || id || this._t("Kalender");
+    const icon = this._config?.icon || "calendar";
+    const title = a.message || this._t("Keine Termine");
+    const when = this._calWhen(a);
+    return `
+      <div class="neo-card" id="card" role="button" style="
+        padding:16px;min-height:160px;display:flex;flex-direction:column;cursor:pointer;
+        background:linear-gradient(160deg,var(--neo-fill2) 0%,var(--neo-fill0) 100%);
+        backdrop-filter:var(--neo-blur);-webkit-backdrop-filter:var(--neo-blur);
+        border:1px solid var(--neo-line2);">
+        <div style="width:38px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;
+          background:linear-gradient(160deg,${acc.c}26 0%,var(--neo-fill1) 100%);
+          border:1px solid ${acc.c}33;">${neoIcon(icon, { size: 19, color: acc.c })}</div>
+        <div style="margin-top:auto;">
+          <div style="font-size:11px;color:var(--neo-text3);text-transform:uppercase;letter-spacing:0.6px;">${name}</div>
+          <div style="font-size:16px;font-weight:600;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title}</div>
+          ${when ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${when}</div>` : ""}
         </div>
       </div>`;
   }
@@ -2963,7 +3003,7 @@ Object.assign(window.NeoDashboard, {
   normalizeLayout,
   viewportLayout: neoViewportLayout,
   renderReorder: neoRenderReorder,
-  version: "0.2.0-beta.73", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.74", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3057,7 +3097,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.73 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.74 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
