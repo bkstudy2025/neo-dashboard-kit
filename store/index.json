@@ -8,5 +8,15 @@
     "version": "1.0.0",
     "icon": "🏷️",
     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-mini-badge.js"
+  },
+  {
+    "id": "neo-glow-frame",
+    "name": "Neo Glow Frame",
+    "description": "Adds a subtle state-aware glow and border effect to Neo cards.",
+    "target": "*",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "✨",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-glow-frame.js"
   }
 ]
