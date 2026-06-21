@@ -15,7 +15,7 @@ fertigen Code bis zum Klick beim Nutzer.
 
 | Du willst… | Weg | Sichtbarkeit | Für wen |
 |---|---|---|---|
-| **frei** für alle teilen | **Über Discussions einreichen** | im Editor-Store, bei allen | Community / Open Source |
+| **frei** für alle teilen | **Discussion oder Pull Request** | im Editor-Store, bei allen | Community / Open Source |
 | **Premium** anbieten (Patreon) | **Code weitergeben** | nur wer den Code bekommt | zahlende Unterstützer |
 | eigenes großes Projekt | **HACS** (eigenes Repo) | über HACS installierbar | Fortgeschrittene |
 
@@ -23,41 +23,65 @@ Die ersten beiden sind die wichtigen — beide unten Schritt für Schritt.
 
 ---
 
-## Weg 1 — Über Discussions einreichen (der einzige Community-Weg)
+## Weg 1 — In den öffentlichen Store (Community)
 
-**Community-Einreichungen werden ausschließlich über Discussions angenommen. Der
-Maintainer prüft, passt den Code bei Bedarf an und übernimmt akzeptierte
-Karten/Module ins Repository und in den offiziellen Store.** Du erstellst
-**keinen Fork und keinen Pull Request** — du schlägst sie vor, der Maintainer
-übernimmt den Rest. So landet sie im öffentlichen **Store** (Editor →
-*Erweiterungen* → *Karte oder Modul installieren* → **Store**), sichtbar für
-**alle** Nutzer und mit **Update-Anzeige**.
+Es gibt **zwei** Wege, deine Karte/dein Modul in den offiziellen **Store** zu
+bringen (Editor → *Erweiterungen* → *Karte oder Modul installieren* →
+**Store**) — such dir den aus, der zu dir passt. Beides ist willkommen. 🙌
 
-### Schritt für Schritt
+### Weg 1a — Discussion (Idee/Modul vorschlagen)
 
-1. **Vorschlag eröffnen** in der Discussions-Kategorie
+Ideal, wenn du Feedback möchtest oder (noch) keinen Pull Request öffnen willst.
+
+1. Eröffne einen Vorschlag in der Kategorie
    [**Community Cards & Modules**](https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules)
-   und das Formular ausfüllen: Name, Typ (Karte/Modul), Beschreibung,
-   Screenshot, eigenständiger Code (oder öffentlicher Repo-/Gist-Link),
-   HA-Version, benötigte Entitäten/Domains und die Sicherheits-/
-   Lizenzbestätigung. Muster & API für den Code: [Entwicklung](entwicklung.md)
-   — **eigenständig** (keine Imports aus dem Bundle), abgesichert mit
-   `neo-dashboard-ready`.
-2. **Ein Maintainer prüft** den Code (lesbar, keine Secrets, MIT-kompatibel),
-   passt ihn bei Bedarf an und **übernimmt ihn ins Repo** als
-   `store/modules/<id>.js` plus passenden `store/index.json`-Eintrag.
-3. Nach dem Merge auf `main` erscheint die Karte/das Modul **automatisch im
-   Store** aller Nutzer (im Editor **„Store aktualisieren"** klicken; jsDelivr
-   cacht `@main` ein paar Stunden).
+   mit Name, Typ (Karte/Modul), Beschreibung, Screenshot und Code (oder einem
+   öffentlichen Repo-/Gist-Link).
+2. Ein Maintainer schaut drüber, gibt Feedback und übernimmt akzeptierte
+   Beiträge ins Repo.
 
-> **Discussions sind ein Vorschlagskanal, keine Installationsquelle.** Aus einer
-> Discussion wird nichts automatisch installiert. Erst **Maintainer-Prüfung und
-> -Merge** machen aus einem Vorschlag einen Store-Eintrag.
+### Weg 1b — Pull Request (fertiges Modul einreichen)
 
-> Das technische Store-Format (`store/modules/<id>.js` + Eintrag in
-> `store/index.json`) ist der **Maintainer-Teil** der Übernahme — siehe
-> [`store/README.md`](../../store/README.md). Zum Einreichen brauchst du das
-> **nicht**.
+Schnellster Weg, wenn dein Modul fertig ist und du dich mit Git auskennst.
+
+1. **Datei anlegen:** `store/modules/<id>.js` (eigenständig, keine Imports aus
+   dem Bundle, abgesichert mit `neo-dashboard-ready`). Muster & API:
+   [Entwicklung](entwicklung.md).
+2. **Katalog-Eintrag** in `store/index.json` ergänzen:
+   ```json
+   {
+     "id": "neo-wetter-card",
+     "kind": "card",
+     "name": "Wetter Card",
+     "description": "Kurze Beschreibung, was sie zeigt.",
+     "target": "neo-wetter-card",
+     "author": "Community",
+     "version": "1.0.0",
+     "icon": "⛅",
+     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-wetter-card.js",
+     "homepage": "https://github.com/bkstudy2025/neo-dashboard-kit"
+   }
+   ```
+   - **`id`** = lowercase **kebab-case** und identisch zur `id`/zum `type` im Code.
+   - **`version`** setzen (SemVer, z. B. `1.0.0`), bei Updates erhöhen.
+   - **`target`** setzen (Karte = die eigene `id`; Modul = Ziel-Karte(n) oder `"*"`).
+   - Screenshot/Beschreibung in den PR schreiben, wenn möglich.
+3. **Pull Request öffnen.** Die **CI prüft** Katalog **und** Moduldatei
+   automatisch (siehe unten) — ein grüner Check macht das Review leicht.
+
+> Nach dem Merge auf `main` erscheint dein Beitrag **automatisch im Store** aller
+> Nutzer (im Editor **„Store aktualisieren"** klicken; jsDelivr cacht `@main`
+> ein paar Stunden) — **ohne** HACS-Release und **ohne** neues Bundle.
+
+### Was der Maintainer prüft (Review-Regeln)
+
+Damit der Store sicher und sauber bleibt, achtet der Maintainer auf:
+
+- **lesbarer Code** (nicht minified/obfuscated);
+- **keine externen Requests ohne Grund** (kein fremdes CDN, kein Tracking);
+- **kein `eval` / `new Function` / `document.write` / `XMLHttpRequest`**;
+- **keine Secrets/Tokens/privaten Links**;
+- **keine Premium-/Paywall-Module** im Community-Store (Premium → Weg 2).
 
 ---
 
@@ -150,8 +174,9 @@ den neuen Code — einfach erneut einfügen.
 - [ ] `author` korrekt (`Community` / `Premium`).
 - [ ] Farben nur über `--neo-*`-Tokens, Karte in `.neo-card`-Hülle.
 - [ ] In Home Assistant getestet (Hinzufügen, Editor, Update/Entfernen).
-- [ ] Store-Weg: **nur** in **Discussions** vorschlagen — ein Maintainer prüft
-      und übernimmt es in `store/modules/<id>.js` + `index.json`.
+- [ ] Store-Weg: per **Discussion** vorschlagen **oder** per **Pull Request**
+      einreichen (`store/modules/<id>.js` + `index.json`-Eintrag). Bei PR:
+      `id` kebab-case, `version`/`target` gesetzt — die CI prüft den Rest.
 
 Siehe auch: [Entwicklung](entwicklung.md) · [Module & Store](module.md) ·
 [`CONTRIBUTING.md`](../../CONTRIBUTING.md)

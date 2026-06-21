@@ -2686,8 +2686,16 @@ class NeoCardEditor extends HTMLElement {
       // damit frisch gemergte Einträge ohne Release/Bundle sofort erscheinen.
       const sep = NEO_LINKS.modulesIndex.includes("?") ? "&" : "?";
       const txt = await NeoStore.fetch(`${NEO_LINKS.modulesIndex}${sep}t=${Date.now()}`);
-      const data = JSON.parse(txt);
-      this._storeItems = Array.isArray(data) ? data : (data.modules || []);
+      let data;
+      try {
+        data = JSON.parse(txt);
+      } catch (_e) {
+        throw new Error("invalid JSON");
+      }
+      const rawItems = Array.isArray(data)
+        ? data
+        : (Array.isArray(data?.modules) ? data.modules : []);
+      this._storeItems = this._normalizeStoreItems(rawItems);
     } catch (e) {
       this._storeItems = [];
       this._storeErr = "Store-Index konnte nicht geladen werden. Prüfe die Internetverbindung und versuche es erneut.";
@@ -2698,6 +2706,54 @@ class NeoCardEditor extends HTMLElement {
     if (remaining > 0) await new Promise((r) => setTimeout(r, remaining));
     this._storeLoading = false;
     this._renderAddArea();
+  }
+
+  // Defensive parsing: keep the store usable even if a single catalog entry is
+  // broken. Invalid items are skipped (with a console warning) instead of
+  // breaking the whole list. Items with a missing required field, a bad id, or
+  // a foreign/invalid url are never shown or installable. Mirrors the CI rules
+  // in scripts/validate-store.mjs (lightweight client-side copy).
+  _normalizeStoreItems(items) {
+    if (!Array.isArray(items)) {
+      console.warn("[Neo Store] index is not an array — ignoring.");
+      return [];
+    }
+    const PREFIX = "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@";
+    const ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    const REQUIRED = ["id", "name", "description", "target", "author", "version", "icon", "url"];
+    const out = [];
+    const seen = new Set();
+    items.forEach((it, i) => {
+      if (!it || typeof it !== "object" || Array.isArray(it)) {
+        console.warn(`[Neo Store] item[${i}] is not an object — skipped.`);
+        return;
+      }
+      const ref = (typeof it.id === "string" && it.id) ? it.id : `item[${i}]`;
+      const missing = REQUIRED.filter((f) => typeof it[f] !== "string" || !it[f].trim());
+      if (missing.length) {
+        console.warn(`[Neo Store] "${ref}" skipped — missing field(s): ${missing.join(", ")}.`);
+        return;
+      }
+      if (!ID_RE.test(it.id)) {
+        console.warn(`[Neo Store] "${ref}" skipped — invalid id (need lowercase kebab-case).`);
+        return;
+      }
+      if (seen.has(it.id)) {
+        console.warn(`[Neo Store] "${ref}" skipped — duplicate id.`);
+        return;
+      }
+      if (it.kind !== undefined && it.kind !== "module" && it.kind !== "card") {
+        console.warn(`[Neo Store] "${ref}" skipped — invalid kind "${it.kind}".`);
+        return;
+      }
+      if (!it.url.startsWith(PREFIX) || !it.url.endsWith(`/store/modules/${it.id}.js`)) {
+        console.warn(`[Neo Store] "${ref}" skipped — url not allowed: ${it.url}`);
+        return;
+      }
+      seen.add(it.id);
+      out.push(it);
+    });
+    return out;
   }
 
   async _installFromStore(item) {
@@ -3303,7 +3359,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.85", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.86", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3397,7 +3453,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.85 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.86 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

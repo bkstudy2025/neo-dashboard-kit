@@ -12,28 +12,39 @@ Thanks for your interest! Here's how to contribute.
 
 ## Community cards & modules (share / submit)
 
-Build a card or module, then share it with your community. **Community
-submissions are accepted through Discussions only.** The maintainer reviews,
-adapts, and adds accepted cards/modules to the repository and official Store.
-The full workflow — submitting via Discussions, distributing Premium via Patreon
-(code only), or shipping your own HACS repo, plus a copy-paste announcement
-template — is documented here:
+Build a card or module, then share it with your community. There are **two
+welcome ways** to get it into the public Store:
+
+1. **Discussion** — propose an idea/module in the **Community Cards & Modules**
+   category (great for feedback). Nothing is installed automatically from a
+   Discussion.
+2. **Pull Request** — submit a finished module: add `store/modules/<id>.js` and
+   a `store/index.json` entry (`id` lowercase kebab-case, `version` and `target`
+   set). CI validates the catalog and the file automatically.
+
+The maintainer reviews and merges; that's what makes an entry appear in the
+Store (no HACS release / new bundle needed). Full step-by-step, Premium via
+Patreon (code only), your-own-HACS-repo, and a copy-paste announcement template:
 
 - 🇬🇧 [docs/en/community.md](docs/en/community.md)
 - 🇩🇪 [docs/de/mitmachen.md](docs/de/mitmachen.md)
 
 How to write a card/module (API reference): [docs/en/development.md](docs/en/development.md) ([Deutsch](docs/de/entwicklung.md)).
 
-### Curated submission workflow (Discussions → review → Store)
+### Review rules (what gets merged)
 
-The Store stays **curated**: anyone can *propose* a card/module via Discussions,
-but only entries the maintainer reviews and merges into this repo are published.
-Step-by-step (contributor + maintainer parts) lives in the guides linked above;
-the maintainer adoption details (`store/modules/<id>.js` + `store/index.json`)
-are in [`store/README.md`](store/README.md).
+The Store stays **curated** — the maintainer checks each submission for:
 
-> **Discussions are not an install source** — nothing is installed
-> automatically; they are for proposals, showcase and support only.
+- readable code (not minified/obfuscated);
+- no external requests without a reason (no foreign CDN, no tracking);
+- no `eval` / `new Function` / `document.write` / `XMLHttpRequest`;
+- no secrets/tokens/private links;
+- no Premium/paywalled modules in the community Store.
+
+`store/index.json` is loaded live and `@main` store URLs are allowed so accepted
+entries show up without a release; CI (`scripts/validate-store.mjs`) checks the
+catalog + module files, so broken entries are not merged.
+
 > **Premium** cards are **not** accepted into the public Store and must not be
 > listed in `store/index.json`; Premium code is distributed privately (e.g.
 > Patreon) and added via the editor’s **“Paste code”** (`author: "Premium"`).
