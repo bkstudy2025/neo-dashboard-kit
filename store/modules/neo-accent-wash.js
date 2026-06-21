@@ -45,7 +45,7 @@
     name: "Neo Accent Wash",
     description: "Adds a soft accent-colored background gradient to Neo cards.",
     icon: "🌈",
-    version: "1.0.0",
+    version: "1.0.1",
     author: "Community",
     target: "*",
 
@@ -139,9 +139,12 @@
       card.style.removeProperty("--neo-accent-wash-angle");
 
       const entityId = settings.entity || ctx.config?.entity;
-      const stateObj = entityId ? ctx.hass?.states?.[entityId] : null;
+      const hasEntity = !!entityId;
+      const stateObj = hasEntity ? ctx.hass?.states?.[entityId] : null;
       const activeStates = normalizeList(settings.active_states);
-      const active = !!settings.always_on || isActiveState(stateObj?.state, activeStates);
+
+      // No entity selected means visual-only mode, so show the wash immediately.
+      const active = !!settings.always_on || !hasEntity || isActiveState(stateObj?.state, activeStates);
       if (!active) return;
 
       const rgb = colorRgb(settings);
