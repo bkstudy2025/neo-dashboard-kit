@@ -25,6 +25,12 @@ Der offizielle Store ist **kuratiert**. Das heißt konkret:
   privat verteilt (z. B. Patreon) und von Nutzern über „Code einfügen" in den
   Editor eingespielt.
 
+**Kanonische Regel:** *Community submissions are accepted through Discussions
+only. The maintainer reviews, adapts, and adds accepted cards/modules to the
+repository and official Store.* Es gibt **keinen** Fork-/PR-Einreichungsweg für
+die Community – Fork/PR ist allenfalls dein **internes** Maintainer-Werkzeug
+(siehe Abschnitt 5).
+
 **Merksatz:** Vorschlag (Discussion) → Prüfung (du) → Übernahme ins Repo
 (`store/`) → erst dann im Store sichtbar.
 
@@ -124,9 +130,11 @@ Danach ergänzt du den passenden Eintrag in **`store/index.json`**.
 
 ---
 
-## 5. PR und Merge
+## 5. PR und Merge (Maintainer-intern)
 
-So sieht ein sauberer Übernahme-PR aus:
+Dieser Schritt ist **dein** Maintainer-Werkzeug zur Übernahme – **kein**
+Einreichungsweg für die Community (die reicht ausschließlich über Discussions
+ein, siehe Abschnitt 2). So sieht ein sauberer Übernahme-PR aus:
 
 - Der PR enthält die **neue Datei** unter `store/modules/<id>.js`.
 - Der PR ergänzt **`store/index.json`** um den passenden Eintrag.

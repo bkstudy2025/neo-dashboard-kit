@@ -23,13 +23,15 @@ Die ersten beiden sind die wichtigen — beide unten Schritt für Schritt.
 
 ---
 
-## Weg 1 — Über Discussions einreichen (empfohlen)
+## Weg 1 — Über Discussions einreichen (der einzige Community-Weg)
 
-Das ist der **Hauptweg**, damit deine Karte/dein Modul in den öffentlichen
-**Store** kommt (Editor → *Erweiterungen* → *Karte oder Modul installieren* →
-**Store**), sichtbar für **alle** Nutzer und mit **Update-Anzeige**. Du brauchst
-**keinen Fork und keinen Pull Request** — du schlägst sie vor, ein Maintainer
-prüft und übernimmt sie.
+**Community-Einreichungen werden ausschließlich über Discussions angenommen. Der
+Maintainer prüft, passt den Code bei Bedarf an und übernimmt akzeptierte
+Karten/Module ins Repository und in den offiziellen Store.** Du erstellst
+**keinen Fork und keinen Pull Request** — du schlägst sie vor, der Maintainer
+übernimmt den Rest. So landet sie im öffentlichen **Store** (Editor →
+*Erweiterungen* → *Karte oder Modul installieren* → **Store**), sichtbar für
+**alle** Nutzer und mit **Update-Anzeige**.
 
 ### Schritt für Schritt
 
@@ -52,52 +54,10 @@ prüft und übernimmt sie.
 > Discussion wird nichts automatisch installiert. Erst **Maintainer-Prüfung und
 > -Merge** machen aus einem Vorschlag einen Store-Eintrag.
 
-<details>
-<summary><b>Optionale Alternative (erfahrene Entwickler): Fork + Pull Request</b></summary>
-
-Wenn du mit Git vertraut bist, kannst du stattdessen direkt einen PR öffnen —
-ein Maintainer prüft und merged ihn trotzdem. Das Store-Ergebnis ist dasselbe.
-
-1. **Repo forken:** `https://github.com/bkstudy2025/neo-dashboard-kit` → **Fork**.
-2. **Datei anlegen** als eigenständige `store/modules/<deine-id>.js` (Beispiel:
-   `store/modules/neo-wetter-card.js`).
-3. **Katalog-Eintrag** in `store/index.json` ergänzen:
-   ```json
-   {
-     "id": "neo-wetter-card",
-     "kind": "card",
-     "name": "Wetter Card",
-     "description": "Kurze Beschreibung, was sie zeigt.",
-     "target": "neo-wetter-card",
-     "author": "Community",
-     "version": "1.0.0",
-     "icon": "⛅",
-     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-wetter-card.js",
-     "homepage": "https://github.com/<dein-name>/neo-dashboard-kit/tree/main/store"
-   }
-   ```
-4. **Pull Request** öffnen → wird geprüft und gemerged.
-
-**Die `index.json`-Felder**
-
-| Feld | Pflicht | Zweck |
-|---|---|---|
-| `id` | ✅ | eindeutig, **muss** der `id`/`type` im Code entsprechen |
-| `kind` | – | `"card"` oder `"module"` (steuert das Badge im Store) |
-| `name`, `description`, `icon` | ✅/– | Anzeige im Store |
-| `target` | ✅ | für welche Karte(n): Typ · Liste · `"*"` (alle). Bei **Karten** = die eigene `id` |
-| `author` | – | Badge: `Community` / `Premium` / … |
-| `version` | ✅ | wird mit der installierten verglichen → **„⬆ Update"** wenn neuer |
-| `url` | ✅ | jsDelivr-Link zur Datei (Muster oben) |
-| `homepage` | – | Link für den **Info**-Button (Doku/Repo) |
-
-> **Updates ausliefern:** Erhöhe `version` **im Code** (`registerCard`/
-> `registerModule`-Meta) **und** in `store/index.json` → der Store zeigt bei
-> allen „⬆ Update" an, *Aktualisieren* lädt die Datei neu.
-
-Mehr Details: [`store/README.md`](../../store/README.md).
-
-</details>
+> Das technische Store-Format (`store/modules/<id>.js` + Eintrag in
+> `store/index.json`) ist der **Maintainer-Teil** der Übernahme — siehe
+> [`store/README.md`](../../store/README.md). Zum Einreichen brauchst du das
+> **nicht**.
 
 ---
 
@@ -190,9 +150,8 @@ den neuen Code — einfach erneut einfügen.
 - [ ] `author` korrekt (`Community` / `Premium`).
 - [ ] Farben nur über `--neo-*`-Tokens, Karte in `.neo-card`-Hülle.
 - [ ] In Home Assistant getestet (Hinzufügen, Editor, Update/Entfernen).
-- [ ] Store-Weg: in **Discussions** vorschlagen (ein Maintainer übernimmt es in
-      `store/modules/<id>.js` + `index.json`); Fork + PR nur als optionale
-      Alternative für Fortgeschrittene.
+- [ ] Store-Weg: **nur** in **Discussions** vorschlagen — ein Maintainer prüft
+      und übernimmt es in `store/modules/<id>.js` + `index.json`.
 
 Siehe auch: [Entwicklung](entwicklung.md) · [Module & Store](module.md) ·
 [`CONTRIBUTING.md`](../../CONTRIBUTING.md)
