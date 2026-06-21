@@ -25,42 +25,45 @@ Der offizielle Store ist **kuratiert**. Das heißt konkret:
   privat verteilt (z. B. Patreon) und von Nutzern über „Code einfügen" in den
   Editor eingespielt.
 
-**Kanonische Regel:** *Community submissions are accepted through Discussions
-only. The maintainer reviews, adapts, and adds accepted cards/modules to the
-repository and official Store.* Es gibt **keinen** Fork-/PR-Einreichungsweg für
-die Community – Fork/PR ist allenfalls dein **internes** Maintainer-Werkzeug
-(siehe Abschnitt 5).
+**Zwei Community-Wege (beide willkommen):**
 
-**Merksatz:** Vorschlag (Discussion) → Prüfung (du) → Übernahme ins Repo
-(`store/`) → erst dann im Store sichtbar.
+1. **Discussion** – Idee/Modul vorschlagen (gut für Feedback).
+2. **Pull Request** – fertiges Modul direkt einreichen
+   (`store/modules/<id>.js` + `store/index.json`-Eintrag).
+
+In **beiden** Fällen gilt: Erst **dein Review + Merge** macht aus dem Beitrag
+einen Store-Eintrag. Aus Discussions wird **nichts** automatisch installiert.
+
+**Merksatz:** Vorschlag/PR → Prüfung (du) → Merge nach `main` (`store/`) → erst
+dann im Store sichtbar.
 
 ---
 
 ## 2. Community reicht etwas ein
 
-So läuft eine Einreichung aus Sicht der Community ab:
+Die Community wählt einen der zwei Wege:
 
-1. Die Community geht auf **GitHub Discussions** des Repos.
-2. Sie wählt die Kategorie **`Community Cards & Modules`**.
-3. Sie füllt das **Einreichungs-Formular** aus
+**Weg A — Discussion (Vorschlag).**
+1. Auf **GitHub Discussions** die Kategorie **`Community Cards & Modules`** wählen.
+2. Das **Einreichungs-Formular** ausfüllen
    (`.github/DISCUSSION_TEMPLATE/community-cards-modules.yml`).
 
-**Pflichtfelder im Formular:**
+**Pflichtfelder im Formular:** Name · Typ (Card `registerCard` / Module
+`registerModule`) · Beschreibung · Screenshot · Code oder Repo/Gist-Link
+(lesbar, nicht minified) · Home-Assistant-Version · benötigte Entitäten/Domains ·
+Sicherheits-/Lizenzbestätigung (eigene Rechte/MIT, keine Secrets).
 
-- **Name** – Anzeigename der Karte/des Moduls
-- **Typ** – **Card** (`registerCard`) oder **Module** (`registerModule`)
-- **Beschreibung** – was es tut und welchen Anwendungsfall es löst
-- **Screenshot** – mindestens ein Bild
-- **Code oder Repo/Gist-Link** – der eigenständige `.js`-Code oder ein
-  öffentlicher Link, damit du prüfen kannst (lesbar, nicht minified)
-- **Home-Assistant-Version** – z. B. `2025.6`
-- **Benötigte Entitäten/Domains** – z. B. `sensor`, `light`, `weather`
-- **Sicherheits-/Lizenzbestätigung** – eigene Rechte/MIT, lesbarer Code, keine
-  Secrets/Tokens/privaten Links, Verständnis, dass nur ein admin-geprüfter
-  Merge in den Store führt
+**Weg B — Pull Request (fertige Einreichung).**
+1. `store/modules/<id>.js` hinzufügen (eigenständig; `id` = lowercase
+   **kebab-case**, identisch zur `id`/zum `type` im Code).
+2. Eintrag in `store/index.json` ergänzen (`version` als SemVer, `target`
+   gesetzt — Details in Abschnitt 4).
+3. Pull Request öffnen — die **CI** (`scripts/validate-store.mjs`) prüft Katalog
+   **und** Moduldatei automatisch.
 
-> **Wichtig zum Klarstellen:** Eine Discussion ist **kein Installationsweg**.
-> Sie ist ausschließlich ein Vorschlags-, Vorzeige- und Support-Kanal.
+> **Wichtig:** Eine Discussion ist **kein Installationsweg**. Und auch ein PR ist
+> erst nach **deinem Review + Merge** im Store. Die CI blockiert kaputte
+> Katalog-/Moduldateien bereits vor dem Merge.
 
 ---
 
@@ -130,11 +133,12 @@ Danach ergänzt du den passenden Eintrag in **`store/index.json`**.
 
 ---
 
-## 5. PR und Merge (Maintainer-intern)
+## 5. PR und Merge
 
-Dieser Schritt ist **dein** Maintainer-Werkzeug zur Übernahme – **kein**
-Einreichungsweg für die Community (die reicht ausschließlich über Discussions
-ein, siehe Abschnitt 2). So sieht ein sauberer Übernahme-PR aus:
+Ein PR kommt entweder **von der Community** (Weg B) oder von dir selbst, wenn du
+einen Discussion-Vorschlag (Weg A) übernimmst. In beiden Fällen läuft die **CI**
+(`scripts/validate-store.mjs`) und prüft Katalog + Moduldatei vor dem Merge. So
+sieht ein sauberer Store-PR aus:
 
 - Der PR enthält die **neue Datei** unter `store/modules/<id>.js`.
 - Der PR ergänzt **`store/index.json`** um den passenden Eintrag.

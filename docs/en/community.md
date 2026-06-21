@@ -15,7 +15,7 @@ click on the user's screen.
 
 | You want to… | Path | Visibility | For whom |
 |---|---|---|---|
-| share **freely** with everyone | **Submit via Discussions** | in the editor store, for all | Community / open source |
+| share **freely** with everyone | **Discussion or Pull Request** | in the editor store, for all | Community / open source |
 | offer **Premium** (Patreon) | **Share the code** | only those who get the code | paying supporters |
 | ship a large standalone project | **HACS** (own repo) | installable via HACS | advanced |
 
@@ -23,40 +23,64 @@ The first two are the important ones — both are explained step by step below.
 
 ---
 
-## Path 1 — Submit via Discussions (the only community path)
+## Path 1 — Into the public Store (community)
 
-**Community submissions are accepted through Discussions only. The maintainer
-reviews, adapts, and adds accepted cards/modules to the repository and official
-Store.** You do **not** create a fork or a pull request — you propose it, and
-the maintainer takes it from there. This is how it lands in the public **Store**
-(Editor → *Extensions* → *Install card or module* → **Store**), visible to
-**all** users and with an **update indicator**.
+There are **two** ways to get your card/module into the official **Store**
+(Editor → *Extensions* → *Install card or module* → **Store**) — pick whichever
+suits you. Both are welcome. 🙌
 
-### Step by step
+### Path 1a — Discussion (propose an idea/module)
 
-1. **Open a proposal** in the
+Great if you want feedback or aren't ready to open a pull request.
+
+1. Open a proposal in the
    [**Community Cards & Modules**](https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules)
-   Discussions category and fill in the submission form: name, type
-   (card/module), description, screenshot, standalone code (or a public
-   repo/gist link), HA version, required entities/domains, and the security &
-   license confirmation. Template & API for the code:
-   [Development](development.md) — **standalone** (no imports from the bundle),
-   guarded with `neo-dashboard-ready`.
-2. **A maintainer reviews** the code (readable, no secrets, MIT-compatible),
-   adjusts it if needed, and **adopts it into the repo** as
-   `store/modules/<id>.js` plus a matching `store/index.json` entry.
-3. After the maintainer merges to `main`, it appears **automatically in the
-   Store** for all users (click **"Refresh store"**; jsDelivr caches `@main`
-   for a few hours).
+   category with name, type (card/module), description, screenshot and code (or
+   a public repo/gist link).
+2. A maintainer reviews it, gives feedback, and adopts accepted entries.
 
-> **Discussions are a proposal channel, not an install source.** Nothing is
-> installed automatically from a Discussion. Only a **maintainer review and
-> merge** turns a proposal into a Store entry.
+### Path 1b — Pull Request (submit a finished module)
 
-> The technical store format (`store/modules/<id>.js` + a `store/index.json`
-> entry) is the **maintainer's** part of adopting a proposal — see
-> [`store/README.md`](../../store/README.md). Contributors don't need it to
-> submit.
+The fastest path when your module is ready and you're comfortable with Git.
+
+1. **Add the file:** `store/modules/<id>.js` (standalone, no imports from the
+   bundle, guarded with `neo-dashboard-ready`). Template & API:
+   [Development](development.md).
+2. **Catalog entry** in `store/index.json`:
+   ```json
+   {
+     "id": "neo-weather-card",
+     "kind": "card",
+     "name": "Weather Card",
+     "description": "Short description of what it shows.",
+     "target": "neo-weather-card",
+     "author": "Community",
+     "version": "1.0.0",
+     "icon": "⛅",
+     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-weather-card.js",
+     "homepage": "https://github.com/bkstudy2025/neo-dashboard-kit"
+   }
+   ```
+   - **`id`** = lowercase **kebab-case**, identical to the `id`/`type` in the code.
+   - Set **`version`** (SemVer, e.g. `1.0.0`); bump it on updates.
+   - Set **`target`** (card = its own `id`; module = target card(s) or `"*"`).
+   - Add a screenshot/description to the PR if you can.
+3. **Open a Pull Request.** CI **validates** the catalog **and** the module file
+   automatically (see below) — a green check makes review easy.
+
+> After it merges to `main`, your entry appears **automatically in the Store**
+> for all users (click **"Refresh store"**; jsDelivr caches `@main` for a few
+> hours) — with **no HACS release** and **no new bundle**.
+
+### What the maintainer reviews
+
+To keep the store safe and clean, the maintainer checks for:
+
+- **readable code** (not minified/obfuscated);
+- **no external requests without a reason** (no foreign CDN, no tracking);
+- **no `eval` / `new Function` / `document.write` / `XMLHttpRequest`**;
+- **no secrets/tokens/private links**;
+- **no Premium/paywalled modules** in the community store (Premium → Path 2).
 
 ---
 
@@ -148,8 +172,9 @@ new code — just paste it again.
 - [ ] `author` correct (`Community` / `Premium`).
 - [ ] Colors only via `--neo-*` tokens, card wrapped in `.neo-card`.
 - [ ] Tested in Home Assistant (add, editor, update/remove).
-- [ ] Store path: propose in **Discussions** only — a maintainer reviews and
-      adopts it into `store/modules/<id>.js` + `index.json`.
+- [ ] Store path: propose via **Discussion** **or** submit a **Pull Request**
+      (`store/modules/<id>.js` + `index.json` entry). For a PR: `id` kebab-case,
+      `version`/`target` set — CI checks the rest.
 
 See also: [Development](development.md) · [Modules & Store](modules.md) ·
 [`CONTRIBUTING.md`](../../CONTRIBUTING.md)

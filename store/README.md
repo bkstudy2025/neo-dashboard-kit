@@ -64,18 +64,24 @@ als Referenz: eigenständig, `kind: "card"`, `author: "Community"`, mit
 Typed-Editor (`makeTypedEditor` / `capabilityType` / `typeDef`) und sicherer
 Ausgabe (`escapeHtml` / `escapeAttr` / `safeUrl`) — ohne externe Requests.
 
-## Ein geprüftes Modul in den Store übernehmen (nur Maintainer)
+## Einen Beitrag in den Store bringen
 
-> **Community-Einreichungen werden ausschließlich über GitHub Discussions
-> angenommen** (Kategorie **„Community Cards & Modules"**). Aus Discussions wird
-> **nichts** automatisch installiert. Der **Maintainer** prüft den Vorschlag,
-> passt den Code bei Bedarf an und übernimmt akzeptierte Beiträge ins Repository
-> und in den offiziellen Store. Der Community-Ablauf steht in
-> [`CONTRIBUTING.md`](../CONTRIBUTING.md). Die folgenden Schritte sind der
-> **Maintainer-Teil** (Übernahme eines geprüften Beitrags). **Premium**-Karten
-> gehören **nicht** in diesen Katalog.
+Es gibt **zwei** Community-Wege (beide willkommen):
 
-1. Lege `store/modules/<id>.js` an (Muster wie oben, eigenständig).
+- **Discussion** — Idee/Modul in der Kategorie **„Community Cards & Modules"**
+  vorschlagen (ideal für Feedback). Aus Discussions wird **nichts** automatisch
+  installiert.
+- **Pull Request** — fertiges Modul direkt einreichen (die Schritte unten).
+
+Der **Maintainer** prüft den Code und merged ihn. Beim Pull Request prüft
+zusätzlich die **CI** (`scripts/validate-store.mjs`) Katalog **und** Moduldatei —
+kaputte Einträge werden nicht gemergt. Details:
+[`CONTRIBUTING.md`](../CONTRIBUTING.md) ·
+[`docs/de/mitmachen.md`](../docs/de/mitmachen.md). **Premium**-Karten gehören
+**nicht** in diesen Katalog.
+
+1. Lege `store/modules/<id>.js` an (Muster wie oben, eigenständig). Die `id` muss
+   **lowercase kebab-case** sein und mit der `id`/dem `type` im Code übereinstimmen.
 2. Ergänze einen Eintrag in `store/index.json`:
 
    ```json
