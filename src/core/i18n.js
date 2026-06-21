@@ -135,6 +135,8 @@ const EN = {
   "Jalousie": "Blind", "Vorhang": "Curtain", "Garage": "Garage", "Tür": "Door",
   "Tor": "Gate", "Fenster": "Window", "Markise": "Awning", "Rollo": "Shade",
   "Aktion wirklich ausführen?": "Really run this action?",
+  // Editor: Aktionen-Abschnitt (übrige Action-Felder übersetzt HA selbst)
+  "Aktionen": "Actions", "Tippen": "Tap", "Halten": "Hold", "Doppeltippen": "Double tap",
   // Editor: Sichtbarkeits-Schalter
   "Schalter anzeigen": "Show toggle", "Helligkeit anzeigen": "Show brightness",
   "Stufe anzeigen": "Show speed", "Voreinstellungen anzeigen": "Show presets",

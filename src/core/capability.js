@@ -32,6 +32,7 @@
 //  - Rebuild-Guard via rebuildKeys → kein Fokusverlust
 //  - Editor UND Rendering leiten den Typ aus derselben Map ab (neoCapabilityType)
 import { makeNeoEditor } from "./editor-factory.js";
+import { neoActionFields, neoCleanActions } from "./action-editor.js";
 
 const domainOf = (id) => (id ? String(id).split(".")[0] : "");
 export const neoTypeDef = (spec, t) => spec.types.find((x) => x.value === t);
@@ -61,9 +62,14 @@ export function neoCapabilityNormalize(config, spec) {
     if (cfg.entities?.length && m) cfg[spec.typeKey] = m.value;
     else { const t = typeByDomain(spec, domainOf(cfg.entity)); if (t) cfg[spec.typeKey] = t; }
   }
+  neoCleanActions(cfg); // leere/Default-Aktionen verwerfen (Editor schreibt undefined bei „Standard")
   const t = cfg[spec.typeKey];
   if (!t) return cfg;
   const def = neoTypeDef(spec, t);
+  // Sichtbarkeits-Defaults explizit setzen, damit die Editor-Schalter den
+  // tatsächlichen (Default = an) Zustand anzeigen. Nur fehlende Keys, nie
+  // explizite false-Werte überschreiben (bestehende YAML bleibt unangetastet).
+  if (def?.defaults) for (const [k, v] of Object.entries(def.defaults)) if (cfg[k] == null) cfg[k] = v;
   if (def?.source === "text") { delete cfg.entity; delete cfg.entities; return cfg; } // Text-Quelle: keine Entität
   if (def?.multi) { delete cfg.entity; return cfg; }   // Multi nutzt 'entities'
   delete cfg.entities;                                 // Single-Typ nutzt 'entity'
@@ -122,6 +128,9 @@ function buildCapabilitySchema(config, spec) {
     if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
     (spec.appearance || []).forEach((f) => appearance.push(f));
     sections.push({ type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance });
+
+    // Aktionen (tap/hold/double_tap) — opt-in per Spec, eigener Abschnitt.
+    if (spec.actions) sections.push(neoActionFields(spec.actionDefaults || {}));
   }
 
   return sections;

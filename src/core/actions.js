@@ -58,8 +58,11 @@ export function neoExecuteAction(raw, helpers = {}) {
       if (url) { try { window.open(url, "_blank", "noopener"); } catch (_e) { /* ignore */ } }
       return true;
     }
-    case "call-service": {
-      const svc = cfg.service;
+    case "call-service":
+    case "perform-action": {
+      // HA renamed "call-service" → "perform-action" and `service` → `perform_action`.
+      // Both are accepted here for forward/backward compatibility.
+      const svc = cfg.service || cfg.perform_action;
       if (typeof svc === "string" && svc.includes(".") && typeof helpers.callService === "function") {
         const dot = svc.indexOf(".");
         const domain = svc.slice(0, dot);

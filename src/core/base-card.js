@@ -6,7 +6,7 @@ import { NEO_CSS } from "./tokens.js";
 import { NEO_BP, normalizeLayout, neoViewportLayout } from "./layout.js";
 import { NeoModules } from "./modules.js";
 import { neoT } from "./i18n.js";
-import { neoExecuteAction } from "./actions.js";
+import { neoExecuteAction, neoNormalizeAction } from "./actions.js";
 
 export class NeoBaseCard extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: "open" }); }
@@ -133,9 +133,12 @@ export class NeoBaseCard extends HTMLElement {
     if (!el) return;
     const cfg = this._config || {};
     const run = (key, fallback) => {
-      const raw = cfg[key];
-      if (raw != null) neoExecuteAction(raw, this._actionHelpers(behavior.entity ?? cfg.entity, behavior.toggle));
-      else if (typeof fallback === "function") fallback();
+      // An empty or explicit "default" action falls back to the card's default
+      // behaviour (domain default / more-info / none).
+      const norm = neoNormalizeAction(cfg[key]);
+      if (norm && norm.action && norm.action !== "default") {
+        neoExecuteAction(norm, this._actionHelpers(behavior.entity ?? cfg.entity, behavior.toggle));
+      } else if (typeof fallback === "function") fallback();
     };
     const onTap = (e) => { if (this._moduleTap(e)) return; run("tap_action", behavior.tapDefault); };
     const onHold = () => run("hold_action", null);

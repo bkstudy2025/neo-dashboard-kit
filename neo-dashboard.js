@@ -605,6 +605,8 @@ const EN = {
   "Jalousie": "Blind", "Vorhang": "Curtain", "Garage": "Garage", "Tür": "Door",
   "Tor": "Gate", "Fenster": "Window", "Markise": "Awning", "Rollo": "Shade",
   "Aktion wirklich ausführen?": "Really run this action?",
+  // Editor: Aktionen-Abschnitt (übrige Action-Felder übersetzt HA selbst)
+  "Aktionen": "Actions", "Tippen": "Tap", "Halten": "Hold", "Doppeltippen": "Double tap",
   // Editor: Sichtbarkeits-Schalter
   "Schalter anzeigen": "Show toggle", "Helligkeit anzeigen": "Show brightness",
   "Stufe anzeigen": "Show speed", "Voreinstellungen anzeigen": "Show presets",
@@ -1009,8 +1011,11 @@ function neoExecuteAction(raw, helpers = {}) {
       if (url) { try { window.open(url, "_blank", "noopener"); } catch (_e) { /* ignore */ } }
       return true;
     }
-    case "call-service": {
-      const svc = cfg.service;
+    case "call-service":
+    case "perform-action": {
+      // HA renamed "call-service" → "perform-action" and `service` → `perform_action`.
+      // Both are accepted here for forward/backward compatibility.
+      const svc = cfg.service || cfg.perform_action;
       if (typeof svc === "string" && svc.includes(".") && typeof helpers.callService === "function") {
         const dot = svc.indexOf(".");
         const domain = svc.slice(0, dot);
@@ -1156,9 +1161,12 @@ class NeoBaseCard extends HTMLElement {
     if (!el) return;
     const cfg = this._config || {};
     const run = (key, fallback) => {
-      const raw = cfg[key];
-      if (raw != null) neoExecuteAction(raw, this._actionHelpers(behavior.entity ?? cfg.entity, behavior.toggle));
-      else if (typeof fallback === "function") fallback();
+      // An empty or explicit "default" action falls back to the card's default
+      // behaviour (domain default / more-info / none).
+      const norm = neoNormalizeAction(cfg[key]);
+      if (norm && norm.action && norm.action !== "default") {
+        neoExecuteAction(norm, this._actionHelpers(behavior.entity ?? cfg.entity, behavior.toggle));
+      } else if (typeof fallback === "function") fallback();
     };
     const onTap = (e) => { if (this._moduleTap(e)) return; run("tap_action", behavior.tapDefault); };
     const onHold = () => run("hold_action", null);
@@ -1268,6 +1276,46 @@ class NeoBaseCard extends HTMLElement {
   }
 }
 
+// Neo Dashboard Kit — Action editor schema helper
+// Builds the visual "Aktionen" section for card editors using Home Assistant's
+// NATIVE `ui_action` selector (the same hui-action-editor HA core uses). That
+// gives us the action dropdown plus conditional fields (navigation_path, url_path,
+// perform_action + target + data), the "Default" option (which clears the key),
+// and HA's own translations — without reimplementing anything.
+//
+// Note: HA's action editor has no inline confirmation UI; `confirmation` is set
+// via YAML and is preserved across edits (the native editor spreads the config).
+
+// Supported actions (modern HA token "perform-action"; "call-service" stays
+// supported in saved configs at runtime). "assist" is intentionally omitted.
+const NEO_UI_ACTIONS = ["more-info", "toggle", "navigate", "url", "perform-action", "none"];
+
+// One collapsible "Aktionen" group with tap/hold/double-tap fields.
+// opts: { tapDefault, holdDefault, doubleDefault } — optional default_action
+// labels shown on the "Default" entry (purely cosmetic).
+function neoActionFields(opts = {}) {
+  const mk = (def) => ({ ui_action: { actions: NEO_UI_ACTIONS, ...(def ? { default_action: def } : {}) } });
+  return {
+    type: "expandable", title: "Aktionen", icon: "mdi:gesture-tap",
+    schema: [
+      { name: "tap_action", label: "Tippen", selector: mk(opts.tapDefault) },
+      { name: "hold_action", label: "Halten", selector: mk(opts.holdDefault) },
+      { name: "double_tap_action", label: "Doppeltippen", selector: mk(opts.doubleDefault) },
+    ],
+  };
+}
+
+// Drop empty / "default" action keys so the card falls back to its default
+// behaviour and the YAML stays clean (the native editor sets undefined on Default).
+function neoCleanActions(cfg) {
+  for (const k of ["tap_action", "hold_action", "double_tap_action"]) {
+    const v = cfg[k];
+    if (v == null) { delete cfg[k]; continue; }
+    if (typeof v === "object" && (!v.action || v.action === "default")) delete cfg[k];
+  }
+  return cfg;
+}
+
 // Neo Dashboard Kit — Capability registry / typed-editor generator
 //
 // Deklarative Struktur, mit der Standard-, Premium- und Community-Karten
@@ -1330,9 +1378,14 @@ function neoCapabilityNormalize(config, spec) {
     if (cfg.entities?.length && m) cfg[spec.typeKey] = m.value;
     else { const t = typeByDomain(spec, domainOf(cfg.entity)); if (t) cfg[spec.typeKey] = t; }
   }
+  neoCleanActions(cfg); // leere/Default-Aktionen verwerfen (Editor schreibt undefined bei „Standard")
   const t = cfg[spec.typeKey];
   if (!t) return cfg;
   const def = neoTypeDef(spec, t);
+  // Sichtbarkeits-Defaults explizit setzen, damit die Editor-Schalter den
+  // tatsächlichen (Default = an) Zustand anzeigen. Nur fehlende Keys, nie
+  // explizite false-Werte überschreiben (bestehende YAML bleibt unangetastet).
+  if (def?.defaults) for (const [k, v] of Object.entries(def.defaults)) if (cfg[k] == null) cfg[k] = v;
   if (def?.source === "text") { delete cfg.entity; delete cfg.entities; return cfg; } // Text-Quelle: keine Entität
   if (def?.multi) { delete cfg.entity; return cfg; }   // Multi nutzt 'entities'
   delete cfg.entities;                                 // Single-Typ nutzt 'entity'
@@ -1391,6 +1444,9 @@ function buildCapabilitySchema(config, spec) {
     if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
     (spec.appearance || []).forEach((f) => appearance.push(f));
     sections.push({ type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance });
+
+    // Aktionen (tap/hold/double_tap) — opt-in per Spec, eigener Abschnitt.
+    if (spec.actions) sections.push(neoActionFields(spec.actionDefaults || {}));
   }
 
   return sections;
@@ -1998,12 +2054,16 @@ class NeoControlCard extends NeoBaseCard {
 const bool = (name, label) => ({ name, label, selector: { boolean: {} } });
 const CONTROL_SPEC = {
   typeKey: "device_type", typeLabel: "Typ", entityLabel: "Entität (Gerät)",
+  actions: true, // Aktionen-Abschnitt (tap/hold/double_tap) im Editor
   types: [
     { value: "light", label: "Licht", domains: ["light"],
+      defaults: { show_toggle: true, show_brightness: true },
       fields: [bool("show_toggle", "Schalter anzeigen"), bool("show_brightness", "Helligkeit anzeigen")] },
     { value: "switch", label: "Schalter", domains: ["switch", "input_boolean"],
+      defaults: { show_toggle: true },
       fields: [bool("show_toggle", "Schalter anzeigen")] },
     { value: "climate", label: "Klima", domains: ["climate"],
+      defaults: { show_temperature_controls: true, show_hvac_modes: true, show_climate_presets: true },
       fields: [
         { name: "step", label: "Temperaturschritt (optional)", selector: { number: { min: 0.1, max: 5, step: 0.1, mode: "box" } } },
         bool("show_temperature_controls", "Temperatur-Steuerung anzeigen"),
@@ -2012,17 +2072,23 @@ const CONTROL_SPEC = {
         bool("show_humidity", "Luftfeuchte anzeigen"),
       ] },
     { value: "cover", label: "Cover", domains: ["cover"],
+      defaults: { show_cover_controls: true, show_cover_position: true, show_cover_tilt: true },
       fields: [bool("show_cover_controls", "Auf/Stopp/Zu anzeigen"), bool("show_cover_position", "Position anzeigen"), bool("show_cover_tilt", "Neigung anzeigen")] },
     { value: "fan", label: "Ventilator", domains: ["fan"],
+      defaults: { show_toggle: true, show_percentage: true, show_fan_presets: true, show_fan_oscillate: true, show_fan_direction: true },
       fields: [bool("show_toggle", "Schalter anzeigen"), bool("show_percentage", "Stufe anzeigen"), bool("show_fan_presets", "Voreinstellungen anzeigen"), bool("show_fan_oscillate", "Oszillation anzeigen"), bool("show_fan_direction", "Richtung anzeigen")] },
     { value: "media_player", label: "Media", domains: ["media_player"],
+      defaults: { show_media_controls: true, show_volume: true, show_mute: true },
       fields: [bool("show_media_controls", "Transport anzeigen"), bool("show_volume", "Lautstärke anzeigen"), bool("show_mute", "Stumm anzeigen"), bool("show_source", "Quelle anzeigen"), bool("show_media_power", "Power anzeigen")] },
     { value: "lock", label: "Schloss", domains: ["lock"],
+      defaults: { show_toggle: true },
       fields: [bool("show_toggle", "Schalter anzeigen")] },
     { value: "alarm_control_panel", label: "Alarm", domains: ["alarm_control_panel"],
+      defaults: { show_alarm_controls: true },
       fields: [{ name: "code", label: "Code (optional, falls erforderlich)", selector: { text: {} } }, bool("show_alarm_controls", "Bedienelemente anzeigen")] },
     { value: "action", label: "Szene / Skript / Taster", domains: ["scene", "script", "button"] },
     { value: "lightgroup", label: "Licht-Gruppe", domains: ["light"], multi: true, entityLabel: "Lichter",
+      defaults: { show_toggle: true, show_brightness: true },
       fields: [bool("show_toggle", "Schalter anzeigen"), bool("show_brightness", "Helligkeit anzeigen")] },
   ],
   appearance: [
@@ -2081,6 +2147,7 @@ const WEATHER_COND = {
 const DISPLAY_SPEC = {
   typeKey: "display_type", typeLabel: "Typ", entityLabel: "Entität",
   types: DISPLAY_TYPES,
+  actions: true, actionDefaults: { tapDefault: "more-info" }, // Default-Tap = More-Info
   appearance: [
     { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
     NEO_LAYOUT_FIELD,
@@ -2442,8 +2509,10 @@ customElements.define("neo-header-card-editor", makeNeoEditor((config) => {
         { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
       ],
     },
+    // Aktionen (Default-Tap = none). navigate · url · perform-action · none.
+    neoActionFields({ tapDefault: "none" }),
   ];
-}, { name: "Neo Header", description: "Überschrift / Trenner", icon: "🔖", rebuildKeys: ["variant"] }));
+}, { name: "Neo Header", description: "Überschrift / Trenner", icon: "🔖", rebuildKeys: ["variant"], normalizeConfig: neoCleanActions }));
 
 NeoDashboardRegistry.registerCard("neo-header-card", NeoHeaderCard, {
   name: "Neo Header",
@@ -3764,7 +3833,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.88", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.89", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3858,7 +3927,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.88 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.89 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

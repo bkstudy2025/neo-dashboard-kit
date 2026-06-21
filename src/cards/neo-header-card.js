@@ -6,6 +6,7 @@ import { NeoDashboardRegistry } from "../core/registry.js";
 import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "../core/tokens.js";
 import { neoIcon } from "../core/icons.js";
 import { makeNeoEditor } from "../core/editor-factory.js";
+import { neoActionFields, neoCleanActions } from "../core/action-editor.js";
 import { escapeHtml } from "../core/html.js";
 
 class NeoHeaderCard extends NeoBaseCard {
@@ -97,8 +98,10 @@ customElements.define("neo-header-card-editor", makeNeoEditor((config) => {
         { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
       ],
     },
+    // Aktionen (Default-Tap = none). navigate · url · perform-action · none.
+    neoActionFields({ tapDefault: "none" }),
   ];
-}, { name: "Neo Header", description: "Überschrift / Trenner", icon: "🔖", rebuildKeys: ["variant"] }));
+}, { name: "Neo Header", description: "Überschrift / Trenner", icon: "🔖", rebuildKeys: ["variant"], normalizeConfig: neoCleanActions }));
 
 NeoDashboardRegistry.registerCard("neo-header-card", NeoHeaderCard, {
   name: "Neo Header",
