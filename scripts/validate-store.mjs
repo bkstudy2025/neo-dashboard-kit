@@ -19,7 +19,9 @@ const URL_PREFIX = "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@";
 const HOMEPAGE_PREFIX = "https://github.com/bkstudy2025/neo-dashboard-kit";
 const ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/; // lowercase kebab-case
 const SEMVER_RE = /^\d+\.\d+\.\d+/; // loose SemVer
-const REQUIRED_FIELDS = ["id", "name", "description", "target", "author", "version", "icon", "url"];
+// "target" is validated separately: it may be a string ("*" / card type) OR an
+// array of card types (the module system supports both — see src/core/modules.js).
+const REQUIRED_FIELDS = ["id", "name", "description", "author", "version", "icon", "url"];
 
 // Hard-fail patterns and warn-only patterns (matched as plain substrings).
 const FORBIDDEN_PATTERNS = ["eval(", "new Function", "Function(", "document.write", "XMLHttpRequest"];
@@ -77,6 +79,16 @@ function validate() {
       if (typeof item[f] !== "string" || item[f].trim() === "") {
         err(`${label}: missing/empty required field "${f}".`);
       }
+    }
+
+    // target: non-empty string ("*" or a card type) OR a non-empty array of
+    // non-empty strings. Mirrors the runtime targeting in src/core/modules.js.
+    const tgt = item.target;
+    const validTarget =
+      (typeof tgt === "string" && tgt.trim() !== "") ||
+      (Array.isArray(tgt) && tgt.length > 0 && tgt.every((x) => typeof x === "string" && x.trim() !== ""));
+    if (!validTarget) {
+      err(`${label}: "target" must be a non-empty string or array of non-empty strings.`);
     }
 
     const id = item.id;
