@@ -1,5 +1,5 @@
 // Neo Dashboard Kit — Externe Links
-// Im Editor unter "Info & Support" und vom Modul-Store genutzt.
+// Im Editor unter "Info & Support" und vom Store (Karten & Module) genutzt.
 // TODO: trage hier deine echte Patreon-/PayPal-/Ko-fi-URL ein.
 export const NEO_LINKS = {
   repo: "https://github.com/bkstudy2025/neo-dashboard-kit",
@@ -12,7 +12,7 @@ export const NEO_LINKS = {
   // (modulesIndex) — geprüft, versioniert, CDN-ausgeliefert. Der Link führt
   // direkt in die Einreichungs-Kategorie "Community Cards & Modules".
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules",
-  // Neo Module Store — Katalog liegt im Repo unter store/.
+  // Neo Store (Karten & Module) — Katalog liegt im Repo unter store/.
   // index.json wird LIVE über raw.githubusercontent.com geladen: Änderungen auf
   // main erscheinen in ~5 min bzw. sofort per "Store aktualisieren" (Cache-Bust),
   // ganz OHNE neuen Kit-Release oder neues neo-dashboard.js-Bundle.

@@ -1,6 +1,6 @@
-// Neo Dashboard Kit — Module Store
-// Talks to the "Neo Dashboard Tools" integration. Persists modules
-// server-side (file-based) so the dashboard config stays clean.
+// Neo Dashboard Kit — Store (cards & modules)
+// Talks to the "Neo Dashboard Tools" integration. Persists store items
+// (cards & modules) server-side (file-based) so the dashboard config stays clean.
 // Falls back gracefully (available=false) when not installed.
 import { NeoDashboardRegistry } from "../core/registry.js";
 import { NeoModules } from "../core/modules.js";
@@ -55,7 +55,7 @@ export const NeoStore = {
     return res;
   },
 
-  // Server-side fetch of an https URL (Module Store) — avoids browser CORS.
+  // Server-side fetch of an https URL (Store) — avoids browser CORS.
   async fetch(url) {
     const res = await this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/fetch", url });
     return res.content;

@@ -1,6 +1,6 @@
-// Neo Dashboard Kit — Module loader
-// Loads pasted module code (script injection, deduped). Used by the
-// neo-card wrapper at runtime and by its editor's "Modul einfügen" area.
+// Neo Dashboard Kit — Extension loader (cards & modules)
+// Loads pasted extension code (cards or modules; script injection, deduped).
+// Used by the neo-card wrapper at runtime and by its editor's paste-code area.
 // Returns { ok, modules, cards } where modules/cards are the manifests that
 // registered while the pasted code ran — including updates of existing IDs.
 

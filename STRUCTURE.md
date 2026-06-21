@@ -31,7 +31,7 @@ docs/de/ · docs/en/   ← zweisprachige Doku (README, Karten, Module, Entwicklu
 themes/               ← Optionales HA-Theme zum Kopieren nach <config>/themes/
 premium/              ← Nur die Vorlage (neo-card-template.js); Premium-Karten
                         werden via Patreon verteilt, NIE hier committen (.gitignore)
-store/                ← Hinweise zum Modul-Store
+store/                ← Hinweise zum Store (Karten & Module)
 img/                  ← Bilder für Doku/Readme
 ```
 
