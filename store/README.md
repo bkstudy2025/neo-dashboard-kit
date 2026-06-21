@@ -58,6 +58,12 @@ window.NeoDashboard.registerModule({
 Siehe [`modules/neo-state-glow.js`](./modules/neo-state-glow.js) als vollständiges
 Beispiel.
 
+Für eine **Karte** (statt Layer-Modul) siehe
+[`modules/neo-community-example-card.js`](./modules/neo-community-example-card.js)
+als Referenz: eigenständig, `kind: "card"`, `author: "Community"`, mit
+Typed-Editor (`makeTypedEditor` / `capabilityType` / `typeDef`) und sicherer
+Ausgabe (`escapeHtml` / `escapeAttr` / `safeUrl`) — ohne externe Requests.
+
 ## Ein geprüftes Modul in den Store übernehmen (nur Maintainer)
 
 > **Community-Einreichungen werden ausschließlich über GitHub Discussions
