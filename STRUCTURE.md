@@ -4,13 +4,18 @@ Diese Datei beschreibt das verbindliche Ordner-Layout und die Konventionen
 dieses Repos. **Bitte beim Hinzufügen neuer Dateien einhalten**, damit die
 Struktur übersichtlich bleibt.
 
-## Das Ökosystem (3 Repos)
+## Das Ökosystem (2 Repos)
 
 | Repo | Rolle | Installation in HA |
 |------|-------|--------------------|
-| **neo-dashboard-kit** (dieses Repo) | Frontend: Karten + Modul-System | HACS → Lovelace-Resource (`neo-dashboard.js`) |
+| **neo-dashboard-kit** (dieses Repo) | Frontend: Karten + Modul-System **und** der Store-Katalog (`store/`) | HACS → Lovelace-Resource (`neo-dashboard.js`) |
 | **neo-dashboard-tools** | Integration: serverseitige Modul-Persistenz + CORS-Proxy | HACS → `custom_components/` |
-| **neo-modules** | Store-Index + Community-Module | kein Install — über jsDelivr-CDN geladen |
+
+> Der **Store-Katalog** (`store/index.json` + `store/modules/*.js`) liegt
+> **in diesem Repo** und wird live über `raw.githubusercontent.com`/jsDelivr
+> geladen — **kein** separates Install-Repo. Eine spätere Auslagerung in ein
+> eigenes `neo-modules`-Repo wäre möglich (nur die Konstante `modulesIndex` in
+> `src/core/links.js`), ist aber **aktuell nicht** umgesetzt.
 
 ## Wurzelverzeichnis
 

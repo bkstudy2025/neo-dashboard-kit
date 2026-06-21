@@ -15,7 +15,7 @@ fertigen Code bis zum Klick beim Nutzer.
 
 | Du willst… | Weg | Sichtbarkeit | Für wen |
 |---|---|---|---|
-| **frei** für alle teilen | **Store (Pull Request)** | im Editor-Store, bei allen | Community / Open Source |
+| **frei** für alle teilen | **Über Discussions einreichen** | im Editor-Store, bei allen | Community / Open Source |
 | **Premium** anbieten (Patreon) | **Code weitergeben** | nur wer den Code bekommt | zahlende Unterstützer |
 | eigenes großes Projekt | **HACS** (eigenes Repo) | über HACS installierbar | Fortgeschrittene |
 
@@ -23,23 +23,44 @@ Die ersten beiden sind die wichtigen — beide unten Schritt für Schritt.
 
 ---
 
-## Weg 1 — In den öffentlichen Store (Pull Request)
+## Weg 1 — Über Discussions einreichen (empfohlen)
 
-So landet deine Karte/dein Modul im **Store** (Editor → *Erweiterungen* →
-*Karte oder Modul installieren* → **Store**), sichtbar für **alle** Nutzer und
-mit **Update-Anzeige**.
+Das ist der **Hauptweg**, damit deine Karte/dein Modul in den öffentlichen
+**Store** kommt (Editor → *Erweiterungen* → *Karte oder Modul installieren* →
+**Store**), sichtbar für **alle** Nutzer und mit **Update-Anzeige**. Du brauchst
+**keinen Fork und keinen Pull Request** — du schlägst sie vor, ein Maintainer
+prüft und übernimmt sie.
 
 ### Schritt für Schritt
 
-1. **Repo forken:** Gehe auf
-   `https://github.com/bkstudy2025/neo-dashboard-kit` → **Fork**.
-2. **Datei anlegen:** Lege deine Erweiterung als eigenständige Datei ab:
-   ```
-   store/modules/<deine-id>.js
-   ```
-   Beispiel: `store/modules/neo-wetter-card.js`. Muster & API:
-   [Entwicklung](entwicklung.md). Wichtig: **eigenständig** (keine Imports aus
-   dem Bundle), abgesichert mit `neo-dashboard-ready`.
+1. **Vorschlag eröffnen** in der Discussions-Kategorie
+   [**Community Cards & Modules**](https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules)
+   und das Formular ausfüllen: Name, Typ (Karte/Modul), Beschreibung,
+   Screenshot, eigenständiger Code (oder öffentlicher Repo-/Gist-Link),
+   HA-Version, benötigte Entitäten/Domains und die Sicherheits-/
+   Lizenzbestätigung. Muster & API für den Code: [Entwicklung](entwicklung.md)
+   — **eigenständig** (keine Imports aus dem Bundle), abgesichert mit
+   `neo-dashboard-ready`.
+2. **Ein Maintainer prüft** den Code (lesbar, keine Secrets, MIT-kompatibel),
+   passt ihn bei Bedarf an und **übernimmt ihn ins Repo** als
+   `store/modules/<id>.js` plus passenden `store/index.json`-Eintrag.
+3. Nach dem Merge auf `main` erscheint die Karte/das Modul **automatisch im
+   Store** aller Nutzer (im Editor **„Store aktualisieren"** klicken; jsDelivr
+   cacht `@main` ein paar Stunden).
+
+> **Discussions sind ein Vorschlagskanal, keine Installationsquelle.** Aus einer
+> Discussion wird nichts automatisch installiert. Erst **Maintainer-Prüfung und
+> -Merge** machen aus einem Vorschlag einen Store-Eintrag.
+
+<details>
+<summary><b>Optionale Alternative (erfahrene Entwickler): Fork + Pull Request</b></summary>
+
+Wenn du mit Git vertraut bist, kannst du stattdessen direkt einen PR öffnen —
+ein Maintainer prüft und merged ihn trotzdem. Das Store-Ergebnis ist dasselbe.
+
+1. **Repo forken:** `https://github.com/bkstudy2025/neo-dashboard-kit` → **Fork**.
+2. **Datei anlegen** als eigenständige `store/modules/<deine-id>.js` (Beispiel:
+   `store/modules/neo-wetter-card.js`).
 3. **Katalog-Eintrag** in `store/index.json` ergänzen:
    ```json
    {
@@ -56,10 +77,8 @@ mit **Update-Anzeige**.
    }
    ```
 4. **Pull Request** öffnen → wird geprüft und gemerged.
-5. Nach dem Merge erscheint die Karte/das Modul **automatisch im Store** aller
-   Nutzer (jsDelivr cacht `@main` ein paar Stunden — etwas Geduld).
 
-### Die `index.json`-Felder
+**Die `index.json`-Felder**
 
 | Feld | Pflicht | Zweck |
 |---|---|---|
@@ -77,6 +96,8 @@ mit **Update-Anzeige**.
 > allen „⬆ Update" an, *Aktualisieren* lädt die Datei neu.
 
 Mehr Details: [`store/README.md`](../../store/README.md).
+
+</details>
 
 ---
 
@@ -169,7 +190,9 @@ den neuen Code — einfach erneut einfügen.
 - [ ] `author` korrekt (`Community` / `Premium`).
 - [ ] Farben nur über `--neo-*`-Tokens, Karte in `.neo-card`-Hülle.
 - [ ] In Home Assistant getestet (Hinzufügen, Editor, Update/Entfernen).
-- [ ] Store-Weg: `store/modules/<id>.js` + `index.json`-Eintrag + Pull Request.
+- [ ] Store-Weg: in **Discussions** vorschlagen (ein Maintainer übernimmt es in
+      `store/modules/<id>.js` + `index.json`); Fork + PR nur als optionale
+      Alternative für Fortgeschrittene.
 
 Siehe auch: [Entwicklung](entwicklung.md) · [Module & Store](module.md) ·
 [`CONTRIBUTING.md`](../../CONTRIBUTING.md)

@@ -72,22 +72,19 @@ release will be cut later.
 
 ## 🧩 Submit a community card or module
 
-The Store is **curated**: only entries an admin reviews and merges into the repo
-appear in the editor’s official Store (the single 1-click install source).
+The Store is **curated**: **propose** a card/module in the
+[**Community Cards & Modules**](https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules)
+Discussions category (no fork or PR needed) — an admin reviews it and merges it
+into the repo, and it then appears after **“Refresh store”**.
 
-1. **Propose it in Discussions** — open the
-   [**Community Cards & Modules**](https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules)
-   category and fill in the submission form (name, description, screenshot,
-   code/repo link, HA version, required domains, security & license confirm).
-2. **Admin reviews** the code, screenshot and description.
-3. If accepted, the admin adds `store/modules/<id>.js` + a `store/index.json`
-   entry and merges to `main` — then it appears after **“Refresh store”**, with
-   **no HACS release** and **no new bundle** needed.
+> **Discussions are a proposal channel, not an install source.** **Premium**
+> cards are **not** in the public Store; Premium code is shared privately and
+> added via the editor’s **“Paste code”**.
 
-> **Discussions are a proposal channel, not an install source.** Nothing is
-> installed automatically from Discussions. **Premium** cards are **not** in the
-> public Store — Premium code is shared privately (e.g. Patreon) and added via
-> the editor’s **“Paste code”**. Details: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+**Full guides:**
+[🇩🇪 Mitmachen](docs/de/mitmachen.md) · [🇬🇧 Community](docs/en/community.md) ·
+[Maintainer-Workflow (DE)](docs/Neo-Dashboard-Community-Store-Workflow.md) ·
+[`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 ---
 
