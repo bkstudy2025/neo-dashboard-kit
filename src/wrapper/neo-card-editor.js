@@ -560,24 +560,36 @@ class NeoCardEditor extends HTMLElement {
 
   async _pasteModule(code) {
     if (!code) return this._msg(this._t("Bitte Code einfügen."), true);
-    const before = new Set(NeoModules.list().map((m) => m.id));
+    // Snapshot existing IDs so we can tell a NEW install from an UPDATE.
+    const modsBefore = new Set(NeoModules.list().map((m) => m.id));
+    const cardsBefore = new Set(NeoDashboardRegistry.list().map((c) => c.type));
     const res = neoLoadModule(code);
     if (!res.ok) return this._msg(this._t("Code konnte nicht geladen werden."), true);
-    // Erkennt BEIDES: Layer-Module (registerModule) und eigenständige Karten
-    // (registerCard, z. B. Premium-Karten wie Neo Wetter).
-    const addedMods = NeoModules.list().filter((m) => !before.has(m.id));
-    const addedCards = res.cards || [];
-    if (!addedMods.length && !addedCards.length) {
+    // registerCard → res.cards, registerModule → res.modules (no cross-mapping),
+    // so a module update is never mistaken for a card.
+    const card = (res.cards || [])[0];
+    const mod = (res.modules || [])[0];
+    if (!card && !mod) {
       return this._msg(this._t("Kein Modul/Karte erkannt (registerModule/registerCard fehlt?)."), true);
     }
-    const id = addedMods[0]?.id || addedCards[0]?.type || `neo-${Date.now()}`;
+    const id = card?.type || mod?.id || `neo-${Date.now()}`;
     try {
       if (NeoStore.available()) await NeoStore.save(id, code);
       await this._refreshInstalled();
-      this._renderTypePicker(); // neue Karten sofort im Kartentyp-Dropdown
-      this._msg(addedCards.length
-        ? this._t("✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.").replace("{name}", addedCards[0].name || addedCards[0].type)
-        : this._t("✓ Modul „{name}” hinzugefügt.").replace("{name}", addedMods[0].name || addedMods[0].id));
+      this._renderTypePicker(); // neue/aktualisierte Karten sofort im Kartentyp-Dropdown
+      let msg;
+      if (card) {
+        const name = card.name || card.type;
+        msg = cardsBefore.has(card.type)
+          ? this._t("✓ Karte „{name}” aktualisiert.").replace("{name}", name)
+          : this._t("✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.").replace("{name}", name);
+      } else {
+        const name = mod.name || mod.id;
+        msg = modsBefore.has(mod.id)
+          ? this._t("✓ Modul „{name}” aktualisiert.").replace("{name}", name)
+          : this._t("✓ Modul „{name}” hinzugefügt.").replace("{name}", name);
+      }
+      this._msg(msg);
     } catch (e) {
       this._msg(this._t("Speichern fehlgeschlagen: {err}").replace("{err}", e?.message || e), true);
     }
