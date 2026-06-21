@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "neo-mini-badge",
+    "name": "Neo Mini Badge",
+    "description": "Shows a small secondary badge on Neo cards.",
+    "target": ["neo-control-card", "neo-display-card"],
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "🏷️",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-mini-badge.js"
+  }
+]
