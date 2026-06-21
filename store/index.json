@@ -25,7 +25,7 @@
     "description": "Adds a soft accent-colored background gradient to Neo cards.",
     "target": "*",
     "author": "Community",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "icon": "🌈",
     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-accent-wash.js"
   }
