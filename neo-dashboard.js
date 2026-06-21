@@ -1988,63 +1988,6 @@ NeoDashboardRegistry.registerCard("neo-header-card", NeoHeaderCard, {
   description: "Überschrift / Trenner zum Strukturieren",
 });
 
-// Neo Module — Status-Badge
-// Beispiel für ein DECORATE-Modul, gebunden an die Steuerungs-Karte.
-// Zeigt eine kleine Eck-Badge mit dem Status/Wert einer Entität.
-
-NeoModules.register({
-  id: "neo-badge",
-  name: "Status-Badge",
-  description: "Kleine Eck-Badge mit dem Wert/Status einer Entität.",
-  icon: "🏷️",
-  target: "neo-control-card",
-  version: "1.0.0",
-  author: "Neo",
-  config: [
-    { name: "badge_entity", label: "Entität", selector: { entity: {} } },
-    { name: "badge_color", label: "Farbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
-  ],
-  decorate(root, ctx) {
-    const ent = ctx.settings?.badge_entity;
-    if (!ent) return;
-    const stObj = ctx.hass?.states?.[ent];
-    if (!stObj) return;
-    const acc = NEO_ACCENTS[ctx.settings?.badge_color] || NEO_ACCENTS.rose;
-    const card = root.getElementById("card") || root.querySelector(".neo-card");
-    if (!card) return;
-    const badge = document.createElement("div");
-    badge.textContent = stObj.state;
-    badge.style.cssText =
-      `position:absolute;top:12px;right:12px;z-index:3;min-width:18px;height:18px;padding:0 6px;` +
-      `display:flex;align-items:center;justify-content:center;border-radius:9px;` +
-      `font-size:11px;font-weight:700;color:#fff;background:${acc.c};box-shadow:0 2px 8px ${acc.glow};`;
-    card.appendChild(badge);
-  },
-});
-
-// Neo Module — Akzent-Glow
-// Beispiel für ein STYLE-Modul, gebunden an ALLE Karten (target "*").
-// Legt einen sanft pulsierenden Leuchtrahmen über die Karte.
-
-NeoModules.register({
-  id: "neo-glow",
-  name: "Akzent-Glow",
-  description: "Sanft pulsierender Leuchtrahmen in der Akzentfarbe.",
-  icon: "✨",
-  target: "*",
-  version: "1.0.0",
-  author: "Neo",
-  config: [],
-  style() {
-    return `
-      .neo-card { animation: neoGlowPulse 2.6s ease-in-out infinite; }
-      @keyframes neoGlowPulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(124,156,255,0); }
-        50%      { box-shadow: 0 0 24px 2px rgba(124,156,255,.40); }
-      }`;
-  },
-});
-
 // Neo Dashboard Kit — Extension loader (cards & modules)
 // Loads pasted extension code (cards or modules; script injection, deduped).
 // Used by the neo-card wrapper at runtime and by its editor's paste-code area.
@@ -3359,7 +3302,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.86", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.87", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3453,7 +3396,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.86 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.87 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
