@@ -109,3 +109,43 @@ Ausgabe (`escapeHtml` / `escapeAttr` / `safeUrl`) — ohne externe Requests.
 > (`https://purge.jsdelivr.net/gh/...`). Premium-Module (Patreon) gehören
 > **nicht** in den öffentlichen Katalog; sie werden über „Module → Code einfügen"
 > eingespielt.
+
+## Vertrauensmodell & Supply-Chain (bewusster Tradeoff)
+
+Der Store ist **kuratiert** und absichtlich **releasefrei**:
+
+- Nur **Maintainer-Merges** landen im öffentlichen Store. Community-Beiträge
+  werden über Discussions vorgeschlagen, geprüft und vom Maintainer übernommen
+  (siehe [`../CONTRIBUTING.md`](../CONTRIBUTING.md)) — aus Discussions wird
+  **nichts** automatisch installiert.
+- **`store/index.json` wird live geladen** (über `raw.githubusercontent.com`),
+  und die Store-Modul-/Karten-Dateien werden derzeit **live von `@main`** über
+  jsDelivr geladen.
+- Das ist **bewusst so gewählt**, damit der gewünschte Ablauf ohne Release
+  funktioniert:
+
+  > Maintainer merged Store-Datei + `store/index.json` auf `main`
+  > → Nutzer klickt „Store aktualisieren"
+  > → Karte/Modul erscheint **ohne HACS-Release und ohne neues Bundle**.
+
+- **Konsequenz:** Der Store ist genau **so vertrauenswürdig wie das Repo und die
+  Maintainer-Merges**. Wer auf `main` schreiben/mergen darf, kann beeinflussen,
+  was Nutzer per „Store aktualisieren" laden. Deshalb sind sorgfältiges Review
+  jeder Einreichung und ein eng gehaltener Schreibzugriff auf `main`
+  entscheidend.
+
+### Spätere Härtungs-Optionen (optional, derzeit NICHT umgesetzt)
+
+Diese Punkte sind bewusst nur **dokumentiert/geplant** — sie würden den
+releasefreien Workflow verändern und werden hier *nicht* eingeführt:
+
+- **sha256-Checksumme pro Store-Modul** in `store/index.json`, vom Loader vor
+  der Ausführung geprüft.
+- **Automatische GitHub Action**, die Store-URLs beim Merge auf einen
+  **Commit-SHA** pinnt (statt `@main`), inkl. Checksummen-Update.
+- **Signierter Store-Index** (z. B. Signatur über `index.json`).
+- **Release-/Channel-Modell** (z. B. `stable` / `beta`) für den Store.
+
+> Hinweis: Solange diese Optionen nicht aktiv sind, bitte `@main`-URLs in
+> `store/index.json` **nicht** entfernen — das würde den releasefreien
+> Community-Store-Workflow brechen.
