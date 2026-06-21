@@ -274,7 +274,7 @@ const NEO_ACCENT_OPTIONS = [
 ];
 
 // Neo Dashboard Kit — Externe Links
-// Im Editor unter "Info & Support" und vom Modul-Store genutzt.
+// Im Editor unter "Info & Support" und vom Store (Karten & Module) genutzt.
 // TODO: trage hier deine echte Patreon-/PayPal-/Ko-fi-URL ein.
 const NEO_LINKS = {
   repo: "https://github.com/bkstudy2025/neo-dashboard-kit",
@@ -287,7 +287,7 @@ const NEO_LINKS = {
   // (modulesIndex) — geprüft, versioniert, CDN-ausgeliefert. Der Link führt
   // direkt in die Einreichungs-Kategorie "Community Cards & Modules".
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules",
-  // Neo Module Store — Katalog liegt im Repo unter store/.
+  // Neo Store (Karten & Module) — Katalog liegt im Repo unter store/.
   // index.json wird LIVE über raw.githubusercontent.com geladen: Änderungen auf
   // main erscheinen in ~5 min bzw. sofort per "Store aktualisieren" (Cache-Bust),
   // ganz OHNE neuen Kit-Release oder neues neo-dashboard.js-Bundle.
@@ -537,7 +537,9 @@ const EN = {
     "No module/card detected (missing registerModule/registerCard?).",
   "✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.":
     "✓ Card “{name}” added — selectable in the card type above.",
+  "✓ Karte „{name}” aktualisiert.": "✓ Card “{name}” updated.",
   "✓ Modul „{name}” hinzugefügt.": "✓ Module “{name}” added.",
+  "✓ Modul „{name}” aktualisiert.": "✓ Module “{name}” updated.",
   "Speichern fehlgeschlagen: {err}": "Saving failed: {err}",
   "Installiere …": "Installing …",
   "✓ „{name}” installiert.": "✓ “{name}” installed.",
@@ -2043,11 +2045,13 @@ NeoModules.register({
   },
 });
 
-// Neo Dashboard Kit — Module loader
-// Loads pasted module code (script injection, deduped). Used by the
-// neo-card wrapper at runtime and by its editor's "Modul einfügen" area.
-// Returns { ok, modules, cards } where modules/cards are the manifests that
-// registered while the pasted code ran — including updates of existing IDs.
+// Neo Dashboard Kit — Extension loader (cards & modules)
+// Loads pasted extension code (cards or modules; script injection, deduped).
+// Used by the neo-card wrapper at runtime and by its editor's paste-code area.
+// Returns { ok, modules, cards } — the manifests that registered while the
+// pasted code ran (new installs AND updates of existing IDs). The two lists are
+// kept strictly separate: `modules` comes only from registerModule, `cards`
+// only from registerCard. A module is never reported as a card.
 
 function neoLoadModule(code) {
   if (!code || !code.trim()) return { ok: false, modules: [], cards: [] };
@@ -2081,14 +2085,11 @@ function neoLoadModule(code) {
     const key = code.length + ":" + code.slice(0, 96);
     window.__neoModules.add(key);
 
-    // Backward compatibility for the current editor: it already accepts
-    // res.cards for updates. Expose touched modules there too so an existing
-    // module update is never misreported as "no module/card detected".
-    const editorCards = cards.length ? cards : modules.map((m) => ({ type: m.id, name: m.name || m.id, isModule: true }));
-
     // Live-Swap aller neo-card-Instanzen auf die (neue) Modul-Version – kein Reload nötig.
     window.dispatchEvent(new CustomEvent("neo-module-changed"));
-    return { ok: true, modules, cards: editorCards };
+    // `modules` and `cards` are reported separately and never cross-mapped, so
+    // the editor can tell a pasted module from a pasted card reliably.
+    return { ok: true, modules, cards };
   } catch (e) {
     console.error("[Neo Module] Fehler beim Laden:", e);
     return { ok: false, modules: [], cards: [] };
@@ -2100,9 +2101,9 @@ function neoLoadModule(code) {
   }
 }
 
-// Neo Dashboard Kit — Module Store
-// Talks to the "Neo Dashboard Tools" integration. Persists modules
-// server-side (file-based) so the dashboard config stays clean.
+// Neo Dashboard Kit — Store (cards & modules)
+// Talks to the "Neo Dashboard Tools" integration. Persists store items
+// (cards & modules) server-side (file-based) so the dashboard config stays clean.
 // Falls back gracefully (available=false) when not installed.
 
 const NeoStore = {
@@ -2154,7 +2155,7 @@ const NeoStore = {
     return res;
   },
 
-  // Server-side fetch of an https URL (Module Store) — avoids browser CORS.
+  // Server-side fetch of an https URL (Store) — avoids browser CORS.
   async fetch(url) {
     const res = await this._hass.connection.sendMessagePromise({ type: "neo_dashboard_tools/fetch", url });
     return res.content;
@@ -2716,24 +2717,36 @@ class NeoCardEditor extends HTMLElement {
 
   async _pasteModule(code) {
     if (!code) return this._msg(this._t("Bitte Code einfügen."), true);
-    const before = new Set(NeoModules.list().map((m) => m.id));
+    // Snapshot existing IDs so we can tell a NEW install from an UPDATE.
+    const modsBefore = new Set(NeoModules.list().map((m) => m.id));
+    const cardsBefore = new Set(NeoDashboardRegistry.list().map((c) => c.type));
     const res = neoLoadModule(code);
     if (!res.ok) return this._msg(this._t("Code konnte nicht geladen werden."), true);
-    // Erkennt BEIDES: Layer-Module (registerModule) und eigenständige Karten
-    // (registerCard, z. B. Premium-Karten wie Neo Wetter).
-    const addedMods = NeoModules.list().filter((m) => !before.has(m.id));
-    const addedCards = res.cards || [];
-    if (!addedMods.length && !addedCards.length) {
+    // registerCard → res.cards, registerModule → res.modules (no cross-mapping),
+    // so a module update is never mistaken for a card.
+    const card = (res.cards || [])[0];
+    const mod = (res.modules || [])[0];
+    if (!card && !mod) {
       return this._msg(this._t("Kein Modul/Karte erkannt (registerModule/registerCard fehlt?)."), true);
     }
-    const id = addedMods[0]?.id || addedCards[0]?.type || `neo-${Date.now()}`;
+    const id = card?.type || mod?.id || `neo-${Date.now()}`;
     try {
       if (NeoStore.available()) await NeoStore.save(id, code);
       await this._refreshInstalled();
-      this._renderTypePicker(); // neue Karten sofort im Kartentyp-Dropdown
-      this._msg(addedCards.length
-        ? this._t("✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.").replace("{name}", addedCards[0].name || addedCards[0].type)
-        : this._t("✓ Modul „{name}” hinzugefügt.").replace("{name}", addedMods[0].name || addedMods[0].id));
+      this._renderTypePicker(); // neue/aktualisierte Karten sofort im Kartentyp-Dropdown
+      let msg;
+      if (card) {
+        const name = card.name || card.type;
+        msg = cardsBefore.has(card.type)
+          ? this._t("✓ Karte „{name}” aktualisiert.").replace("{name}", name)
+          : this._t("✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.").replace("{name}", name);
+      } else {
+        const name = mod.name || mod.id;
+        msg = modsBefore.has(mod.id)
+          ? this._t("✓ Modul „{name}” aktualisiert.").replace("{name}", name)
+          : this._t("✓ Modul „{name}” hinzugefügt.").replace("{name}", name);
+      }
+      this._msg(msg);
     } catch (e) {
       this._msg(this._t("Speichern fehlgeschlagen: {err}").replace("{err}", e?.message || e), true);
     }
@@ -3290,7 +3303,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.84", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.85", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3384,7 +3397,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.84 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.85 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

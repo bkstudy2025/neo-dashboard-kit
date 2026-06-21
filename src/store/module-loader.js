@@ -1,8 +1,10 @@
 // Neo Dashboard Kit — Extension loader (cards & modules)
 // Loads pasted extension code (cards or modules; script injection, deduped).
 // Used by the neo-card wrapper at runtime and by its editor's paste-code area.
-// Returns { ok, modules, cards } where modules/cards are the manifests that
-// registered while the pasted code ran — including updates of existing IDs.
+// Returns { ok, modules, cards } — the manifests that registered while the
+// pasted code ran (new installs AND updates of existing IDs). The two lists are
+// kept strictly separate: `modules` comes only from registerModule, `cards`
+// only from registerCard. A module is never reported as a card.
 
 export function neoLoadModule(code) {
   if (!code || !code.trim()) return { ok: false, modules: [], cards: [] };
@@ -36,14 +38,11 @@ export function neoLoadModule(code) {
     const key = code.length + ":" + code.slice(0, 96);
     window.__neoModules.add(key);
 
-    // Backward compatibility for the current editor: it already accepts
-    // res.cards for updates. Expose touched modules there too so an existing
-    // module update is never misreported as "no module/card detected".
-    const editorCards = cards.length ? cards : modules.map((m) => ({ type: m.id, name: m.name || m.id, isModule: true }));
-
     // Live-Swap aller neo-card-Instanzen auf die (neue) Modul-Version – kein Reload nötig.
     window.dispatchEvent(new CustomEvent("neo-module-changed"));
-    return { ok: true, modules, cards: editorCards };
+    // `modules` and `cards` are reported separately and never cross-mapped, so
+    // the editor can tell a pasted module from a pasted card reliably.
+    return { ok: true, modules, cards };
   } catch (e) {
     console.error("[Neo Module] Fehler beim Laden:", e);
     return { ok: false, modules: [], cards: [] };

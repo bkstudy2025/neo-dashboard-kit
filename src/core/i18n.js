@@ -67,7 +67,9 @@ const EN = {
     "No module/card detected (missing registerModule/registerCard?).",
   "✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.":
     "✓ Card “{name}” added — selectable in the card type above.",
+  "✓ Karte „{name}” aktualisiert.": "✓ Card “{name}” updated.",
   "✓ Modul „{name}” hinzugefügt.": "✓ Module “{name}” added.",
+  "✓ Modul „{name}” aktualisiert.": "✓ Module “{name}” updated.",
   "Speichern fehlgeschlagen: {err}": "Saving failed: {err}",
   "Installiere …": "Installing …",
   "✓ „{name}” installiert.": "✓ “{name}” installed.",
