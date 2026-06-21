@@ -18,5 +18,15 @@
     "version": "1.0.0",
     "icon": "✨",
     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-glow-frame.js"
+  },
+  {
+    "id": "neo-accent-wash",
+    "name": "Neo Accent Wash",
+    "description": "Adds a soft accent-colored background gradient to Neo cards.",
+    "target": "*",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "🌈",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-accent-wash.js"
   }
 ]
