@@ -70,7 +70,6 @@ src/core/              ← Kern-Infrastruktur (keine konkreten Karten)
   links.js               Zentrale URLs (Repo, Spenden, Store-Index)
   theme-fallback.js      Fallback-Variablen, falls kein HA-Theme greift
 src/cards/             ← Die drei Kern-Karten (control/display/header), je registerCard
-src/modules/           ← Mitgelieferte Beispiel-Module (registerModule)
 src/store/             ← Modul-Persistenz & -Laden
   module-store.js        NeoStore: WS-Calls an neo-dashboard-tools (list/save/…)
   module-loader.js       neoLoadModule: Code zur Laufzeit injizieren
@@ -83,8 +82,10 @@ src/wrapper/           ← Die EINE sichtbare Karte + ihr Editor
 
 - **Neue Karte** → `src/cards/neo-<name>-card.js`, dann in `src/neo-dashboard.js`
   importieren. Erbt von der Basis-Karte, registriert sich via `registerCard`.
-- **Neues eingebautes Modul** → `src/modules/neo-<name>.js`, registriert via
-  `NeoModules.register({ id, target, … })`, in `neo-dashboard.js` importieren.
+- **Module** werden **nicht** ins Core-Bundle eingebaut. Der Core enthält nur die
+  drei Standardkarten; Module kommen über den **Store**, **„Code einfügen"** oder
+  **Premium**. Beispiel-Module als Vorlage liegen unter
+  [`docs/examples/store-modules/`](docs/examples/store-modules/).
 - **Kern-Helfer** (von mehreren Karten genutzt) → `src/core/`.
 - Karten-spezifischer Code gehört **nicht** in `src/core/`.
 

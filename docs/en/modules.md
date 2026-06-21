@@ -5,6 +5,11 @@
 **Modules** add extra functionality or visuals to a card — without bloating the
 core. Each card stays lean, and the “big” extras come on top.
 
+> **Note:** The core ships **no** built-in example modules anymore — the release
+> contains only the three standard cards. Modules come via the **Store**, **Paste
+> code**, or **Premium**. Templates live under
+> [`docs/examples/store-modules/`](../examples/store-modules/).
+
 > There are two kinds of extension:
 > - **Module** — attaches to an *existing* card (e.g. status badge, glow).
 > - **Card** — a *new* card type (e.g. a Premium weather card).

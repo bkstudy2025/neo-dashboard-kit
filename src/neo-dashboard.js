@@ -28,10 +28,6 @@ import "./cards/neo-control-card.js";
 import "./cards/neo-display-card.js";
 import "./cards/neo-header-card.js";
 
-// 4b. Built-in example modules (card-scoped extensions)
-import "./modules/neo-badge.js";
-import "./modules/neo-glow.js";
-
 // 5. Store: cards & modules (server-side persistence via Neo Dashboard Tools)
 import "./store/module-loader.js";
 import "./store/module-store.js";

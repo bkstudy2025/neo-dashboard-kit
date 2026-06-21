@@ -5,6 +5,11 @@
 **Module** erweitern eine Karte um Zusatzfunktionen oder Optik — ohne den Kern
 zu überladen. So bleibt jede Karte schlank, und „große" Extras kommen oben drauf.
 
+> **Hinweis:** Der Core enthält **keine** eingebauten Beispielmodule mehr — der
+> Release liefert nur die drei Standardkarten. Module kommen über den **Store**,
+> **„Code einfügen"** oder **Premium**. Vorlagen liegen unter
+> [`docs/examples/store-modules/`](../examples/store-modules/).
+
 > Es gibt zwei Arten von Erweiterungen:
 > - **Modul** — hängt sich an eine *bestehende* Karte (z. B. Status-Badge, Glow).
 > - **Karte** — ein *neuer* Kartentyp (z. B. eine Premium-Wetterkarte).
