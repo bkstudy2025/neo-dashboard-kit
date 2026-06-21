@@ -25,6 +25,11 @@ The first two are the important ones — both are explained step by step below.
 
 ## Path 1 — Into the public Store (community)
 
+> **Release note:** The official store starts **empty on purpose** — the first
+> release focuses on the standard cards. The store is fully functional;
+> **official community modules will be curated in after the release.** Your
+> proposals are welcome already! 💛
+
 There are **two** ways to get your card/module into the official **Store**
 (Editor → *Extensions* → *Install card or module* → **Store**) — pick whichever
 suits you. Both are welcome. 🙌

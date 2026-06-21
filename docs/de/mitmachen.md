@@ -25,6 +25,11 @@ Die ersten beiden sind die wichtigen — beide unten Schritt für Schritt.
 
 ## Weg 1 — In den öffentlichen Store (Community)
 
+> **Hinweis zum Release:** Der offizielle Store startet **bewusst leer** — der
+> erste Release konzentriert sich auf die Standardkarten. Der Store funktioniert
+> technisch vollständig; **offizielle Community-Module werden nach dem Release
+> kuratiert ergänzt**. Deine Vorschläge sind ab sofort willkommen! 💛
+
 Es gibt **zwei** Wege, deine Karte/dein Modul in den offiziellen **Store** zu
 bringen (Editor → *Erweiterungen* → *Karte oder Modul installieren* →
 **Store**) — such dir den aus, der zu dir passt. Beides ist willkommen. 🙌

@@ -36,12 +36,22 @@ A practical pre-release checklist. Tick everything before tagging a release.
 ---
 
 ## Store — test matrix
+
+> For the initial release the catalog (`store/index.json`) ships **empty (`[]`)**
+> on purpose — this is **not** a blocker, and no example modules need to be in
+> the store.
+
 - [ ] Store tab loads (with **Neo Dashboard Tools** installed)
-- [ ] All **valid** catalog items appear
+- [ ] **Empty store** shows a clean empty-state message ("Aktuell keine
+      Store-Module verfügbar … Code einfügen"), not an error/blank
+- [ ] `node scripts/validate-store.mjs` on the empty catalog → **warning only**,
+      exit 0 (CI stays green)
+- [ ] When entries exist later: all **valid** catalog items appear
 - [ ] A deliberately **broken** entry (bad url / missing field) is **skipped**,
       the rest of the list still shows (check console warning)
 - [ ] Install a card and a module from the store works
 - [ ] Remove an installed card/module works
+- [ ] "Paste code" still works for users' own/premium modules
 - [ ] Without the **Neo Dashboard Tools** integration → clear message shown
 - [ ] A **foreign/invalid store URL** is blocked (frontend skip + server
       `host_not_allowed` / `path_not_allowed`)
