@@ -1,9 +1,10 @@
 name: Build beta bundle
 
+# Manual helper to rebuild the committed bundle (neo-dashboard.js) from src/.
+# Triggered on demand only (workflow_dispatch) — this keeps it generic (no
+# hardcoded beta version / branch) and avoids a commit loop, since the job
+# pushes a commit back to the branch it runs on.
 on:
-  push:
-    branches:
-      - beta-0.2.0-beta.58
   workflow_dispatch:
 
 permissions:
@@ -22,7 +23,7 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build bundle
         run: npm run build
@@ -31,10 +32,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add neo-dashboard.js package-lock.json package.json src .github/workflows/build-beta-bundle.yml
+          git add neo-dashboard.js
           if git diff --cached --quiet; then
             echo "No build changes to commit."
             exit 0
           fi
-          git commit -m "Build beta 0.2.0-beta.58"
+          VERSION="$(node -p "require('./package.json').version")"
+          git commit -m "Build beta ${VERSION}"
           git push
