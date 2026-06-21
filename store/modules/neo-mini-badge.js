@@ -9,15 +9,6 @@
     return;
   }
 
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
   Neo.registerModule({
     id: "neo-mini-badge",
     name: "Neo Mini Badge",
@@ -116,11 +107,12 @@
         }
       }
 
+      value = String(value ?? "").trim();
       if (!value) return;
 
       const badge = document.createElement("div");
       badge.className = `neo-mini-badge ${settings.position || "top-right"}`;
-      badge.innerHTML = escapeHtml(value);
+      badge.textContent = value;
 
       card.style.position = card.style.position || "relative";
       card.appendChild(badge);
