@@ -20,7 +20,7 @@ that adapts to your device. Extensible via **modules** and **Premium**.
 | Plugin | HACS category | Required? |
 |---|---|---|
 | _no frontend dependency_ | — | The cards need **no** Card Mod or similar — mobile header & glass dialogs are built into Neo itself. |
-| [Neo Dashboard Tools](https://github.com/bkstudy2025/neo-dashboard-tools) | Integration | ⭐ Recommended — module store & persistent storage |
+| [Neo Dashboard Tools](https://github.com/bkstudy2025/neo-dashboard-tools) | Integration | ⭐ Recommended — store (cards & modules) & persistent storage |
 
 ### 1. Install (HACS)
 1. HACS → **Frontend** → ⋮ → *Custom repository* →

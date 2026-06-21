@@ -1,6 +1,6 @@
-# Neo Dashboard — Modul-Store
+# Neo Dashboard — Store (Karten & Module)
 
-Der **Modul-Store** im Karten-Editor (Sektion „Module" → **➕ Modul hinzufügen**)
+Der **Store** im Karten-Editor (Bereich „Erweiterungen" → **➕ Karte oder Modul hinzufügen**)
 liest seinen Katalog **live** aus der `index.json` in diesem Ordner. Der Editor
 lädt sie über **`raw.githubusercontent.com`** (mit Cache-Busting), die einzelnen
 Modul-/Karten-Dateien (`url`) liegen auf dem **jsDelivr-CDN**. Module werden **nach

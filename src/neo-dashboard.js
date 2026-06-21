@@ -32,7 +32,7 @@ import "./cards/neo-header-card.js";
 import "./modules/neo-badge.js";
 import "./modules/neo-glow.js";
 
-// 5. Module store (server-side persistence via Neo Dashboard Tools)
+// 5. Store: cards & modules (server-side persistence via Neo Dashboard Tools)
 import "./store/module-loader.js";
 import "./store/module-store.js";
 
