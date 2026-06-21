@@ -15,13 +15,15 @@ class NeoHeaderCard extends NeoBaseCard {
     const variant = this._config?.variant || "header";
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
     const title = this._config?.title || "";
+    // Nur klickbar wirken, wenn auch eine Aktion konfiguriert ist.
+    const cursor = this._hasAnyAction() ? "cursor:pointer;" : "";
 
     if (variant === "divider") {
       const lbl = title
         ? `<span style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--neo-text3);">${escapeHtml(title)}</span>
            <div style="flex:1;height:1px;background:var(--neo-line2);"></div>`
         : "";
-      return `<div style="display:flex;align-items:center;gap:12px;padding:8px 2px;">
+      return `<div id="card" style="display:flex;align-items:center;gap:12px;padding:8px 2px;${cursor}">
         <div style="flex:1;height:1px;background:var(--neo-line2);"></div>${lbl}</div>`;
     }
 
@@ -33,7 +35,7 @@ class NeoHeaderCard extends NeoBaseCard {
       : `<div style="width:4px;height:28px;border-radius:2px;flex-shrink:0;background:${acc.c};"></div>`;
 
     return `
-      <div style="display:flex;align-items:center;gap:12px;padding:8px 4px;">
+      <div id="card" style="display:flex;align-items:center;gap:12px;padding:8px 4px;${cursor}">
         ${lead}
         <div style="min-width:0;">
           <div style="font-size:18px;font-weight:700;letter-spacing:-.2px;color:var(--neo-text1);
@@ -41,6 +43,12 @@ class NeoHeaderCard extends NeoBaseCard {
           ${subtitle ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:1px;">${escapeHtml(subtitle)}</div>` : ""}
         </div>
       </div>`;
+  }
+
+  // Aktions-System (navigate/url/call-service/none; Default: none).
+  // Header und Trenner bleiben ohne konfigurierte Aktion reine Layout-Bausteine.
+  _bindEvents() {
+    this._bindCardActions(this.shadowRoot.getElementById("card"), {});
   }
 
   static getConfigElement() { return document.createElement("neo-header-card-editor"); }

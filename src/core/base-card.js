@@ -6,6 +6,7 @@ import { NEO_CSS } from "./tokens.js";
 import { NEO_BP, normalizeLayout, neoViewportLayout } from "./layout.js";
 import { NeoModules } from "./modules.js";
 import { neoT } from "./i18n.js";
+import { neoExecuteAction } from "./actions.js";
 
 export class NeoBaseCard extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: "open" }); }
@@ -101,6 +102,88 @@ export class NeoBaseCard extends HTMLElement {
     return false;
   }
 
+  // ── Action system (tap / hold / double_tap) ─────────────────
+  // True when any action is configured (and not "none") — cards use this to
+  // decide whether to look interactive (cursor/role) for action-only elements.
+  _hasAnyAction() {
+    const c = this._config || {};
+    return [c.tap_action, c.hold_action, c.double_tap_action].some((x) =>
+      x && (typeof x === "string" ? x !== "none" : x.action && x.action !== "none"));
+  }
+
+  // Helpers passed to the action executor — bound to this card's hass/services.
+  _actionHelpers(entity, toggle) {
+    return {
+      entity,
+      moreInfo: (id) => this._modCtx().moreInfo(id),
+      navigate: (p) => this._modCtx().navigate(p),
+      callService: (d, s, data, target) => this._callService(d, s, data, target),
+      toggle,
+      t: (s) => this._t(s),
+    };
+  }
+
+  // Wire the standard tap/hold/double-tap action system onto `el`.
+  // behavior: { entity, toggle, tapDefault }
+  //   entity     — entity id for more-info / default behaviour
+  //   toggle     — fn for action "toggle" (card's primary toggle)
+  //   tapDefault — fn run when tap_action is NOT configured (domain default)
+  // Module tapAction still wins for the tap gesture.
+  _bindCardActions(el, behavior = {}) {
+    if (!el) return;
+    const cfg = this._config || {};
+    const run = (key, fallback) => {
+      const raw = cfg[key];
+      if (raw != null) neoExecuteAction(raw, this._actionHelpers(behavior.entity ?? cfg.entity, behavior.toggle));
+      else if (typeof fallback === "function") fallback();
+    };
+    const onTap = (e) => { if (this._moduleTap(e)) return; run("tap_action", behavior.tapDefault); };
+    const onHold = () => run("hold_action", null);
+    const onDouble = () => run("double_tap_action", null);
+    this._gesture(el, {
+      onTap, onHold, onDouble,
+      hold: cfg.hold_action != null,
+      double: cfg.double_tap_action != null,
+    });
+  }
+
+  // Low-level gesture detection. Plain click in the common case (no hold/double
+  // configured) to avoid any tap delay; timers only when needed.
+  _gesture(el, { onTap, onHold, onDouble, hold, double }) {
+    // Ignore gestures that start on interactive children (buttons, sliders, …)
+    // so internal controls never double-trigger a card action.
+    const fromControl = (e) =>
+      !!(e.target && e.target.closest && e.target.closest("button,input,select,a,[data-no-action]"));
+
+    if (!hold && !double) {
+      el.addEventListener("click", (e) => { if (!fromControl(e)) onTap(e); });
+      return;
+    }
+
+    let holdTimer = null, held = false, clicks = 0, clickTimer = null, lastEvent = null;
+    const HOLD_MS = 500, DOUBLE_MS = 250;
+    const clearHold = () => { if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } };
+
+    el.addEventListener("pointerdown", (e) => {
+      held = false;
+      if (hold && !fromControl(e)) { clearHold(); holdTimer = setTimeout(() => { held = true; onHold(); }, HOLD_MS); }
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => el.addEventListener(ev, clearHold));
+
+    el.addEventListener("click", (e) => {
+      clearHold();
+      if (fromControl(e)) return;
+      if (held) { held = false; return; }
+      if (!double) { onTap(e); return; }
+      lastEvent = e; clicks++;
+      if (clicks === 1) {
+        clickTimer = setTimeout(() => { clicks = 0; onTap(lastEvent); }, DOUBLE_MS);
+      } else {
+        clearTimeout(clickTimer); clicks = 0; onDouble();
+      }
+    });
+  }
+
   _render() {
     this.setAttribute("data-neo-layout", this._layout());
 
@@ -156,5 +239,8 @@ export class NeoBaseCard extends HTMLElement {
 
   _state(id) { return this._hass?.states?.[id]; }
   _attr(id, a) { return this._state(id)?.attributes?.[a]; }
-  _callService(domain, service, data = {}) { this._hass?.callService(domain, service, data); }
+  _callService(domain, service, data = {}, target) {
+    if (target) this._hass?.callService(domain, service, data, target);
+    else this._hass?.callService(domain, service, data);
+  }
 }
