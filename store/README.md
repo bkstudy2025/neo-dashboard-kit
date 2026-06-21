@@ -64,17 +64,18 @@ als Referenz: eigenständig, `kind: "card"`, `author: "Community"`, mit
 Typed-Editor (`makeTypedEditor` / `capabilityType` / `typeDef`) und sicherer
 Ausgabe (`escapeHtml` / `escapeAttr` / `safeUrl`) — ohne externe Requests.
 
-## Eigenes Modul einreichen
+## Ein geprüftes Modul in den Store übernehmen (nur Maintainer)
 
-> **Community-Beiträge** werden zuerst in den GitHub-Discussions vorgeschlagen
-> (Kategorie **„Community Cards & Modules"**), von einem Admin geprüft und erst
-> nach Übernahme ins Repo veröffentlicht. Discussions sind **keine**
-> Installationsquelle. Der Ablauf steht in
+> **Community-Einreichungen werden ausschließlich über GitHub Discussions
+> angenommen** (Kategorie **„Community Cards & Modules"**). Aus Discussions wird
+> **nichts** automatisch installiert. Der **Maintainer** prüft den Vorschlag,
+> passt den Code bei Bedarf an und übernimmt akzeptierte Beiträge ins Repository
+> und in den offiziellen Store. Der Community-Ablauf steht in
 > [`CONTRIBUTING.md`](../CONTRIBUTING.md). Die folgenden Schritte sind der
-> **Admin-Teil** (Übernahme eines geprüften Beitrags). **Premium**-Karten
+> **Maintainer-Teil** (Übernahme eines geprüften Beitrags). **Premium**-Karten
 > gehören **nicht** in diesen Katalog.
 
-1. Lege `store/modules/<deine-id>.js` an (Muster wie oben, eigenständig).
+1. Lege `store/modules/<id>.js` an (Muster wie oben, eigenständig).
 2. Ergänze einen Eintrag in `store/index.json`:
 
    ```json
@@ -89,7 +90,7 @@ Ausgabe (`escapeHtml` / `escapeAttr` / `safeUrl`) — ohne externe Requests.
      "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-mein-modul.js"
    }
    ```
-3. Pull Request öffnen.
+3. Auf `main` mergen (Maintainer).
 
 | index.json-Feld | Zweck |
 |---|---|

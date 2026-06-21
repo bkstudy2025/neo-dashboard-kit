@@ -15,7 +15,7 @@ click on the user's screen.
 
 | You want to… | Path | Visibility | For whom |
 |---|---|---|---|
-| share **freely** with everyone | **Store (Pull Request)** | in the editor store, for all | Community / open source |
+| share **freely** with everyone | **Submit via Discussions** | in the editor store, for all | Community / open source |
 | offer **Premium** (Patreon) | **Share the code** | only those who get the code | paying supporters |
 | ship a large standalone project | **HACS** (own repo) | installable via HACS | advanced |
 
@@ -23,60 +23,40 @@ The first two are the important ones — both are explained step by step below.
 
 ---
 
-## Path 1 — Into the public Store (Pull Request)
+## Path 1 — Submit via Discussions (the only community path)
 
-This puts your card/module in the **Store** (Editor → *Extensions* →
-*Install card or module* → **Store**), visible to **all** users and with an
-**update indicator**.
+**Community submissions are accepted through Discussions only. The maintainer
+reviews, adapts, and adds accepted cards/modules to the repository and official
+Store.** You do **not** create a fork or a pull request — you propose it, and
+the maintainer takes it from there. This is how it lands in the public **Store**
+(Editor → *Extensions* → *Install card or module* → **Store**), visible to
+**all** users and with an **update indicator**.
 
 ### Step by step
 
-1. **Fork the repo:** go to
-   `https://github.com/bkstudy2025/neo-dashboard-kit` → **Fork**.
-2. **Add the file:** drop your extension as a standalone file:
-   ```
-   store/modules/<your-id>.js
-   ```
-   Example: `store/modules/neo-weather-card.js`. Template & API:
-   [Development](development.md). Important: **standalone** (no imports from the
-   bundle), guarded with `neo-dashboard-ready`.
-3. **Catalog entry** in `store/index.json`:
-   ```json
-   {
-     "id": "neo-weather-card",
-     "kind": "card",
-     "name": "Weather Card",
-     "description": "Short description of what it shows.",
-     "target": "neo-weather-card",
-     "author": "Community",
-     "version": "1.0.0",
-     "icon": "⛅",
-     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-weather-card.js",
-     "homepage": "https://github.com/<your-name>/neo-dashboard-kit/tree/main/store"
-   }
-   ```
-4. **Open a Pull Request** → it gets reviewed and merged.
-5. After the merge it appears **automatically in the Store** for all users
-   (jsDelivr caches `@main` for a few hours — be a little patient).
+1. **Open a proposal** in the
+   [**Community Cards & Modules**](https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules)
+   Discussions category and fill in the submission form: name, type
+   (card/module), description, screenshot, standalone code (or a public
+   repo/gist link), HA version, required entities/domains, and the security &
+   license confirmation. Template & API for the code:
+   [Development](development.md) — **standalone** (no imports from the bundle),
+   guarded with `neo-dashboard-ready`.
+2. **A maintainer reviews** the code (readable, no secrets, MIT-compatible),
+   adjusts it if needed, and **adopts it into the repo** as
+   `store/modules/<id>.js` plus a matching `store/index.json` entry.
+3. After the maintainer merges to `main`, it appears **automatically in the
+   Store** for all users (click **"Refresh store"**; jsDelivr caches `@main`
+   for a few hours).
 
-### The `index.json` fields
+> **Discussions are a proposal channel, not an install source.** Nothing is
+> installed automatically from a Discussion. Only a **maintainer review and
+> merge** turns a proposal into a Store entry.
 
-| Field | Required | Purpose |
-|---|---|---|
-| `id` | ✅ | unique, **must** match the `id`/`type` in the code |
-| `kind` | – | `"card"` or `"module"` (controls the store badge) |
-| `name`, `description`, `icon` | ✅/– | display in the store |
-| `target` | ✅ | which card(s): type · list · `"*"` (all). For **cards** = its own `id` |
-| `author` | – | badge: `Community` / `Premium` / … |
-| `version` | ✅ | compared to the installed one → shows **"⬆ Update"** when newer |
-| `url` | ✅ | jsDelivr link to the file (pattern above) |
-| `homepage` | – | link for the **Info** button (docs/repo) |
-
-> **Shipping updates:** bump `version` **in the code** (`registerCard`/
-> `registerModule` meta) **and** in `store/index.json` → the store shows
-> "⬆ Update" for everyone, *Update* reloads the file.
-
-More details: [`store/README.md`](../../store/README.md).
+> The technical store format (`store/modules/<id>.js` + a `store/index.json`
+> entry) is the **maintainer's** part of adopting a proposal — see
+> [`store/README.md`](../../store/README.md). Contributors don't need it to
+> submit.
 
 ---
 
@@ -168,7 +148,8 @@ new code — just paste it again.
 - [ ] `author` correct (`Community` / `Premium`).
 - [ ] Colors only via `--neo-*` tokens, card wrapped in `.neo-card`.
 - [ ] Tested in Home Assistant (add, editor, update/remove).
-- [ ] Store path: `store/modules/<id>.js` + `index.json` entry + Pull Request.
+- [ ] Store path: propose in **Discussions** only — a maintainer reviews and
+      adopts it into `store/modules/<id>.js` + `index.json`.
 
 See also: [Development](development.md) · [Modules & Store](modules.md) ·
 [`CONTRIBUTING.md`](../../CONTRIBUTING.md)

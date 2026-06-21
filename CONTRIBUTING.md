@@ -12,8 +12,10 @@ Thanks for your interest! Here's how to contribute.
 
 ## Community cards & modules (share / submit)
 
-Build a card or module, then share it with your community. The full workflow —
-publishing to the public Store (fork + PR), distributing Premium via Patreon
+Build a card or module, then share it with your community. **Community
+submissions are accepted through Discussions only.** The maintainer reviews,
+adapts, and adds accepted cards/modules to the repository and official Store.
+The full workflow — submitting via Discussions, distributing Premium via Patreon
 (code only), or shipping your own HACS repo, plus a copy-paste announcement
 template — is documented here:
 
