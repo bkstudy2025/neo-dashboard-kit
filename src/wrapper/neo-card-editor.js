@@ -188,25 +188,53 @@ class NeoCardEditor extends HTMLElement {
       </div>`;
 
     // Aktive Module zuerst (in Layer-Reihenfolge = config.modules), dann inaktive.
+    // Aktive Module mit Einstellungen werden als Accordion gezeigt: nur das
+    // geöffnete Modul blendet seine Settings ein (kompakte, kurze Liste).
     const list = this._modPanel.querySelector(".nmod-list");
     if (list) {
       const byId = new Map(available.map((m) => [m.id, m]));
       const active = this._enabledList().map((e) => byId.get(e.id)).filter(Boolean);
       const inactive = available.filter((m) => !this._isModEnabled(m.id));
+      const activeWithCfg = active.filter((m) => Array.isArray(m.config) && m.config.length);
+      const openId = this._effectiveOpenId(activeWithCfg);
+      if (active.length) {
+        const hint = document.createElement("div");
+        hint.className = "nmod-hint";
+        hint.textContent = this._t("Aktive Module — klicke ein Modul an, um die Einstellungen zu bearbeiten.");
+        list.appendChild(hint);
+      }
       active.forEach((mod, i) => this._renderModItem(list, mod, {
         active: true, reorder: active.length > 1, canUp: i > 0, canDown: i < active.length - 1,
+        open: openId === mod.id,
       }));
       inactive.forEach((mod) => this._renderModItem(list, mod, { active: false }));
     }
     this._renderAddArea();
   }
 
+  // Welches aktive Modul ist aufgeklappt? `_openModuleId` ist vom Nutzer
+  // gesteuert (id oder null = alles zu). Solange unberührt (undefined) wird bei
+  // genau einem konfigurierbaren aktiven Modul dieses automatisch geöffnet.
+  _effectiveOpenId(activeWithCfg) {
+    if (this._openModuleId !== undefined) return this._openModuleId;
+    return activeWithCfg.length === 1 ? activeWithCfg[0].id : null;
+  }
+
+  // Accordion umschalten (reine UI — keine Config-Änderung).
+  _toggleAccordion(id, isOpen) {
+    this._openModuleId = isOpen ? null : id;
+    this._renderModulesSection();
+  }
+
   _renderModItem(list, mod, opts) {
     opts = opts || {};
     const on = !!opts.active;
+    const expandable = on && Array.isArray(mod.config) && mod.config.length;
+    const isOpen = expandable && !!opts.open;
     const item = document.createElement("div");
     item.className = "nmod-item";
     const badge = mod.author ? this._authorChip(mod.author) : "";
+    const active = on ? `<span class="nmod-badge">${this._t("Aktiv")}</span>` : "";
     const rm = this._isInstalled(mod.id)
       ? `<button class="nmod-rm" title="${escapeAttr(this._t("Modul entfernen"))}" data-rm="${escapeAttr(mod.id)}">${neoIcon("trash", { size: 15, color: "currentColor" })}</button>`
       : "";
@@ -216,12 +244,15 @@ class NeoCardEditor extends HTMLElement {
            <button data-down title="${this._t("Layer nach unten")}" ${opts.canDown ? "" : "disabled"}>▼</button>
          </div>`
       : "";
+    const chev = expandable
+      ? `<span class="nmod-chev ${isOpen ? "open" : ""}">${neoIcon("chevD", { size: 16, color: "currentColor" })}</span>`
+      : "";
     item.innerHTML = `
-      <div class="nmod-row">
+      <div class="nmod-row ${expandable ? "nmod-row--exp" : ""}">
         ${move}
         <span class="nmod-ic">${escapeHtml(mod.icon || "🧩")}</span>
         <div class="nmod-meta">
-          <div class="nmod-name">${escapeHtml(mod.name || mod.id)}${badge}</div>
+          <div class="nmod-name">${escapeHtml(mod.name || mod.id)}${badge}${active}</div>
           ${mod.description ? `<div class="nmod-desc">${escapeHtml(mod.description)}</div>` : ""}
         </div>
         ${rm}
@@ -229,17 +260,27 @@ class NeoCardEditor extends HTMLElement {
           <input type="checkbox" ${on ? "checked" : ""} />
           <span class="nmod-track"></span><span class="nmod-knob"></span>
         </label>
+        ${chev}
       </div>
-      <div class="nmod-cfg"></div>`;
+      ${isOpen ? `<div class="nmod-cfg"></div>` : ""}`;
     list.appendChild(item);
 
     item.querySelector("input[type=checkbox]")
       .addEventListener("change", (e) => this._toggleModule(mod, e.target.checked));
-    item.querySelector("[data-rm]")?.addEventListener("click", () => this._removeInstalled(mod.id));
-    item.querySelector("[data-up]")?.addEventListener("click", () => this._moveModule(mod.id, -1));
-    item.querySelector("[data-down]")?.addEventListener("click", () => this._moveModule(mod.id, 1));
+    item.querySelector("[data-rm]")?.addEventListener("click", (e) => { e.stopPropagation(); this._removeInstalled(mod.id); });
+    item.querySelector("[data-up]")?.addEventListener("click", (e) => { e.stopPropagation(); this._moveModule(mod.id, -1); });
+    item.querySelector("[data-down]")?.addEventListener("click", (e) => { e.stopPropagation(); this._moveModule(mod.id, 1); });
 
-    if (on && Array.isArray(mod.config) && mod.config.length) {
+    // Accordion: Klick auf die Kopfzeile öffnet/schließt das Panel. Klicks auf
+    // Schalter, Entfernen oder Reorder lösen den Accordion NICHT aus.
+    if (expandable) {
+      item.querySelector(".nmod-row").addEventListener("click", (e) => {
+        if (e.target.closest(".nmod-sw, .nmod-rm, .nmod-move")) return;
+        this._toggleAccordion(mod.id, isOpen);
+      });
+    }
+
+    if (isOpen) {
       const form = document.createElement("ha-form");
       form.schema = mod.config;
       form.data = this._modSettings(mod.id);
@@ -257,8 +298,14 @@ class NeoCardEditor extends HTMLElement {
   _toggleModule(mod, on) {
     const list = this._enabledList().slice();
     const idx = list.findIndex((m) => m.id === mod.id);
-    if (on && idx < 0) list.push({ id: mod.id, settings: {} });
-    else if (!on && idx >= 0) list.splice(idx, 1);
+    if (on && idx < 0) {
+      list.push({ id: mod.id, settings: {} });
+      // Frisch aktiviertes Modul mit Einstellungen automatisch aufklappen.
+      if (Array.isArray(mod.config) && mod.config.length) this._openModuleId = mod.id;
+    } else if (!on && idx >= 0) {
+      list.splice(idx, 1);
+      if (this._openModuleId === mod.id) this._openModuleId = null;
+    }
     this._config = { ...this._config };
     if (list.length) this._config.modules = list;
     else delete this._config.modules;
@@ -675,6 +722,7 @@ class NeoCardEditor extends HTMLElement {
       const list = this._enabledList().filter((m) => m.id !== id);
       this._config = { ...this._config };
       if (list.length) this._config.modules = list; else delete this._config.modules;
+      if (this._openModuleId === id) this._openModuleId = null;
       this._fire();
     }
     await this._refreshInstalled();
@@ -713,6 +761,11 @@ class NeoCardEditor extends HTMLElement {
           font-size:9px; color:var(--secondary-text-color); background:var(--neo-fill2,rgba(255,255,255,.06)); }
         .nmod-move button:disabled { opacity:.3; cursor:default; }
         .nmod-cfg { margin-top:8px; }
+        .nmod-hint { font-size:12px; color:var(--secondary-text-color); margin:2px 0 8px; line-height:1.4; }
+        .nmod-row--exp { cursor:pointer; }
+        .nmod-chev { flex-shrink:0; display:flex; align-items:center; margin-left:2px;
+          color:var(--secondary-text-color); transition:transform .2s; }
+        .nmod-chev.open { transform:rotate(180deg); }
         .nmod-add { border-top:1px solid var(--divider-color,rgba(255,255,255,.08)); margin-top:6px; padding-top:8px; }
         .nmod-addbtn { width:100%; padding:9px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:600;
           color:var(--primary-text-color); background:var(--neo-fill2,rgba(255,255,255,.06));

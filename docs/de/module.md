@@ -34,6 +34,11 @@ Wähle oben einen **Kartentyp** und scrolle zu **Module**. Dort schaltest du die
 passenden Module **ein/aus**, stellst ihre Optionen ein und änderst mit **▲ ▼**
 die Reihenfolge.
 
+> Aktivierte Module werden als **Accordion** angezeigt: Es ist immer nur **ein**
+> Modul zur Bearbeitung geöffnet. Klicke ein Modul an, um seine Einstellungen zu
+> öffnen — die anderen klappen automatisch zu; ein frisch aktiviertes Modul
+> öffnet sich direkt.
+
 ---
 
 ## Ein Modul schreiben (für Entwickler)

@@ -32,6 +32,10 @@ plus **Update** and **Remove**.
 Pick a **card type** at the top and scroll to **Module**. There you toggle the
 matching modules **on/off**, set their options, and reorder them with **▲ ▼**.
 
+> Enabled modules are shown as an **accordion**: only **one** module is open for
+> editing at a time. Click a module to open its settings — the others collapse
+> automatically; a freshly enabled module opens straight away.
+
 ---
 
 ## Writing a module (developers)

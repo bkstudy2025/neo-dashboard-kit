@@ -23,6 +23,9 @@ const EN = {
   "<b>Karten</b> &amp; <b>Module</b> installieren (Store oder Code einfügen) — oder oben einen <b>Kartentyp</b> wählen, um Module für eine Karte zu aktivieren.":
     "Install <b>cards</b> &amp; <b>modules</b> (store or paste code) — or pick a <b>card type</b> above to enable modules for a card.",
   "Modul hinzufügen": "Add module",
+  "Aktiv": "Active",
+  "Aktive Module — klicke ein Modul an, um die Einstellungen zu bearbeiten.":
+    "Active modules — click a module to edit its settings.",
   "Karte oder Modul installieren": "Install card or module",
   "Store": "Store",
   "Code einfügen": "Paste code",
