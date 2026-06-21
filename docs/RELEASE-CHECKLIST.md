@@ -6,18 +6,29 @@ A practical pre-release checklist. Tick everything before tagging a release.
 
 ## Cards — test matrices
 
+### Actions (all cards)
+- [ ] `tap_action`: more-info / toggle / navigate / url / call-service / none
+- [ ] `hold_action` (press & hold ~0.5s)
+- [ ] `double_tap_action`
+- [ ] `confirmation: true` (generic prompt) and `confirmation.text` (custom)
+- [ ] Invalid URL / invalid service does **not** crash (ignored)
+- [ ] Internal buttons/sliders do **not** double-trigger the card action
+
 ### Neo Control (`neo-control-card`)
-- [ ] Light (on/off, brightness, color where supported)
-- [ ] Switch / input_boolean toggles
-- [ ] Cover (open/close/stop, position if available)
-- [ ] Climate (mode + setpoint)
-- [ ] Media player (play/pause, volume)
+- [ ] Light dimmable: toggle + brightness; non-dimmable: no slider, no false 0 %
+- [ ] Switch / input_boolean toggles; `show_toggle: false` hides toggle
+- [ ] Fan: simple on/off · percentage · presets · oscillate · direction
+- [ ] Cover: open/stop/close · position · tilt · device_class label/icon
+- [ ] Climate: current temp · setpoint + step · hvac modes · presets · (fan/swing/humidity optional)
+- [ ] Media: play/pause/prev/next · volume · mute · (source/power optional)
 - [ ] Lock (lock/unlock)
-- [ ] Alarm control panel (arm/disarm states)
-- [ ] Scene / script (activate)
-- [ ] Light group
+- [ ] Alarm control panel (arm home/away, disarm, code)
+- [ ] Scene / script / button: default tap fires; custom `tap_action` overrides
+- [ ] Light group: brightness only when a dimmable light is on; unavailable members ignored
+- [ ] Capability-aware: unsupported controls are hidden
+- [ ] `unknown`/`unavailable` renders cleanly (no broken buttons/active state)
 - [ ] Empty state when no type/entity is selected
-- [ ] Editor: type → entity flow, conditional fields, no console errors
+- [ ] Editor: type → entity flow, visibility toggles, conditional fields, no console errors
 
 ### Neo Display (`neo-display-card`)
 - [ ] Sensor value + unit
@@ -25,12 +36,14 @@ A practical pre-release checklist. Tick everything before tagging a release.
 - [ ] Weather (current condition)
 - [ ] Calendar / next event
 - [ ] Badge / KPI and text/markdown types
+- [ ] Actions work; default tap = more-info; preview stable for all types
 - [ ] Empty state when no type/entity is selected
 - [ ] Editor: type → entity flow, no console errors
 
 ### Neo Header (`neo-header-card`)
 - [ ] Heading text renders
 - [ ] Divider variant renders
+- [ ] Actions work (default `none`); header/divider stable without an action
 - [ ] Editor variant switch, no console errors
 
 ---

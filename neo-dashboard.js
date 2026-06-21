@@ -594,6 +594,28 @@ const EN = {
   "Heizt": "Heating", "Kühlt": "Cooling", "Entfeuchtet": "Drying", "Lüftet": "Fan",
   "Heizen": "Heat", "Kühlen": "Cool", "Aktuell": "Current",
   "Spielt": "Playing", "Pausiert": "Paused", "Standby": "Standby", "Puffert": "Buffering",
+  // capability-aware Controls & Aktionen
+  "Nicht verfügbar": "Unavailable",
+  "Position": "Position", "Neigung": "Tilt",
+  "Lautstärke": "Volume", "Stumm": "Mute", "Quelle": "Source",
+  "Modus": "Mode", "Voreinstellung": "Preset", "Lüftung": "Fan mode",
+  "Schwenken": "Swing", "Luftfeuchte": "Humidity",
+  "Oszillation": "Oscillate", "Richtung": "Direction",
+  "Entfeuchten": "Dry", "Lüften": "Fan only",
+  "Jalousie": "Blind", "Vorhang": "Curtain", "Garage": "Garage", "Tür": "Door",
+  "Tor": "Gate", "Fenster": "Window", "Markise": "Awning", "Rollo": "Shade",
+  "Aktion wirklich ausführen?": "Really run this action?",
+  // Editor: Sichtbarkeits-Schalter
+  "Schalter anzeigen": "Show toggle", "Helligkeit anzeigen": "Show brightness",
+  "Stufe anzeigen": "Show speed", "Voreinstellungen anzeigen": "Show presets",
+  "Oszillation anzeigen": "Show oscillate", "Richtung anzeigen": "Show direction",
+  "Auf/Stopp/Zu anzeigen": "Show open/stop/close", "Position anzeigen": "Show position",
+  "Neigung anzeigen": "Show tilt", "Temperatur-Steuerung anzeigen": "Show temperature controls",
+  "Modi anzeigen": "Show modes", "Lüftungsstufen anzeigen": "Show fan modes",
+  "Schwenken anzeigen": "Show swing", "Luftfeuchte anzeigen": "Show humidity",
+  "Transport anzeigen": "Show transport", "Lautstärke anzeigen": "Show volume",
+  "Stumm anzeigen": "Show mute", "Quelle anzeigen": "Show source", "Power anzeigen": "Show power",
+  "Bedienelemente anzeigen": "Show controls",
   "Unscharf": "Disarmed", "Zuhause": "Home", "Abwesend": "Away", "Alarm": "Alarm",
   "Scharf · Zuhause": "Armed · Home", "Scharf · Abwesend": "Armed · Away",
   "Scharf · Nacht": "Armed · Night", "Scharf · Urlaub": "Armed · Vacation",
@@ -897,6 +919,113 @@ function neoRenderReorder(container, items, labelFn, onChange) {
   container.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => del(+b.dataset.del)));
 }
 
+// Neo Dashboard Kit — small HTML escaping helpers
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function safeUrl(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  // Relative HA/local paths are allowed; protocol-relative and malformed values
+  // are intentionally not allowed for card/store-rendered links and images.
+  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+
+  try {
+    const url = new URL(raw);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+  } catch (_err) {
+    return "";
+  }
+}
+
+// Neo Dashboard Kit — Home-Assistant-style action system
+// Shared tap/hold/double-tap action handling for all core cards.
+// Supported actions: more-info · toggle · navigate · url · call-service · none.
+// Designed to be robust: an incomplete or invalid action config never throws.
+
+
+const NEO_ACTION_DEFAULT_CONFIRM = "Aktion wirklich ausführen?";
+
+// Normalize an action config — accepts the object form or a string shorthand
+// ("more-info"), returns an object { action, … } or null.
+function neoNormalizeAction(raw) {
+  if (raw == null) return null;
+  if (typeof raw === "string") return { action: raw };
+  if (typeof raw === "object") return raw;
+  return null;
+}
+
+// Confirmation gate. confirmation: true → generic text; confirmation.text → custom.
+// Returns true when execution may proceed (no confirmation, or user accepted).
+function neoConfirmed(cfg, t) {
+  const c = cfg.confirmation;
+  if (!c) return true;
+  const text = (c && typeof c === "object" && c.text) ? c.text : NEO_ACTION_DEFAULT_CONFIRM;
+  const msg = typeof t === "function" ? t(text) : text;
+  try { return window.confirm(msg); } catch (_e) { return true; }
+}
+
+// Execute an action config with the given helpers.
+// helpers: { entity, moreInfo(id), navigate(path), callService(d,s,data,target),
+//            toggle(), t(text) }
+// Returns true when the gesture was handled (incl. "none" and cancelled confirm),
+// false only when the config is missing/unrecognized so the caller can fall back.
+function neoExecuteAction(raw, helpers = {}) {
+  const cfg = neoNormalizeAction(raw);
+  if (!cfg) return false;
+  const action = cfg.action || "none";
+  if (action === "none") return true;
+  if (!neoConfirmed(cfg, helpers.t)) return true;
+
+  switch (action) {
+    case "more-info": {
+      const ent = cfg.entity || helpers.entity;
+      if (ent && typeof helpers.moreInfo === "function") helpers.moreInfo(ent);
+      return true;
+    }
+    case "toggle": {
+      if (typeof helpers.toggle === "function") helpers.toggle();
+      return true;
+    }
+    case "navigate": {
+      const path = cfg.navigation_path;
+      if (path && typeof helpers.navigate === "function") helpers.navigate(path);
+      return true;
+    }
+    case "url": {
+      const url = safeUrl(cfg.url_path || cfg.url);
+      if (url) { try { window.open(url, "_blank", "noopener"); } catch (_e) { /* ignore */ } }
+      return true;
+    }
+    case "call-service": {
+      const svc = cfg.service;
+      if (typeof svc === "string" && svc.includes(".") && typeof helpers.callService === "function") {
+        const dot = svc.indexOf(".");
+        const domain = svc.slice(0, dot);
+        const service = svc.slice(dot + 1);
+        // service_data is a legacy alias for data.
+        const data = { ...(cfg.service_data || {}), ...(cfg.data || {}) };
+        if (domain && service) helpers.callService(domain, service, data, cfg.target);
+      }
+      return true;
+    }
+    default:
+      return false;
+  }
+}
+
 // Neo Dashboard Kit — Base Card
 // All Neo cards (core + community) extend this class. Handles the shared
 // shadow-root styling, responsive layout and performance-gated re-renders.
@@ -996,6 +1125,88 @@ class NeoBaseCard extends HTMLElement {
     return false;
   }
 
+  // ── Action system (tap / hold / double_tap) ─────────────────
+  // True when any action is configured (and not "none") — cards use this to
+  // decide whether to look interactive (cursor/role) for action-only elements.
+  _hasAnyAction() {
+    const c = this._config || {};
+    return [c.tap_action, c.hold_action, c.double_tap_action].some((x) =>
+      x && (typeof x === "string" ? x !== "none" : x.action && x.action !== "none"));
+  }
+
+  // Helpers passed to the action executor — bound to this card's hass/services.
+  _actionHelpers(entity, toggle) {
+    return {
+      entity,
+      moreInfo: (id) => this._modCtx().moreInfo(id),
+      navigate: (p) => this._modCtx().navigate(p),
+      callService: (d, s, data, target) => this._callService(d, s, data, target),
+      toggle,
+      t: (s) => this._t(s),
+    };
+  }
+
+  // Wire the standard tap/hold/double-tap action system onto `el`.
+  // behavior: { entity, toggle, tapDefault }
+  //   entity     — entity id for more-info / default behaviour
+  //   toggle     — fn for action "toggle" (card's primary toggle)
+  //   tapDefault — fn run when tap_action is NOT configured (domain default)
+  // Module tapAction still wins for the tap gesture.
+  _bindCardActions(el, behavior = {}) {
+    if (!el) return;
+    const cfg = this._config || {};
+    const run = (key, fallback) => {
+      const raw = cfg[key];
+      if (raw != null) neoExecuteAction(raw, this._actionHelpers(behavior.entity ?? cfg.entity, behavior.toggle));
+      else if (typeof fallback === "function") fallback();
+    };
+    const onTap = (e) => { if (this._moduleTap(e)) return; run("tap_action", behavior.tapDefault); };
+    const onHold = () => run("hold_action", null);
+    const onDouble = () => run("double_tap_action", null);
+    this._gesture(el, {
+      onTap, onHold, onDouble,
+      hold: cfg.hold_action != null,
+      double: cfg.double_tap_action != null,
+    });
+  }
+
+  // Low-level gesture detection. Plain click in the common case (no hold/double
+  // configured) to avoid any tap delay; timers only when needed.
+  _gesture(el, { onTap, onHold, onDouble, hold, double }) {
+    // Ignore gestures that start on interactive children (buttons, sliders, …)
+    // so internal controls never double-trigger a card action.
+    const fromControl = (e) =>
+      !!(e.target && e.target.closest && e.target.closest("button,input,select,a,[data-no-action]"));
+
+    if (!hold && !double) {
+      el.addEventListener("click", (e) => { if (!fromControl(e)) onTap(e); });
+      return;
+    }
+
+    let holdTimer = null, held = false, clicks = 0, clickTimer = null, lastEvent = null;
+    const HOLD_MS = 500, DOUBLE_MS = 250;
+    const clearHold = () => { if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } };
+
+    el.addEventListener("pointerdown", (e) => {
+      held = false;
+      if (hold && !fromControl(e)) { clearHold(); holdTimer = setTimeout(() => { held = true; onHold(); }, HOLD_MS); }
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => el.addEventListener(ev, clearHold));
+
+    el.addEventListener("click", (e) => {
+      clearHold();
+      if (fromControl(e)) return;
+      if (held) { held = false; return; }
+      if (!double) { onTap(e); return; }
+      lastEvent = e; clicks++;
+      if (clicks === 1) {
+        clickTimer = setTimeout(() => { clicks = 0; onTap(lastEvent); }, DOUBLE_MS);
+      } else {
+        clearTimeout(clickTimer); clicks = 0; onDouble();
+      }
+    });
+  }
+
   _render() {
     this.setAttribute("data-neo-layout", this._layout());
 
@@ -1051,7 +1262,10 @@ class NeoBaseCard extends HTMLElement {
 
   _state(id) { return this._hass?.states?.[id]; }
   _attr(id, a) { return this._state(id)?.attributes?.[a]; }
-  _callService(domain, service, data = {}) { this._hass?.callService(domain, service, data); }
+  _callService(domain, service, data = {}, target) {
+    if (target) this._hass?.callService(domain, service, data, target);
+    else this._hass?.callService(domain, service, data);
+  }
 }
 
 // Neo Dashboard Kit — Capability registry / typed-editor generator
@@ -1192,35 +1406,77 @@ function makeNeoTypedEditor(spec, meta = {}) {
   });
 }
 
-// Neo Dashboard Kit — small HTML escaping helpers
+// Neo Dashboard Kit — Entity capability helpers
+// Small, defensive helpers that answer "does this entity support feature X?".
+// Used by Neo Control so it only renders controls the entity actually supports.
+// Everything is attribute-first (works without supported_features) and never
+// throws when attributes are missing.
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+// ── Generic ──────────────────────────────────────────────────
+function isUnavailable(s) {
+  const st = s?.state;
+  return !s || st === "unavailable" || st === "unknown";
+}
+function hasAttribute(s, name) {
+  return !!s?.attributes && s.attributes[name] != null;
+}
+function hasFeature(s, bit) {
+  const f = s?.attributes?.supported_features;
+  return typeof f === "number" && (f & bit) !== 0;
 }
 
-function escapeAttr(value) {
-  return escapeHtml(value);
-}
-
-function safeUrl(value) {
-  const raw = String(value ?? "").trim();
-  if (!raw) return "";
-
-  // Relative HA/local paths are allowed; protocol-relative and malformed values
-  // are intentionally not allowed for card/store-rendered links and images.
-  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
-
-  try {
-    const url = new URL(raw);
-    return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
-  } catch (_err) {
-    return "";
+// ── Light ────────────────────────────────────────────────────
+// Dimmable = any color mode other than plain on/off (brightness, color_temp,
+// hs, rgb, …). Falls back to the brightness attribute if color modes are absent.
+function supportsBrightness(s) {
+  const a = s?.attributes;
+  if (!a) return false;
+  const modes = a.supported_color_modes;
+  if (Array.isArray(modes) && modes.length) {
+    return modes.some((m) => m && m !== "onoff" && m !== "unknown");
   }
+  return a.brightness != null;
+}
+
+// ── Fan (FanEntityFeature: SET_SPEED=1, OSCILLATE=2, DIRECTION=4, PRESET=8) ──
+function supportsFanPercentage(s) { return hasAttribute(s, "percentage") || hasFeature(s, 1); }
+function supportsFanPreset(s) {
+  const list = s?.attributes?.preset_modes;
+  return (Array.isArray(list) && list.length > 0) || hasFeature(s, 8);
+}
+function supportsFanOscillate(s) { return hasAttribute(s, "oscillating") || hasFeature(s, 2); }
+function supportsFanDirection(s) { return hasAttribute(s, "direction") || hasFeature(s, 4); }
+
+// ── Cover (CoverEntityFeature: SET_POSITION=4, SET_TILT_POSITION=128) ────────
+function supportsCoverPosition(s) { return hasAttribute(s, "current_position") || hasFeature(s, 4); }
+function supportsCoverTilt(s) { return hasAttribute(s, "current_tilt_position") || hasFeature(s, 128); }
+
+// ── Climate (ClimateEntityFeature: TARGET_TEMP=1, TARGET_HUMIDITY=4,
+//    FAN_MODE=8, PRESET_MODE=16, SWING_MODE=32) ─────────────────────────────
+function supportsClimateTemperature(s) { return hasAttribute(s, "temperature") || hasFeature(s, 1); }
+function supportsClimateHvacModes(s) {
+  const m = s?.attributes?.hvac_modes; return Array.isArray(m) && m.length > 0;
+}
+function supportsClimatePresetModes(s) {
+  const m = s?.attributes?.preset_modes; return Array.isArray(m) && m.length > 0;
+}
+function supportsClimateFanModes(s) {
+  const m = s?.attributes?.fan_modes; return Array.isArray(m) && m.length > 0;
+}
+function supportsClimateSwingModes(s) {
+  const m = s?.attributes?.swing_modes; return Array.isArray(m) && m.length > 0;
+}
+function supportsClimateHumidity(s) {
+  return hasAttribute(s, "humidity") || hasAttribute(s, "target_humidity") || hasFeature(s, 4);
+}
+
+// ── Media player (MediaPlayerEntityFeature: VOLUME_SET=4, VOLUME_MUTE=8,
+//    SELECT_SOURCE=2048) ──────────────────────────────────────────────────
+function supportsMediaVolume(s) { return hasAttribute(s, "volume_level") || hasFeature(s, 4); }
+function supportsMediaMute(s) { return hasAttribute(s, "is_volume_muted") || hasFeature(s, 8); }
+function supportsMediaSource(s) {
+  const list = s?.attributes?.source_list;
+  return (Array.isArray(list) && list.length > 0) || hasFeature(s, 2048);
 }
 
 // Neo Dashboard Kit — Control Card ("Neo Steuerung")
@@ -1263,6 +1519,15 @@ const ALARM_STATES = {
 };
 const MEDIA_LABEL = { playing: "Spielt", paused: "Pausiert", idle: "Bereit", off: "Aus", standby: "Standby", buffering: "Puffert", unavailable: "—" };
 const COVER_LABEL = { open: "Offen", closed: "Geschlossen", opening: "Öffnet", closing: "Schließt", unavailable: "—" };
+// Cover device_class → Icon + Label (kompakt; nur sinnvolle Fälle).
+const COVER_DEVICE = {
+  blind: { icon: "blinds", label: "Jalousie" }, shutter: { icon: "blinds", label: "Rollladen" },
+  curtain: { icon: "blinds", label: "Vorhang" }, garage: { icon: "garage", label: "Garage" },
+  door: { icon: "door", label: "Tür" }, gate: { icon: "gate", label: "Tor" },
+  window: { icon: "window", label: "Fenster" }, awning: { icon: "blinds", label: "Markise" },
+  shade: { icon: "blinds", label: "Rollo" },
+};
+const HVAC_LABEL = { off: "Aus", heat: "Heizen", cool: "Kühlen", auto: "Auto", heat_cool: "Auto", dry: "Entfeuchten", fan_only: "Lüften" };
 
 class NeoControlCard extends NeoBaseCard {
   getCardSize() { return this._domain() === "media_player" ? 3 : 2; }
@@ -1306,14 +1571,43 @@ class NeoControlCard extends NeoBaseCard {
     return `<div style="font-size:16px;font-weight:600;">${escapeHtml(name)}</div>
       ${sub ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;">${escapeHtml(sub)}</div>` : ""}${extra || ""}`;
   }
-  _slider(idAttr, acc, pct, label) {
+  // Option mit Default (fehlt der Key → Default; explizit false bleibt false).
+  _opt(name, def) { const v = this._config?.[name]; return v == null ? def : v; }
+
+  _slider(idAttr, acc, pct, label, min = 1) {
+    const n = Number(pct) || 0;
+    const v = Math.max(min, Math.min(100, n));
     return `<div style="margin-top:8px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--neo-text3);">
-        <span>${escapeHtml(label)}</span><span style="font-weight:600;">${escapeHtml(pct)}%</span></div>
-      <input type="range" id="${idAttr}" min="1" max="100" value="${pct || 1}" style="
+        <span>${escapeHtml(label)}</span><span style="font-weight:600;">${escapeHtml(Math.round(n))}%</span></div>
+      <input type="range" id="${idAttr}" min="${min}" max="100" value="${v}" style="
         width:100%;height:26px;border-radius:9px;-webkit-appearance:none;appearance:none;cursor:pointer;
-        background:linear-gradient(90deg,${acc.c}cc 0%,${acc.c} ${pct}%,var(--neo-line2) ${pct}%);
+        background:linear-gradient(90deg,${acc.c}cc 0%,${acc.c} ${n}%,var(--neo-line2) ${n}%);
         border:1px solid var(--neo-line1);" /></div>`;
+  }
+  // Kompakte Auswahl-Chips. `list` = String[] ODER {value,label}[]. `current`
+  // markiert den aktiven Chip. data-Attribut = `data-${attr}` (für bindEvents).
+  _chips(attr, list, current, acc, label) {
+    const arr = (Array.isArray(list) ? list : [])
+      .map((x) => (x && typeof x === "object") ? x : { value: x, label: x })
+      .filter((x) => x.value != null);
+    if (!arr.length) return "";
+    const items = arr.map((o) => {
+      const on = String(o.value) === String(current);
+      return `<button data-${attr}="${escapeAttr(o.value)}" style="padding:6px 11px;border-radius:999px;font-size:12px;cursor:pointer;white-space:nowrap;
+        color:${on ? "#fff" : "var(--neo-text2)"};background:${on ? acc.c : "var(--neo-fill2)"};
+        border:1px solid ${on ? "transparent" : "var(--neo-line2)"};">${escapeHtml(o.label)}</button>`;
+    }).join("");
+    return `<div style="margin-top:8px;">
+      ${label ? `<div style="font-size:12px;color:var(--neo-text3);margin-bottom:6px;">${escapeHtml(label)}</div>` : ""}
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">${items}</div></div>`;
+  }
+  // Kleiner, kompakter (Toggle-)Button mit Icon + Label.
+  _miniBtn(attr, val, icon, label, active, acc) {
+    return `<button data-${attr}="${escapeAttr(val)}" title="${escapeAttr(label)}" style="flex:1;height:38px;border-radius:11px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;
+      color:${active ? "#fff" : "var(--neo-text2)"};background:${active ? acc.c : "var(--neo-fill2)"};
+      border:1px solid ${active ? "transparent" : "var(--neo-line2)"};">${neoIcon(icon, { size: 15, color: active ? "#fff" : "currentColor" })}<span>${escapeHtml(label)}</span></button>`;
   }
   _flatBtn(attr, val, label, acc, primary) {
     return `<button ${attr}="${val}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;
@@ -1367,51 +1661,95 @@ class NeoControlCard extends NeoBaseCard {
   _renderToggle(d) {
     const id = this._config?.entity;
     const s = this._state(id);
+    const unavail = isUnavailable(s);
     const on = s?.state === "on";
     const acc = this._acc();
     const isLight = d === "light";
+    const showToggle = this._opt("show_toggle", true);
+    const dimmable = isLight && supportsBrightness(s);
+    const showBri = isLight && this._opt("show_brightness", true) && dimmable && on && !unavail;
     let pct = 0;
-    if (isLight && on) pct = s?.attributes?.brightness ? Math.round((s.attributes.brightness / 255) * 100) : 0;
-    const sub = this._config?.sub ?? (on ? (isLight ? `${pct}%` : this._t("An")) : this._t("Aus"));
-    const body = this._title(this._name(s, "Schalter"), sub, isLight && on ? this._slider("bri", acc, pct, this._t("Helligkeit")) : "");
-    return this._shell(acc, on, this._toggleEl(acc, on), this._icon(d), body, isLight ? 180 : 160);
+    if (dimmable && on) pct = s?.attributes?.brightness != null ? Math.round((s.attributes.brightness / 255) * 100) : 0;
+    let sub;
+    if (unavail) sub = this._config?.sub ?? this._t("Nicht verfügbar");
+    else if (dimmable) sub = this._config?.sub ?? (on ? `${pct}%` : this._t("Aus"));
+    else sub = this._config?.sub ?? (on ? this._t("An") : this._t("Aus"));
+    const right = unavail ? this._badge(acc, false, "—") : (showToggle ? this._toggleEl(acc, on) : "");
+    const body = this._title(this._name(s, "Schalter"), sub, showBri ? this._slider("bri", acc, pct, this._t("Helligkeit")) : "");
+    return this._shell(acc, on && !unavail, right, this._icon(d), body, isLight ? 180 : 160);
   }
 
   _renderLock() {
     const id = this._config?.entity;
     const s = this._state(id);
+    const unavail = isUnavailable(s);
     const locked = s?.state === "locked";
     const acc = NEO_ACCENTS[this._config?.accent] || (locked ? NEO_ACCENTS.mint : NEO_ACCENTS.amber);
-    const sub = this._config?.sub ?? (locked ? this._t("Verriegelt") : this._t("Entriegelt"));
-    const right = this._badge(acc, true, locked ? "🔒" : "🔓");
+    const showToggle = this._opt("show_toggle", true);
+    const sub = unavail ? (this._config?.sub ?? this._t("Nicht verfügbar"))
+      : (this._config?.sub ?? (locked ? this._t("Verriegelt") : this._t("Entriegelt")));
+    const right = unavail ? this._badge(acc, false, "—")
+      : (showToggle ? this._toggleEl(acc, locked) : this._badge(acc, true, locked ? "🔒" : "🔓"));
     const body = this._title(this._name(s, "Schloss"), sub);
-    return this._shell(acc, locked, right, this._config?.icon || (locked ? "lock" : "unlock"), body);
+    return this._shell(acc, locked && !unavail, right, this._config?.icon || (locked ? "lock" : "unlock"), body);
   }
 
   _renderFan() {
     const id = this._config?.entity;
     const s = this._state(id);
     const a = s?.attributes || {};
+    const unavail = isUnavailable(s);
     const on = s?.state === "on";
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.mint;
+    const showToggle = this._opt("show_toggle", true);
+    const pctSupported = supportsFanPercentage(s);
     const pct = typeof a.percentage === "number" ? a.percentage : (on ? 100 : 0);
-    const sub = this._config?.sub ?? (on ? `${pct}%` : this._t("Aus"));
-    const body = this._title(this._name(s, "Ventilator"), sub, on ? this._slider("pct", acc, pct, this._t("Stufe")) : "");
-    return this._shell(acc, on, this._toggleEl(acc, on), this._icon("fan"), body, 180);
+    const sub = unavail ? (this._config?.sub ?? this._t("Nicht verfügbar"))
+      : (this._config?.sub ?? (on ? (pctSupported ? `${pct}%` : this._t("An")) : this._t("Aus")));
+    let extra = "";
+    if (on && !unavail) {
+      if (this._opt("show_percentage", true) && pctSupported) extra += this._slider("pct", acc, pct, this._t("Stufe"));
+      if (this._opt("show_fan_presets", true) && supportsFanPreset(s))
+        extra += this._chips("fan-preset", a.preset_modes, a.preset_mode, acc, this._t("Voreinstellung"));
+      const btns = [];
+      if (this._opt("show_fan_oscillate", true) && supportsFanOscillate(s))
+        btns.push(this._miniBtn("fan-osc", "toggle", "wind", this._t("Oszillation"), !!a.oscillating, acc));
+      if (this._opt("show_fan_direction", true) && supportsFanDirection(s))
+        btns.push(this._miniBtn("fan-dir", "toggle", "refresh", this._t("Richtung"), a.direction === "reverse", acc));
+      if (btns.length) extra += `<div style="display:flex;gap:8px;margin-top:8px;">${btns.join("")}</div>`;
+    }
+    const right = unavail ? this._badge(acc, false, "—") : (showToggle ? this._toggleEl(acc, on) : "");
+    const body = this._title(this._name(s, "Ventilator"), sub, extra);
+    return this._shell(acc, on && !unavail, right, this._icon("fan"), body, 180);
   }
 
   _renderCover() {
     const id = this._config?.entity;
     const s = this._state(id);
     const a = s?.attributes || {};
+    const unavail = isUnavailable(s);
     const state = s?.state || "unavailable";
     const acc = this._acc();
+    const dc = COVER_DEVICE[a.device_class] || {};
     const pos = typeof a.current_position === "number" ? a.current_position : null;
-    const active = state === "open" || state === "opening" || (pos != null && pos > 0);
-    const right = this._badge(acc, false, pos != null ? `${pos}${this._t("% offen")}` : this._t(COVER_LABEL[state] || state));
-    const row = `<div style="display:flex;gap:8px;margin-top:10px;">
-      ${this._iconBtnTxt("up", "▲", this._t("Öffnen"))}${this._iconBtnTxt("stop", "■", this._t("Stopp"))}${this._iconBtnTxt("down", "▼", this._t("Schließen"))}</div>`;
-    return this._shell(acc, active, right, this._icon("cover"), this._title(this._name(s, "Rollladen"), "", row), 200);
+    const active = !unavail && (state === "open" || state === "opening" || (pos != null && pos > 0));
+    const right = this._badge(acc, false, unavail ? "—"
+      : (pos != null ? `${pos}${this._t("% offen")}` : this._t(COVER_LABEL[state] || state)));
+    let body = "";
+    if (!unavail) {
+      if (this._opt("show_cover_controls", true)) {
+        body += `<div style="display:flex;gap:8px;margin-top:10px;">
+          ${this._iconBtnTxt("up", "▲", this._t("Öffnen"))}${this._iconBtnTxt("stop", "■", this._t("Stopp"))}${this._iconBtnTxt("down", "▼", this._t("Schließen"))}</div>`;
+      }
+      if (this._opt("show_cover_position", true) && supportsCoverPosition(s))
+        body += this._slider("cover-pos", acc, pos != null ? pos : 0, this._t("Position"), 0);
+      if (this._opt("show_cover_tilt", true) && supportsCoverTilt(s)) {
+        const tilt = typeof a.current_tilt_position === "number" ? a.current_tilt_position : 0;
+        body += this._slider("cover-tilt", acc, tilt, this._t("Neigung"), 0);
+      }
+    }
+    const name = this._config?.name || a.friendly_name || this._t(dc.label || "Rollladen");
+    return this._shell(acc, active, right, this._config?.icon || dc.icon || "blinds", this._title(name, "", body), 200);
   }
   _iconBtnTxt(val, glyph, title) {
     return `<button data-cover="${val}" title="${escapeAttr(title)}" style="flex:1;height:42px;border-radius:12px;cursor:pointer;font-size:16px;
@@ -1423,58 +1761,96 @@ class NeoControlCard extends NeoBaseCard {
     const id = this._config?.entity;
     const s = this._state(id);
     const a = s?.attributes || {};
+    const unavail = isUnavailable(s);
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.amber;
     const unit = this._hass?.config?.unit_system?.temperature || "°";
     const target = a.temperature;
     const action = a.hvac_action;
     const mode = s?.state || "off";
     const actCol = action === "cooling" ? NEO_ACCENTS.blue.c : action === "heating" ? NEO_ACCENTS.amber.c : acc.c;
-    const active = (action && action !== "idle" && action !== "off") || (!action && mode !== "off" && mode !== "unavailable");
+    const active = !unavail && ((action && action !== "idle" && action !== "off") || (!action && mode !== "off"));
     const accE = { c: actCol, glow: actCol + "55" };
-    const badge = this._t(action ? ({ heating: "Heizt", cooling: "Kühlt", drying: "Entfeuchtet", fan: "Lüftet", idle: "Bereit", off: "Aus" }[action] || action)
-      : ({ heat: "Heizen", cool: "Kühlen", auto: "Auto", heat_cool: "Auto", off: "Aus" }[mode] || mode));
+    const badge = unavail ? "—" : this._t(action ? ({ heating: "Heizt", cooling: "Kühlt", drying: "Entfeuchtet", fan: "Lüftet", idle: "Bereit", off: "Aus" }[action] || action)
+      : (HVAC_LABEL[mode] || mode));
     const cur = a.current_temperature;
-    const row = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;">
-        ${this._iconBtn("data-temp", "dec", "minus", accE)}
-        <div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${escapeHtml(target != null ? target : "—")}</span><span style="font-size:15px;color:var(--neo-text2);">${escapeHtml(unit)}</span></div>
-        ${this._iconBtn("data-temp", "inc", "plus", accE)}
-      </div>${cur != null ? `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">${escapeHtml(this._t("Aktuell"))} ${escapeHtml(cur)}${escapeHtml(unit)}</div>` : ""}`;
-    return this._shell(accE, active, this._badge(accE, active, badge), this._icon("climate"), this._title(this._name(s, "Klima"), "", row), 200);
+    let body = "";
+    if (!unavail) {
+      if (this._opt("show_temperature_controls", true) && supportsClimateTemperature(s)) {
+        body += `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;">
+          ${this._iconBtn("data-temp", "dec", "minus", accE)}
+          <div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:32px;font-weight:500;letter-spacing:-1px;">${escapeHtml(target != null ? target : "—")}</span><span style="font-size:15px;color:var(--neo-text2);">${escapeHtml(unit)}</span></div>
+          ${this._iconBtn("data-temp", "inc", "plus", accE)}
+        </div>`;
+      }
+      if (cur != null) body += `<div style="font-size:12px;color:var(--neo-text3);margin-top:8px;text-align:center;">${escapeHtml(this._t("Aktuell"))} ${escapeHtml(cur)}${escapeHtml(unit)}</div>`;
+      if (this._opt("show_hvac_modes", true) && supportsClimateHvacModes(s))
+        body += this._chips("hvac", a.hvac_modes.map((m) => ({ value: m, label: this._t(HVAC_LABEL[m] || m) })), mode, accE, this._t("Modus"));
+      if (this._opt("show_climate_presets", true) && supportsClimatePresetModes(s))
+        body += this._chips("climate-preset", a.preset_modes, a.preset_mode, accE, this._t("Voreinstellung"));
+      if (this._opt("show_climate_fan_modes", false) && supportsClimateFanModes(s))
+        body += this._chips("climate-fan", a.fan_modes, a.fan_mode, accE, this._t("Lüftung"));
+      if (this._opt("show_climate_swing_modes", false) && supportsClimateSwingModes(s))
+        body += this._chips("climate-swing", a.swing_modes, a.swing_mode, accE, this._t("Schwenken"));
+      if (this._opt("show_humidity", false) && supportsClimateHumidity(s) && typeof a.humidity === "number")
+        body += this._slider("climate-hum", accE, a.humidity, this._t("Luftfeuchte"), 0);
+    }
+    return this._shell(accE, active, this._badge(accE, active, badge), this._icon("climate"), this._title(this._name(s, "Klima"), "", body), 200);
   }
 
   _renderMedia() {
     const id = this._config?.entity;
     const s = this._state(id);
     const a = s?.attributes || {};
+    const unavail = isUnavailable(s);
     const state = s?.state || "unavailable";
     const playing = state === "playing";
-    const active = playing || state === "paused" || state === "buffering";
+    const active = !unavail && (playing || state === "paused" || state === "buffering");
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.violet;
     const title = a.media_title || "";
     const artist = a.media_artist || a.app_name || "";
     const name = this._name(s, "Media");
     const line2 = title ? (artist || name) : this._t(MEDIA_LABEL[state] || state);
-    const transport = `<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;">
-        ${this._iconBtn("data-media", "media_previous_track", "prev", acc)}
-        ${this._iconBtn("data-media", "media_play_pause", playing ? "pause" : "play", acc)}
-        ${this._iconBtn("data-media", "media_next_track", "next", acc)}</div>`;
-    const body = `<div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title || name)}</div>
-      ${line2 ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(line2)}</div>` : ""}${transport}`;
-    return this._shell(acc, active, this._badge(acc, false, this._t(MEDIA_LABEL[state] || state)), this._icon("media_player"), body, 200);
+    let body = `<div style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(title || name)}</div>
+      ${line2 ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(line2)}</div>` : ""}`;
+    if (!unavail) {
+      const power = this._opt("show_media_power", false) ? this._iconBtn("data-media", "__power", "power", acc) : "";
+      if (this._opt("show_media_controls", true)) {
+        body += `<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;">
+          ${this._iconBtn("data-media", "media_previous_track", "prev", acc)}
+          ${this._iconBtn("data-media", "media_play_pause", playing ? "pause" : "play", acc)}
+          ${this._iconBtn("data-media", "media_next_track", "next", acc)}${power}</div>`;
+      } else if (power) {
+        body += `<div style="display:flex;justify-content:center;margin-top:12px;">${power}</div>`;
+      }
+      if (this._opt("show_volume", true) && supportsMediaVolume(s)) {
+        const vol = typeof a.volume_level === "number" ? Math.round(a.volume_level * 100) : 0;
+        body += this._slider("media-vol", acc, vol, this._t("Lautstärke"), 0);
+      }
+      if (this._opt("show_mute", true) && supportsMediaMute(s)) {
+        body += `<div style="display:flex;gap:8px;margin-top:8px;">${this._miniBtn("media-mute", "toggle", "volume", this._t("Stumm"), !!a.is_volume_muted, acc)}</div>`;
+      }
+      if (this._opt("show_source", false) && supportsMediaSource(s))
+        body += this._chips("media-source", a.source_list, a.source, acc, this._t("Quelle"));
+    }
+    return this._shell(acc, active, this._badge(acc, false, unavail ? "—" : this._t(MEDIA_LABEL[state] || state)), this._icon("media_player"), body, 200);
   }
 
   _renderAlarm() {
     const id = this._config?.entity;
     const s = this._state(id);
+    const unavail = isUnavailable(s);
     const state = s?.state || "unavailable";
     const meta = ALARM_STATES[state] || { label: state, accent: "blue", icon: "lock" };
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS[meta.accent] || NEO_ACCENTS.blue;
-    const armed = state !== "disarmed" && state !== "unavailable";
-    const controls = state === "disarmed"
-      ? `${this._flatBtn("data-alarm", "alarm_arm_home", this._t("Zuhause"), acc)}${this._flatBtn("data-alarm", "alarm_arm_away", this._t("Abwesend"), acc)}`
-      : `${this._flatBtn("data-alarm", "alarm_disarm", this._t("Unscharf"), acc, true)}`;
-    const row = `<div style="display:flex;gap:8px;margin-top:10px;">${controls}</div>`;
-    return this._shell(acc, armed, this._badge(acc, armed, this._t(meta.label)), this._config?.icon || meta.icon, this._title(this._name(s, "Alarm"), "", row), 190);
+    const armed = state !== "disarmed" && !unavail;
+    let body = this._title(this._name(s, "Alarm"), "");
+    if (!unavail && this._opt("show_alarm_controls", true)) {
+      const controls = state === "disarmed"
+        ? `${this._flatBtn("data-alarm", "alarm_arm_home", this._t("Zuhause"), acc)}${this._flatBtn("data-alarm", "alarm_arm_away", this._t("Abwesend"), acc)}`
+        : `${this._flatBtn("data-alarm", "alarm_disarm", this._t("Unscharf"), acc, true)}`;
+      body = this._title(this._name(s, "Alarm"), "", `<div style="display:flex;gap:8px;margin-top:10px;">${controls}</div>`);
+    }
+    return this._shell(acc, armed, this._badge(acc, armed, unavail ? "—" : this._t(meta.label)), this._config?.icon || meta.icon, body, 190);
   }
 
   _renderAction(d) {
@@ -1487,14 +1863,24 @@ class NeoControlCard extends NeoBaseCard {
 
   _renderLightGroup() {
     const ids = (this._config.entities || []).filter(Boolean); // Typ-Vorschau ohne Entitäten
-    let onCount = 0, briSum = 0, briN = 0;
-    ids.forEach((id) => { const s = this._state(id); if (s?.state === "on") { onCount++; const b = s.attributes?.brightness; if (typeof b === "number") { briSum += b; briN++; } } });
+    let total = 0, onCount = 0, briSum = 0, briN = 0, dimmable = false;
+    ids.forEach((id) => {
+      const s = this._state(id);
+      if (isUnavailable(s)) return; // nicht verfügbare Entitäten ignorieren
+      total++;
+      if (s?.state === "on") {
+        onCount++;
+        if (supportsBrightness(s)) { dimmable = true; const b = s.attributes?.brightness; if (typeof b === "number") { briSum += b; briN++; } }
+      }
+    });
     const bri = briN ? Math.round((briSum / briN / 255) * 100) : 0;
     const on = onCount > 0;
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.amber;
-    const sub = this._config?.sub ?? `${onCount}/${ids.length} ${this._t("an")}`;
-    const body = this._title(this._config?.name || this._t("Licht-Gruppe"), sub, on ? this._slider("bri", acc, bri, this._t("Helligkeit")) : "");
-    return this._shell(acc, on, this._toggleEl(acc, on), this._config?.icon || "lightbulb", body);
+    const showToggle = this._opt("show_toggle", true);
+    const showBri = this._opt("show_brightness", true) && dimmable && on;
+    const sub = this._config?.sub ?? `${onCount}/${total} ${this._t("an")}`;
+    const body = this._title(this._config?.name || this._t("Licht-Gruppe"), sub, showBri ? this._slider("bri", acc, bri, this._t("Helligkeit")) : "");
+    return this._shell(acc, on, showToggle ? this._toggleEl(acc, on) : "", this._config?.icon || "lightbulb", body);
   }
 
   // ── Events ────────────────────────────────────────────────
@@ -1502,26 +1888,66 @@ class NeoControlCard extends NeoBaseCard {
     const d = this._domain();
     const id = this._config?.entity;
     const sr = this.shadowRoot;
+    const a = this._state(id)?.attributes || {};
 
+    // Primärer Toggle (light/switch/fan/lock/lightgroup).
     sr.getElementById("toggle")?.addEventListener("click", (e) => { e.stopPropagation(); this._primaryToggle(d); });
+
+    // Helligkeit (Licht / Licht-Gruppe).
     sr.getElementById("bri")?.addEventListener("change", (e) => {
+      e.stopPropagation();
       const ids = d === "lightgroup" ? (this._config.entities || []).filter(Boolean) : id;
       if (ids) this._callService("light", "turn_on", { entity_id: ids, brightness_pct: +e.target.value });
     });
-    sr.getElementById("pct")?.addEventListener("change", (e) => { if (id) this._callService("fan", "set_percentage", { entity_id: id, percentage: +e.target.value }); });
+
+    // Ventilator: Stufe / Voreinstellung / Oszillation / Richtung.
+    sr.getElementById("pct")?.addEventListener("change", (e) => { e.stopPropagation(); if (id) this._callService("fan", "set_percentage", { entity_id: id, percentage: +e.target.value }); });
+    sr.querySelectorAll("[data-fan-preset]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("fan", "set_preset_mode", { entity_id: id, preset_mode: b.getAttribute("data-fan-preset") }); }));
+    sr.querySelector("[data-fan-osc]")?.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("fan", "oscillate", { entity_id: id, oscillating: !a.oscillating }); });
+    sr.querySelector("[data-fan-dir]")?.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("fan", "set_direction", { entity_id: id, direction: a.direction === "reverse" ? "forward" : "reverse" }); });
+
+    // Cover: Auf/Stopp/Zu + Position + Neigung.
     sr.querySelectorAll("[data-cover]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("cover", { up: "open_cover", stop: "stop_cover", down: "close_cover" }[b.getAttribute("data-cover")], { entity_id: id }); }));
+    sr.getElementById("cover-pos")?.addEventListener("change", (e) => { e.stopPropagation(); if (id) this._callService("cover", "set_cover_position", { entity_id: id, position: +e.target.value }); });
+    sr.getElementById("cover-tilt")?.addEventListener("change", (e) => { e.stopPropagation(); if (id) this._callService("cover", "set_cover_tilt_position", { entity_id: id, tilt_position: +e.target.value }); });
+
+    // Klima: Temperatur + Modi/Voreinstellungen/Lüftung/Schwenken/Luftfeuchte.
     sr.querySelectorAll("[data-temp]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); this._stepTemp(b.getAttribute("data-temp") === "inc" ? 1 : -1); }));
-    sr.querySelectorAll("[data-media]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("media_player", b.getAttribute("data-media"), { entity_id: id }); }));
+    sr.querySelectorAll("[data-hvac]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("climate", "set_hvac_mode", { entity_id: id, hvac_mode: b.getAttribute("data-hvac") }); }));
+    sr.querySelectorAll("[data-climate-preset]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("climate", "set_preset_mode", { entity_id: id, preset_mode: b.getAttribute("data-climate-preset") }); }));
+    sr.querySelectorAll("[data-climate-fan]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("climate", "set_fan_mode", { entity_id: id, fan_mode: b.getAttribute("data-climate-fan") }); }));
+    sr.querySelectorAll("[data-climate-swing]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("climate", "set_swing_mode", { entity_id: id, swing_mode: b.getAttribute("data-climate-swing") }); }));
+    sr.getElementById("climate-hum")?.addEventListener("change", (e) => { e.stopPropagation(); if (id) this._callService("climate", "set_humidity", { entity_id: id, humidity: +e.target.value }); });
+
+    // Media: Transport + Volume + Mute + Quelle + Power.
+    sr.querySelectorAll("[data-media]").forEach((b) => b.addEventListener("click", (e) => {
+      e.stopPropagation(); if (!id) return;
+      const v = b.getAttribute("data-media");
+      if (v === "__power") { const st = this._state(id)?.state; this._callService("media_player", (st === "off" || st === "standby") ? "turn_on" : "turn_off", { entity_id: id }); }
+      else this._callService("media_player", v, { entity_id: id });
+    }));
+    sr.getElementById("media-vol")?.addEventListener("change", (e) => { e.stopPropagation(); if (id) this._callService("media_player", "volume_set", { entity_id: id, volume_level: (+e.target.value) / 100 }); });
+    sr.querySelector("[data-media-mute]")?.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("media_player", "volume_mute", { entity_id: id, is_volume_muted: !a.is_volume_muted }); });
+    sr.querySelectorAll("[data-media-source]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (id) this._callService("media_player", "select_source", { entity_id: id, source: b.getAttribute("data-media-source") }); }));
+
+    // Alarm.
     sr.querySelectorAll("[data-alarm]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); this._alarm(b.getAttribute("data-alarm")); }));
 
-    sr.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      if (d === "scene") this._callService("scene", "turn_on", { entity_id: id });
-      else if (d === "button") this._callService("button", "press", { entity_id: id });
-      else if (d === "script") id?.startsWith("script.") ? this._callService("script", "turn_on", { entity_id: id }) : this._callService("script", id, {});
-      else if (d === "lightgroup") this._primaryToggle(d);
-      else if (id) this._modCtx().moreInfo(id);
+    // Karten-Aktionen (tap/hold/double_tap) + Modul-Tap + Domain-Defaults.
+    this._bindCardActions(sr.getElementById("card"), {
+      entity: id,
+      toggle: () => this._primaryToggle(d),
+      tapDefault: () => this._controlTapDefault(d, id),
     });
+  }
+
+  // Standard-Tap je Domain (greift nur, wenn keine eigene tap_action gesetzt ist).
+  _controlTapDefault(d, id) {
+    if (d === "scene") this._callService("scene", "turn_on", { entity_id: id });
+    else if (d === "button") this._callService("button", "press", { entity_id: id });
+    else if (d === "script") id?.startsWith("script.") ? this._callService("script", "turn_on", { entity_id: id }) : this._callService("script", id, {});
+    else if (d === "lightgroup") this._primaryToggle(d);
+    else if (id) this._modCtx().moreInfo(id);
   }
 
   _primaryToggle(d) {
@@ -1566,21 +1992,38 @@ class NeoControlCard extends NeoBaseCard {
 // Mismatch-Reset & Pruning kommen aus makeNeoTypedEditor — die Karte liefert nur
 // das Spec. Eigener Key `device_type` (`type` ist von Lovelace belegt). Das
 // Rendering bleibt entitäts-domain-basiert (neoControlDomain), unverändert.
+// Sichtbarkeits-Schalter (capability-aware): steuern, welche Controls gerendert
+// werden. Default = an, außer wo unten explizit `false`. Aktionen (tap/hold/
+// double_tap) werden bewusst per YAML konfiguriert (siehe Doku).
+const bool = (name, label) => ({ name, label, selector: { boolean: {} } });
 const CONTROL_SPEC = {
   typeKey: "device_type", typeLabel: "Typ", entityLabel: "Entität (Gerät)",
   types: [
-    { value: "light", label: "Licht", domains: ["light"] },
-    { value: "switch", label: "Schalter", domains: ["switch", "input_boolean"] },
+    { value: "light", label: "Licht", domains: ["light"],
+      fields: [bool("show_toggle", "Schalter anzeigen"), bool("show_brightness", "Helligkeit anzeigen")] },
+    { value: "switch", label: "Schalter", domains: ["switch", "input_boolean"],
+      fields: [bool("show_toggle", "Schalter anzeigen")] },
     { value: "climate", label: "Klima", domains: ["climate"],
-      fields: [{ name: "step", label: "Temperaturschritt (optional)", selector: { number: { min: 0.1, max: 5, step: 0.1, mode: "box" } } }] },
-    { value: "cover", label: "Cover", domains: ["cover"] },
-    { value: "fan", label: "Ventilator", domains: ["fan"] },
-    { value: "media_player", label: "Media", domains: ["media_player"] },
-    { value: "lock", label: "Schloss", domains: ["lock"] },
+      fields: [
+        { name: "step", label: "Temperaturschritt (optional)", selector: { number: { min: 0.1, max: 5, step: 0.1, mode: "box" } } },
+        bool("show_temperature_controls", "Temperatur-Steuerung anzeigen"),
+        bool("show_hvac_modes", "Modi anzeigen"), bool("show_climate_presets", "Voreinstellungen anzeigen"),
+        bool("show_climate_fan_modes", "Lüftungsstufen anzeigen"), bool("show_climate_swing_modes", "Schwenken anzeigen"),
+        bool("show_humidity", "Luftfeuchte anzeigen"),
+      ] },
+    { value: "cover", label: "Cover", domains: ["cover"],
+      fields: [bool("show_cover_controls", "Auf/Stopp/Zu anzeigen"), bool("show_cover_position", "Position anzeigen"), bool("show_cover_tilt", "Neigung anzeigen")] },
+    { value: "fan", label: "Ventilator", domains: ["fan"],
+      fields: [bool("show_toggle", "Schalter anzeigen"), bool("show_percentage", "Stufe anzeigen"), bool("show_fan_presets", "Voreinstellungen anzeigen"), bool("show_fan_oscillate", "Oszillation anzeigen"), bool("show_fan_direction", "Richtung anzeigen")] },
+    { value: "media_player", label: "Media", domains: ["media_player"],
+      fields: [bool("show_media_controls", "Transport anzeigen"), bool("show_volume", "Lautstärke anzeigen"), bool("show_mute", "Stumm anzeigen"), bool("show_source", "Quelle anzeigen"), bool("show_media_power", "Power anzeigen")] },
+    { value: "lock", label: "Schloss", domains: ["lock"],
+      fields: [bool("show_toggle", "Schalter anzeigen")] },
     { value: "alarm_control_panel", label: "Alarm", domains: ["alarm_control_panel"],
-      fields: [{ name: "code", label: "Code (optional, falls erforderlich)", selector: { text: {} } }] },
+      fields: [{ name: "code", label: "Code (optional, falls erforderlich)", selector: { text: {} } }, bool("show_alarm_controls", "Bedienelemente anzeigen")] },
     { value: "action", label: "Szene / Skript / Taster", domains: ["scene", "script", "button"] },
-    { value: "lightgroup", label: "Licht-Gruppe", domains: ["light"], multi: true, entityLabel: "Lichter" },
+    { value: "lightgroup", label: "Licht-Gruppe", domains: ["light"], multi: true, entityLabel: "Lichter",
+      fields: [bool("show_toggle", "Schalter anzeigen"), bool("show_brightness", "Helligkeit anzeigen")] },
   ],
   appearance: [
     { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
@@ -1644,6 +2087,8 @@ const DISPLAY_SPEC = {
   ],
 };
 const displayTypeDef = (t) => neoTypeDef(DISPLAY_SPEC, t);
+// Domains, die per Service ein-/ausschaltbar sind (für tap_action: toggle).
+const TOGGLABLE = new Set(["light", "switch", "input_boolean", "fan", "automation", "script", "siren", "humidifier", "remote", "media_player"]);
 // Effektiver Typ — Render-seitig (Editor nutzt dieselbe Ableitung über das Spec).
 function neoDisplayType(config) { return neoCapabilityType(config, DISPLAY_SPEC); }
 
@@ -1873,9 +2318,18 @@ class NeoDisplayCard extends NeoBaseCard {
 
   _bindEvents() {
     const id = this._config?.entity;
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      if (id) this._modCtx().moreInfo(id);
+    // Aktions-System: Default-Tap = More-Info. "toggle" nur, wenn die Entität
+    // togglebar ist (sonst ignorieren — kein kaputter Service-Aufruf).
+    this._bindCardActions(this.shadowRoot.getElementById("card"), {
+      entity: id,
+      toggle: () => {
+        if (!id) return;
+        const dom = id.split(".")[0];
+        if (!TOGGLABLE.has(dom)) return;
+        const s = this._state(id);
+        this._callService(dom, s?.state === "on" ? "turn_off" : "turn_on", { entity_id: id });
+      },
+      tapDefault: () => { if (id) this._modCtx().moreInfo(id); },
     });
   }
 
@@ -1906,13 +2360,15 @@ class NeoHeaderCard extends NeoBaseCard {
     const variant = this._config?.variant || "header";
     const acc = NEO_ACCENTS[this._config?.accent] || NEO_ACCENTS.blue;
     const title = this._config?.title || "";
+    // Nur klickbar wirken, wenn auch eine Aktion konfiguriert ist.
+    const cursor = this._hasAnyAction() ? "cursor:pointer;" : "";
 
     if (variant === "divider") {
       const lbl = title
         ? `<span style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--neo-text3);">${escapeHtml(title)}</span>
            <div style="flex:1;height:1px;background:var(--neo-line2);"></div>`
         : "";
-      return `<div style="display:flex;align-items:center;gap:12px;padding:8px 2px;">
+      return `<div id="card" style="display:flex;align-items:center;gap:12px;padding:8px 2px;${cursor}">
         <div style="flex:1;height:1px;background:var(--neo-line2);"></div>${lbl}</div>`;
     }
 
@@ -1924,7 +2380,7 @@ class NeoHeaderCard extends NeoBaseCard {
       : `<div style="width:4px;height:28px;border-radius:2px;flex-shrink:0;background:${acc.c};"></div>`;
 
     return `
-      <div style="display:flex;align-items:center;gap:12px;padding:8px 4px;">
+      <div id="card" style="display:flex;align-items:center;gap:12px;padding:8px 4px;${cursor}">
         ${lead}
         <div style="min-width:0;">
           <div style="font-size:18px;font-weight:700;letter-spacing:-.2px;color:var(--neo-text1);
@@ -1932,6 +2388,12 @@ class NeoHeaderCard extends NeoBaseCard {
           ${subtitle ? `<div style="font-size:13px;color:var(--neo-text2);margin-top:1px;">${escapeHtml(subtitle)}</div>` : ""}
         </div>
       </div>`;
+  }
+
+  // Aktions-System (navigate/url/call-service/none; Default: none).
+  // Header und Trenner bleiben ohne konfigurierte Aktion reine Layout-Bausteine.
+  _bindEvents() {
+    this._bindCardActions(this.shadowRoot.getElementById("card"), {});
   }
 
   static getConfigElement() { return document.createElement("neo-header-card-editor"); }
@@ -3302,7 +3764,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.87", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.88", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3396,7 +3858,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.87 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.88 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

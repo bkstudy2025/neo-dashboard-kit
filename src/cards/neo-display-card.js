@@ -52,6 +52,8 @@ const DISPLAY_SPEC = {
   ],
 };
 const displayTypeDef = (t) => neoTypeDef(DISPLAY_SPEC, t);
+// Domains, die per Service ein-/ausschaltbar sind (für tap_action: toggle).
+const TOGGLABLE = new Set(["light", "switch", "input_boolean", "fan", "automation", "script", "siren", "humidifier", "remote", "media_player"]);
 // Effektiver Typ — Render-seitig (Editor nutzt dieselbe Ableitung über das Spec).
 export function neoDisplayType(config) { return neoCapabilityType(config, DISPLAY_SPEC); }
 
@@ -281,9 +283,18 @@ class NeoDisplayCard extends NeoBaseCard {
 
   _bindEvents() {
     const id = this._config?.entity;
-    this.shadowRoot.getElementById("card")?.addEventListener("click", (e) => {
-      if (this._moduleTap(e)) return;
-      if (id) this._modCtx().moreInfo(id);
+    // Aktions-System: Default-Tap = More-Info. "toggle" nur, wenn die Entität
+    // togglebar ist (sonst ignorieren — kein kaputter Service-Aufruf).
+    this._bindCardActions(this.shadowRoot.getElementById("card"), {
+      entity: id,
+      toggle: () => {
+        if (!id) return;
+        const dom = id.split(".")[0];
+        if (!TOGGLABLE.has(dom)) return;
+        const s = this._state(id);
+        this._callService(dom, s?.state === "on" ? "turn_off" : "turn_on", { entity_id: id });
+      },
+      tapDefault: () => { if (id) this._modCtx().moreInfo(id); },
     });
   }
 
