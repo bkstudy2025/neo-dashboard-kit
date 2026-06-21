@@ -532,12 +532,16 @@ class NeoControlCard extends NeoBaseCard {
 const bool = (name, label) => ({ name, label, selector: { boolean: {} } });
 const CONTROL_SPEC = {
   typeKey: "device_type", typeLabel: "Typ", entityLabel: "Entität (Gerät)",
+  actions: true, // Aktionen-Abschnitt (tap/hold/double_tap) im Editor
   types: [
     { value: "light", label: "Licht", domains: ["light"],
+      defaults: { show_toggle: true, show_brightness: true },
       fields: [bool("show_toggle", "Schalter anzeigen"), bool("show_brightness", "Helligkeit anzeigen")] },
     { value: "switch", label: "Schalter", domains: ["switch", "input_boolean"],
+      defaults: { show_toggle: true },
       fields: [bool("show_toggle", "Schalter anzeigen")] },
     { value: "climate", label: "Klima", domains: ["climate"],
+      defaults: { show_temperature_controls: true, show_hvac_modes: true, show_climate_presets: true },
       fields: [
         { name: "step", label: "Temperaturschritt (optional)", selector: { number: { min: 0.1, max: 5, step: 0.1, mode: "box" } } },
         bool("show_temperature_controls", "Temperatur-Steuerung anzeigen"),
@@ -546,17 +550,23 @@ const CONTROL_SPEC = {
         bool("show_humidity", "Luftfeuchte anzeigen"),
       ] },
     { value: "cover", label: "Cover", domains: ["cover"],
+      defaults: { show_cover_controls: true, show_cover_position: true, show_cover_tilt: true },
       fields: [bool("show_cover_controls", "Auf/Stopp/Zu anzeigen"), bool("show_cover_position", "Position anzeigen"), bool("show_cover_tilt", "Neigung anzeigen")] },
     { value: "fan", label: "Ventilator", domains: ["fan"],
+      defaults: { show_toggle: true, show_percentage: true, show_fan_presets: true, show_fan_oscillate: true, show_fan_direction: true },
       fields: [bool("show_toggle", "Schalter anzeigen"), bool("show_percentage", "Stufe anzeigen"), bool("show_fan_presets", "Voreinstellungen anzeigen"), bool("show_fan_oscillate", "Oszillation anzeigen"), bool("show_fan_direction", "Richtung anzeigen")] },
     { value: "media_player", label: "Media", domains: ["media_player"],
+      defaults: { show_media_controls: true, show_volume: true, show_mute: true },
       fields: [bool("show_media_controls", "Transport anzeigen"), bool("show_volume", "Lautstärke anzeigen"), bool("show_mute", "Stumm anzeigen"), bool("show_source", "Quelle anzeigen"), bool("show_media_power", "Power anzeigen")] },
     { value: "lock", label: "Schloss", domains: ["lock"],
+      defaults: { show_toggle: true },
       fields: [bool("show_toggle", "Schalter anzeigen")] },
     { value: "alarm_control_panel", label: "Alarm", domains: ["alarm_control_panel"],
+      defaults: { show_alarm_controls: true },
       fields: [{ name: "code", label: "Code (optional, falls erforderlich)", selector: { text: {} } }, bool("show_alarm_controls", "Bedienelemente anzeigen")] },
     { value: "action", label: "Szene / Skript / Taster", domains: ["scene", "script", "button"] },
     { value: "lightgroup", label: "Licht-Gruppe", domains: ["light"], multi: true, entityLabel: "Lichter",
+      defaults: { show_toggle: true, show_brightness: true },
       fields: [bool("show_toggle", "Schalter anzeigen"), bool("show_brightness", "Helligkeit anzeigen")] },
   ],
   appearance: [

@@ -156,11 +156,16 @@ heading and divider stay pure layout elements.
 
 ## Actions (`tap_action` · `hold_action` · `double_tap_action`)
 
-All three cards support a Home-Assistant-style action system. Actions are
-configured via **YAML** (nested objects).
+All three cards support a Home-Assistant-style action system — configurable in
+the **visual editor** *and* via **YAML**.
+
+**In the editor:** the **Actions** section → **Tap** / **Hold** / **Double tap**.
+Pick an action and the matching fields appear automatically (navigation path,
+URL, service with target/data). It's the native Home Assistant action editor.
+**"Default"** removes the action again (the card's default behaviour applies).
 
 **Supported actions:** `more-info` · `toggle` · `navigate` · `url` ·
-`call-service` · `none`.
+`call-service` (HA: `perform-action`) · `none`.
 
 **Defaults:**
 
@@ -201,9 +206,37 @@ tap_action:
     text: Start light scene?
 ```
 
+```yaml
+# All three gestures on one card
+type: custom:neo-card
+card_type: neo-control-card
+device_type: light
+entity: light.living_room
+tap_action:
+  action: more-info
+hold_action:
+  action: toggle
+double_tap_action:
+  action: navigate
+  navigation_path: /lovelace/lights
+```
+
+```yaml
+# Header as a navigation element
+type: custom:neo-card
+card_type: neo-header-card
+variant: header
+title: Living room
+tap_action:
+  action: navigate
+  navigation_path: /lovelace/living_room
+```
+
 **Confirmation:** `confirmation: true` shows a generic prompt ("Really run this
 action?"), `confirmation.text` a custom one. A `window.confirm` runs before
 execution — nothing happens if cancelled.
+*Note:* like Home Assistant core, the action editor has no field for this —
+`confirmation` is set via **YAML** and is preserved across editor edits.
 
 **`call-service`:** `service: "domain.service"`, optional `target`, `data`
 (or `service_data` as an alias).

@@ -46,6 +46,7 @@ const WEATHER_COND = {
 const DISPLAY_SPEC = {
   typeKey: "display_type", typeLabel: "Typ", entityLabel: "Entität",
   types: DISPLAY_TYPES,
+  actions: true, actionDefaults: { tapDefault: "more-info" }, // Default-Tap = More-Info
   appearance: [
     { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
     NEO_LAYOUT_FIELD,

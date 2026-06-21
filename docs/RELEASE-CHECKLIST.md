@@ -7,12 +7,20 @@ A practical pre-release checklist. Tick everything before tagging a release.
 ## Cards — test matrices
 
 ### Actions (all cards)
-- [ ] `tap_action`: more-info / toggle / navigate / url / call-service / none
-- [ ] `hold_action` (press & hold ~0.5s)
-- [ ] `double_tap_action`
-- [ ] `confirmation: true` (generic prompt) and `confirmation.text` (custom)
+**Editor (UI):**
+- [ ] Control / Display / Header each show an **Actions** section (Tap / Hold / Double tap)
+- [ ] Native HA action editor renders; conditional fields appear per action
+- [ ] tap/hold/double configurable for: more-info · toggle · navigate · url · perform-action · none
+- [ ] **"Default"** removes the action key from config (no `action: default` saved)
+- [ ] perform-action: service + target + data editable via UI
+**Runtime:**
+- [ ] `tap_action`: more-info / toggle / navigate / url / call-service(perform-action) / none
+- [ ] `hold_action` (press & hold ~0.5s); does not also fire tap
+- [ ] `double_tap_action`; no conflict with single tap
+- [ ] `confirmation: true` (generic prompt) and `confirmation.text` (custom); preserved across UI edits
 - [ ] Invalid URL / invalid service does **not** crash (ignored)
 - [ ] Internal buttons/sliders do **not** double-trigger the card action
+- [ ] Display markdown / Header without entity → more-info does not crash
 
 ### Neo Control (`neo-control-card`)
 - [ ] Light dimmable: toggle + brightness; non-dimmable: no slider, no false 0 %
@@ -28,7 +36,8 @@ A practical pre-release checklist. Tick everything before tagging a release.
 - [ ] Capability-aware: unsupported controls are hidden
 - [ ] `unknown`/`unavailable` renders cleanly (no broken buttons/active state)
 - [ ] Empty state when no type/entity is selected
-- [ ] Editor: type → entity flow, visibility toggles, conditional fields, no console errors
+- [ ] Editor: type → entity flow, conditional fields, no console errors
+- [ ] Editor: `show_*` visibility toggles reflect their on-by-default state after picking a type
 
 ### Neo Display (`neo-display-card`)
 - [ ] Sensor value + unit

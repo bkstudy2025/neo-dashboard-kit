@@ -158,11 +158,17 @@ Reiner Layout-Baustein (kein Gerät) zum Strukturieren.
 
 ## Aktionen (`tap_action` · `hold_action` · `double_tap_action`)
 
-Alle drei Karten unterstützen ein Home-Assistant-übliches Aktions-System.
-Aktionen werden per **YAML** konfiguriert (verschachtelte Objekte).
+Alle drei Karten unterstützen ein Home-Assistant-übliches Aktions-System —
+konfigurierbar **im visuellen Editor** *und* per **YAML**.
+
+**Im Editor:** Abschnitt **Aktionen** → **Tippen** / **Halten** /
+**Doppeltippen**. Dort wählst du die Aktion und die passenden Felder erscheinen
+automatisch (Navigationspfad, URL, Service mit Ziel/Daten). Es ist der native
+Home-Assistant-Aktions-Editor. **„Standard"** entfernt die Aktion wieder
+(Karten-Standardverhalten greift).
 
 **Unterstützte Aktionen:** `more-info` · `toggle` · `navigate` · `url` ·
-`call-service` · `none`.
+`call-service` (HA: `perform-action`) · `none`.
 
 **Defaults:**
 
@@ -204,9 +210,38 @@ tap_action:
     text: Lichtszene starten?
 ```
 
+```yaml
+# Alle drei Gesten an einer Karte
+type: custom:neo-card
+card_type: neo-control-card
+device_type: light
+entity: light.wohnzimmer
+tap_action:
+  action: more-info
+hold_action:
+  action: toggle
+double_tap_action:
+  action: navigate
+  navigation_path: /lovelace/licht
+```
+
+```yaml
+# Header als Navigations-Element
+type: custom:neo-card
+card_type: neo-header-card
+variant: header
+title: Wohnzimmer
+tap_action:
+  action: navigate
+  navigation_path: /lovelace/wohnzimmer
+```
+
 **Bestätigung:** `confirmation: true` zeigt einen generischen Text
 („Aktion wirklich ausführen?"), `confirmation.text` einen eigenen. Vor der
 Ausführung erscheint ein `window.confirm` — bei Abbruch passiert nichts.
+*Hinweis:* Wie im Home-Assistant-Kern hat der Aktions-Editor kein eigenes
+Feld dafür — `confirmation` wird per **YAML** gesetzt und bleibt bei
+Editor-Änderungen erhalten.
 
 **`call-service`:** `service: "domain.service"`, optional `target`, `data`
 (bzw. `service_data` als Alias).
