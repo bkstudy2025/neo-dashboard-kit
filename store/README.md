@@ -1,5 +1,14 @@
 # Neo Dashboard — Store (Karten & Module)
 
+> **Release-Hinweis:** Für den ersten Release ist `store/index.json` **bewusst
+> leer (`[]`)** — der Fokus liegt auf den **Standardkarten**. Der Store ist
+> technisch voll vorbereitet (Laden, Validierung, CI). **Offizielle
+> Community-Module werden nach dem Release kuratiert ergänzt.** Nutzer können
+> jederzeit **eigene Module per „Code einfügen"** verwenden, und die Community
+> kann Beiträge per **Discussion oder Pull Request** vorschlagen. Beispiel-
+> Module als Vorlage liegen unter
+> [`docs/examples/store-modules/`](../docs/examples/store-modules/).
+
 Der **Store** im Karten-Editor (Bereich „Erweiterungen" → **➕ Karte oder Modul hinzufügen**)
 liest seinen Katalog **live** aus der `index.json` in diesem Ordner. Der Editor
 lädt sie über **`raw.githubusercontent.com`** (mit Cache-Busting), die einzelnen
@@ -55,11 +64,11 @@ window.NeoDashboard.registerModule({
 });
 ```
 
-Siehe [`modules/neo-state-glow.js`](./modules/neo-state-glow.js) als vollständiges
-Beispiel.
+Siehe [`docs/examples/store-modules/neo-state-glow.js`](../docs/examples/store-modules/neo-state-glow.js)
+als vollständiges Beispiel.
 
 Für eine **Karte** (statt Layer-Modul) siehe
-[`modules/neo-community-example-card.js`](./modules/neo-community-example-card.js)
+[`docs/examples/store-modules/neo-community-example-card.js`](../docs/examples/store-modules/neo-community-example-card.js)
 als Referenz: eigenständig, `kind: "card"`, `author: "Community"`, mit
 Typed-Editor (`makeTypedEditor` / `capabilityType` / `typeDef`) und sicherer
 Ausgabe (`escapeHtml` / `escapeAttr` / `safeUrl`) — ohne externe Requests.

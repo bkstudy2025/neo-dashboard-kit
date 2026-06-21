@@ -64,7 +64,7 @@ window.NeoDashboard.registerModule({
 **`ctx`** = `{ hass, config, settings, card, callService, navigate, moreInfo }`
 (`settings` = die im Editor gesetzten Werte deines Moduls.)
 
-Vollständiges Beispiel: [`store/modules/neo-state-glow.js`](../../store/modules/neo-state-glow.js).
+Vollständiges Beispiel: [`docs/examples/store-modules/neo-state-glow.js`](../examples/store-modules/neo-state-glow.js).
 
 ## Ein Modul in den Store stellen
 Der Katalog liegt im Repo unter [`store/`](../../store/): pro Modul eine Datei

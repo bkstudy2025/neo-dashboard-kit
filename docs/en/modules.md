@@ -62,7 +62,7 @@ window.NeoDashboard.registerModule({
 **`ctx`** = `{ hass, config, settings, card, callService, navigate, moreInfo }`
 (`settings` = your module’s values set in the editor.)
 
-Full example: [`store/modules/neo-state-glow.js`](../../store/modules/neo-state-glow.js).
+Full example: [`docs/examples/store-modules/neo-state-glow.js`](../examples/store-modules/neo-state-glow.js).
 
 ## Publishing to the store
 The catalog lives under [`store/`](../../store/): one file `store/modules/<id>.js`

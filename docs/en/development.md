@@ -277,7 +277,7 @@ window.NeoDashboard.registerModule({
 });
 ```
 
-See full examples in [`store/modules/`](../../store/modules/).
+See full examples in [`docs/examples/store-modules/`](../examples/store-modules/).
 
 ---
 
