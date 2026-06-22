@@ -117,7 +117,10 @@ kaputte Einträge werden nicht gemergt. Details:
 | `icon`, `image`, `description`, `author` | Anzeige im Store |
 
 > Die **`index.json`** wird über `raw.githubusercontent.com` geladen und ist nach
-> einem Merge in ~5 min bzw. sofort per **„⟳ Store aktualisieren"** aktuell.
+> einem Merge in ~5 min bzw. sofort per **„⟳ Store aktualisieren"** aktuell. Der
+> Store lädt den Katalog außerdem **automatisch neu**, wenn der „Hinzufügen"-
+> Bereich nach kurzer Zeit erneut geöffnet wird (TTL ~30 s) — so erscheinen neue
+> Versionen/Beschreibungen, ohne dass man „Store aktualisieren" suchen muss.
 >
 > **Modul-`url` für veröffentlichte Versionen auf einen Commit-SHA (oder
 > Release-Tag) pinnen — nicht `@main`.** jsDelivr cacht `@main` über Stunden und

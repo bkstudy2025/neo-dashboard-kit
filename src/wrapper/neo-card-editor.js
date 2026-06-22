@@ -456,17 +456,27 @@ class NeoCardEditor extends HTMLElement {
     host.querySelector("#nmod-addbtn").addEventListener("click", () => {
       this._addOpen = !open;
       this._renderAddArea();
-      if (this._addOpen && (this._addTab || "store") === "store" && !this._storeItems) this._loadStoreIndex();
+      if (this._addOpen && (this._addTab || "store") === "store" && this._storeNeedsLoad()) this._loadStoreIndex();
     });
     host.querySelectorAll(".nmod-tab").forEach((t) =>
       t.addEventListener("click", () => {
         this._addTab = t.getAttribute("data-tab");
         this._renderAddArea();
-        if (this._addTab === "store" && !this._storeItems) this._loadStoreIndex();
+        if (this._addTab === "store" && this._storeNeedsLoad()) this._loadStoreIndex();
       }));
     this._wireAddArea();
     // Auto-Laden, wenn die Add-Area (z. B. auf der Startseite) offen startet.
-    if (open && tab === "store" && !this._storeItems && !this._storeLoading) this._loadStoreIndex();
+    if (open && tab === "store" && this._storeNeedsLoad()) this._loadStoreIndex();
+  }
+
+  // Soll der Live-Katalog (neu) geladen werden? Noch nie geladen ODER älter als
+  // die TTL → ja. So holt sich der Store frische Katalog-Daten (neue Versionen/
+  // Beschreibungen), ohne dass der Nutzer „Store aktualisieren" suchen muss —
+  // und ohne bei jedem Öffnen neu zu laden.
+  _storeNeedsLoad() {
+    if (this._storeLoading) return false;
+    if (!this._storeItems) return true;
+    return !this._storeFetchedAt || (Date.now() - this._storeFetchedAt) > 30000;
   }
 
   // Persistenter Kopf des Store-Tabs: Titel + dauerhaft sichtbarer
@@ -612,6 +622,7 @@ class NeoCardEditor extends HTMLElement {
         ? data
         : (Array.isArray(data?.modules) ? data.modules : []);
       this._storeItems = this._normalizeStoreItems(rawItems);
+      this._storeFetchedAt = Date.now(); // für TTL-basiertes Auto-Refresh
     } catch (e) {
       this._storeItems = [];
       this._storeErr = "Store-Index konnte nicht geladen werden. Prüfe die Internetverbindung und versuche es erneut.";
