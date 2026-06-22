@@ -29,6 +29,7 @@
 | Getting started | [Erste Schritte](docs/de/README.md) | [Getting started](docs/en/README.md) |
 | Cards | [Karten](docs/de/karten.md) | [Cards](docs/en/cards.md) |
 | Modules & Store | [Module & Store](docs/de/module.md) | [Modules & Store](docs/en/modules.md) |
+| Free vs Premium | [Free vs Premium](docs/de/free-vs-premium.md) | [Free vs Premium](docs/en/free-vs-premium.md) |
 | Development | [Entwicklung](docs/de/entwicklung.md) | [Development](docs/en/development.md) |
 
 ---
