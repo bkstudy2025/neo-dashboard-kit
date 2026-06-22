@@ -162,6 +162,15 @@ class NeoCardEditor extends HTMLElement {
   _enabledList() { return Array.isArray(this._config.modules) ? this._config.modules : []; }
   _isModEnabled(id) { return this._enabledList().some((m) => m.id === id); }
   _modSettings(id) { return this._enabledList().find((m) => m.id === id)?.settings || {}; }
+  // Default-Werte aus dem Modul-Manifest (config[].default). So sind sinnvolle
+  // Vorgaben (z. B. Akzentfarbe) im Editor sofort vorausgewählt.
+  _modDefaults(mod) {
+    const out = {};
+    (Array.isArray(mod?.config) ? mod.config : []).forEach((f) => {
+      if (f && f.name && f.default !== undefined) out[f.name] = f.default;
+    });
+    return out;
+  }
 
   _isInstalled(id) { return (this._installed || new Set()).has(id); }
 
@@ -283,7 +292,8 @@ class NeoCardEditor extends HTMLElement {
     if (isOpen) {
       const form = document.createElement("ha-form");
       form.schema = mod.config;
-      form.data = this._modSettings(mod.id);
+      // Manifest-Defaults zeigen (vorausgewählt), gespeicherte Werte gewinnen.
+      form.data = { ...this._modDefaults(mod), ...this._modSettings(mod.id) };
       if (this._hass) form.hass = this._hass;
       form.computeLabel = (s) => s.label || s.name;
       form.addEventListener("value-changed", (e) => {
@@ -299,7 +309,7 @@ class NeoCardEditor extends HTMLElement {
     const list = this._enabledList().slice();
     const idx = list.findIndex((m) => m.id === mod.id);
     if (on && idx < 0) {
-      list.push({ id: mod.id, settings: {} });
+      list.push({ id: mod.id, settings: this._modDefaults(mod) });
       // Frisch aktiviertes Modul mit Einstellungen automatisch aufklappen.
       if (Array.isArray(mod.config) && mod.config.length) this._openModuleId = mod.id;
     } else if (!on && idx >= 0) {

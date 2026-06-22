@@ -45,7 +45,7 @@
     name: "Neo Accent Wash",
     description: "Adds an always-on or state-aware accent background gradient to Neo cards.",
     icon: "🌈",
-    version: "1.0.2",
+    version: "1.0.3",
     author: "Community",
     target: "*",
 
@@ -53,6 +53,7 @@
       {
         name: "mode",
         label: "Display mode",
+        default: "always",
         selector: {
           select: {
             mode: "dropdown",
@@ -76,6 +77,7 @@
       {
         name: "color",
         label: "Accent color",
+        default: "blue",
         selector: {
           select: {
             mode: "dropdown",
@@ -96,11 +98,13 @@
       {
         name: "intensity",
         label: "Intensity",
+        default: 2,
         selector: { number: { min: 1, max: 5, step: 1, mode: "slider" } }
       },
       {
         name: "angle",
         label: "Gradient angle",
+        default: 160,
         selector: { number: { min: 0, max: 360, step: 5, mode: "box" } }
       }
     ],
