@@ -288,13 +288,18 @@ const NEO_LINKS = {
   // direkt in die Einreichungs-Kategorie "Community Cards & Modules".
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules",
   // Neo Store (Karten & Module) — Katalog liegt im Repo unter store/.
-  // index.json wird LIVE über raw.githubusercontent.com geladen: Änderungen auf
-  // main erscheinen in ~5 min bzw. sofort per "Store aktualisieren" (Cache-Bust),
-  // ganz OHNE neuen Kit-Release oder neues neo-dashboard.js-Bundle.
-  // Die einzelnen Modul-/Karten-Dateien (url im index.json) liegen weiter auf dem
-  // jsDelivr-CDN — neue Einträge sind neue Dateien (neue URL), also nie stale.
+  // index.json wird LIVE geladen, ganz OHNE neuen Kit-Release/Bundle:
+  //  - PRIMÄR über die GitHub-API (api.github.com/.../contents/...): Echtzeit,
+  //    KEIN Pfad-CDN-Cache → frisch gemergte Versionen erscheinen sofort.
+  //  - FALLBACK über raw.githubusercontent.com (falls die API mal scheitert,
+  //    z. B. Rate-Limit) — ~5 min CDN-Cache.
+  // Beide Quellen werden serverseitig über die Integration "Neo Dashboard Tools"
+  // geladen (CORS) und sind dort auf genau diesen Pfad beschränkt.
+  // Die einzelnen Modul-/Karten-Dateien (url im index.json) liegen auf jsDelivr
+  // und sind auf einen Commit-SHA gepinnt (unveränderlich, nie stale).
   // index.json = [{ id, kind?, name, description, target, author, version, icon, image, url, homepage }]
-  modulesIndex: "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/store/index.json",
+  modulesIndex: "https://api.github.com/repos/bkstudy2025/neo-dashboard-kit/contents/store/index.json?ref=main",
+  modulesIndexFallback: "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/store/index.json",
   modulesRepo: "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store",
 };
 
@@ -3259,19 +3264,14 @@ class NeoCardEditor extends HTMLElement {
     const started = Date.now();
     this._storeLoading = true; this._storeErr = null; this._renderAddArea();
     try {
-      // Cache-Busting: erzwingt den frischen Live-Katalog (raw.githubusercontent),
-      // damit frisch gemergte Einträge ohne Release/Bundle sofort erscheinen.
-      const sep = NEO_LINKS.modulesIndex.includes("?") ? "&" : "?";
-      const txt = await NeoStore.fetch(`${NEO_LINKS.modulesIndex}${sep}t=${Date.now()}`);
-      let data;
+      // PRIMÄR: GitHub-API (Echtzeit, kein Pfad-CDN-Cache). FALLBACK: raw
+      // (~5 min Cache), falls die API scheitert (z. B. Rate-Limit).
+      let rawItems;
       try {
-        data = JSON.parse(txt);
+        rawItems = await this._fetchIndexArray(NEO_LINKS.modulesIndex);
       } catch (_e) {
-        throw new Error("invalid JSON");
+        rawItems = await this._fetchIndexArray(NEO_LINKS.modulesIndexFallback);
       }
-      const rawItems = Array.isArray(data)
-        ? data
-        : (Array.isArray(data?.modules) ? data.modules : []);
       this._storeItems = this._normalizeStoreItems(rawItems);
       this._storeFetchedAt = Date.now(); // für TTL-basiertes Auto-Refresh
     } catch (e) {
@@ -3284,6 +3284,17 @@ class NeoCardEditor extends HTMLElement {
     if (remaining > 0) await new Promise((r) => setTimeout(r, remaining));
     this._storeLoading = false;
     this._renderAddArea();
+  }
+
+  // Lädt eine Index-URL (cache-gebustet) und gibt das Item-Array zurück.
+  // Wirft, wenn die Antwort kein JSON-Array ist — damit der Aufrufer auf die
+  // Fallback-Quelle ausweichen kann.
+  async _fetchIndexArray(url) {
+    const sep = url.includes("?") ? "&" : "?";
+    const txt = await NeoStore.fetch(`${url}${sep}t=${Date.now()}`);
+    const data = JSON.parse(txt); // wirft bei ungültigem JSON
+    if (!Array.isArray(data)) throw new Error("index is not an array");
+    return data;
   }
 
   // Defensive parsing: keep the store usable even if a single catalog entry is
@@ -3957,7 +3968,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.94", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.95", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -4051,7 +4062,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.94 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.95 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

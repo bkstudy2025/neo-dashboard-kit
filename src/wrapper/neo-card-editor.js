@@ -618,19 +618,14 @@ class NeoCardEditor extends HTMLElement {
     const started = Date.now();
     this._storeLoading = true; this._storeErr = null; this._renderAddArea();
     try {
-      // Cache-Busting: erzwingt den frischen Live-Katalog (raw.githubusercontent),
-      // damit frisch gemergte Einträge ohne Release/Bundle sofort erscheinen.
-      const sep = NEO_LINKS.modulesIndex.includes("?") ? "&" : "?";
-      const txt = await NeoStore.fetch(`${NEO_LINKS.modulesIndex}${sep}t=${Date.now()}`);
-      let data;
+      // PRIMÄR: GitHub-API (Echtzeit, kein Pfad-CDN-Cache). FALLBACK: raw
+      // (~5 min Cache), falls die API scheitert (z. B. Rate-Limit).
+      let rawItems;
       try {
-        data = JSON.parse(txt);
+        rawItems = await this._fetchIndexArray(NEO_LINKS.modulesIndex);
       } catch (_e) {
-        throw new Error("invalid JSON");
+        rawItems = await this._fetchIndexArray(NEO_LINKS.modulesIndexFallback);
       }
-      const rawItems = Array.isArray(data)
-        ? data
-        : (Array.isArray(data?.modules) ? data.modules : []);
       this._storeItems = this._normalizeStoreItems(rawItems);
       this._storeFetchedAt = Date.now(); // für TTL-basiertes Auto-Refresh
     } catch (e) {
@@ -643,6 +638,17 @@ class NeoCardEditor extends HTMLElement {
     if (remaining > 0) await new Promise((r) => setTimeout(r, remaining));
     this._storeLoading = false;
     this._renderAddArea();
+  }
+
+  // Lädt eine Index-URL (cache-gebustet) und gibt das Item-Array zurück.
+  // Wirft, wenn die Antwort kein JSON-Array ist — damit der Aufrufer auf die
+  // Fallback-Quelle ausweichen kann.
+  async _fetchIndexArray(url) {
+    const sep = url.includes("?") ? "&" : "?";
+    const txt = await NeoStore.fetch(`${url}${sep}t=${Date.now()}`);
+    const data = JSON.parse(txt); // wirft bei ungültigem JSON
+    if (!Array.isArray(data)) throw new Error("index is not an array");
+    return data;
   }
 
   // Defensive parsing: keep the store usable even if a single catalog entry is
