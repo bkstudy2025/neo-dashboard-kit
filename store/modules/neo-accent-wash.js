@@ -1,6 +1,6 @@
 // neo-accent-wash.js
 // Free community module for Neo Dashboard Kit.
-// Adds a soft accent-colored background gradient to Neo cards.
+// Adds an always-on or state-aware accent background gradient to Neo cards.
 
 (function () {
   const Neo = window.NeoDashboard;
@@ -43,21 +43,34 @@
   Neo.registerModule({
     id: "neo-accent-wash",
     name: "Neo Accent Wash",
-    description: "Adds a soft accent-colored background gradient to Neo cards.",
+    description: "Adds an always-on or state-aware accent background gradient to Neo cards.",
     icon: "🌈",
-    version: "1.0.1",
+    version: "1.0.2",
     author: "Community",
     target: "*",
 
     config: [
       {
+        name: "mode",
+        label: "Display mode",
+        selector: {
+          select: {
+            mode: "dropdown",
+            options: [
+              { value: "always", label: "Always" },
+              { value: "state", label: "When entity is active" }
+            ]
+          }
+        }
+      },
+      {
         name: "entity",
-        label: "Entity optional",
+        label: "Entity optional (mode: when active)",
         selector: { entity: {} }
       },
       {
         name: "active_states",
-        label: "Active states optional, comma-separated",
+        label: "Active states optional, comma-separated (mode: when active)",
         selector: { text: {} }
       },
       {
@@ -89,11 +102,6 @@
         name: "angle",
         label: "Gradient angle",
         selector: { number: { min: 0, max: 360, step: 5, mode: "box" } }
-      },
-      {
-        name: "always_on",
-        label: "Always show background",
-        selector: { boolean: {} }
       }
     ],
 
@@ -143,8 +151,11 @@
       const stateObj = hasEntity ? ctx.hass?.states?.[entityId] : null;
       const activeStates = normalizeList(settings.active_states);
 
-      // No entity selected means visual-only mode, so show the wash immediately.
-      const active = !!settings.always_on || !hasEntity || isActiveState(stateObj?.state, activeStates);
+      // Display mode (default: always-on so "module enabled = style visible").
+      // Legacy "always_on: true" configs keep behaving as "always".
+      const mode = settings.mode || "always";
+      // mode "state": evaluate the entity; with no entity, still show (don't look broken).
+      const active = mode !== "state" || !hasEntity || isActiveState(stateObj?.state, activeStates);
       if (!active) return;
 
       const rgb = colorRgb(settings);
