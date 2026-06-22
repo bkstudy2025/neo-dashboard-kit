@@ -13,22 +13,32 @@ Keep the brand assets consistent across the repo and with
 `info.md` is intentionally **image-free** so the HACS info box renders without a
 broken image while HACS caches the description (see commit history).
 
-## How HACS shows the icon for this repo
+## How HACS shows the icon for this repo (researched, not guessed)
 
 Neo Dashboard Kit is a **Lovelace / frontend plugin**, not a custom integration.
 
+- HACS resolves a repository's store/list icon from the **Home Assistant brands
+  service, keyed by an integration *domain*** (e.g.
+  `https://brands.home-assistant.io/_/<domain>/icon.png`, with metadata from
+  `data-v2.hacs.xyz`). It does **not** read the repo's root `icon.png`/`logo.png`,
+  the README image, or any `hacs.json` field (HACS has no icon field).
+- A **frontend plugin has no integration domain**, and `home-assistant/brands`
+  has **no category for Lovelace plugins**. There is therefore **no supported
+  repo-side mechanism** to set the HACS list icon for a custom plugin — HACS shows
+  a **generic icon**. This is expected HACS behaviour and **cannot be fixed from
+  this repository**.
 - The **inline `brand/` mechanism** (HA 2026.3+) applies **only to custom
-  integrations** (`custom_components/<domain>/brand/`). It does **not** apply to
-  frontend plugins, so this repo does not ship a `brand/` folder.
-- For plugin repositories, HACS resolves the listing icon from
-  `home-assistant/brands` / the HACS data CDN. For a **custom (non-default)
-  repository**, HACS may fall back to a generic icon — this is a HACS-side
-  behaviour and is **not** configurable from the repository.
+  integrations** (`custom_components/<domain>/brand/`), so this plugin repo does
+  not ship a `brand/` folder. (The companion **Neo Dashboard Tools** integration
+  does — see its `BRANDING.md`.)
 - The README header logo is loaded directly from the repo via
   `raw.githubusercontent.com`, so it always renders regardless of HACS.
 
-If/when this repo is added to the HACS default store, an icon can be registered
-in `home-assistant/brands` under the plugin's name.
+> **Summary:** the generic Kit icon in HACS is a known limitation of how HACS
+> handles **frontend plugins**, not a missing/broken asset in this repo. Related
+> HACS discussion:
+> [hacs/integration#5223](https://github.com/hacs/integration/issues/5223),
+> [hacs/integration#5171](https://github.com/hacs/integration/issues/5171).
 
 ## Brand image guidelines (for reference)
 
