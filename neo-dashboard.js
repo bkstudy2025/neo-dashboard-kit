@@ -3097,17 +3097,27 @@ class NeoCardEditor extends HTMLElement {
     host.querySelector("#nmod-addbtn").addEventListener("click", () => {
       this._addOpen = !open;
       this._renderAddArea();
-      if (this._addOpen && (this._addTab || "store") === "store" && !this._storeItems) this._loadStoreIndex();
+      if (this._addOpen && (this._addTab || "store") === "store" && this._storeNeedsLoad()) this._loadStoreIndex();
     });
     host.querySelectorAll(".nmod-tab").forEach((t) =>
       t.addEventListener("click", () => {
         this._addTab = t.getAttribute("data-tab");
         this._renderAddArea();
-        if (this._addTab === "store" && !this._storeItems) this._loadStoreIndex();
+        if (this._addTab === "store" && this._storeNeedsLoad()) this._loadStoreIndex();
       }));
     this._wireAddArea();
     // Auto-Laden, wenn die Add-Area (z. B. auf der Startseite) offen startet.
-    if (open && tab === "store" && !this._storeItems && !this._storeLoading) this._loadStoreIndex();
+    if (open && tab === "store" && this._storeNeedsLoad()) this._loadStoreIndex();
+  }
+
+  // Soll der Live-Katalog (neu) geladen werden? Noch nie geladen ODER älter als
+  // die TTL → ja. So holt sich der Store frische Katalog-Daten (neue Versionen/
+  // Beschreibungen), ohne dass der Nutzer „Store aktualisieren" suchen muss —
+  // und ohne bei jedem Öffnen neu zu laden.
+  _storeNeedsLoad() {
+    if (this._storeLoading) return false;
+    if (!this._storeItems) return true;
+    return !this._storeFetchedAt || (Date.now() - this._storeFetchedAt) > 30000;
   }
 
   // Persistenter Kopf des Store-Tabs: Titel + dauerhaft sichtbarer
@@ -3253,6 +3263,7 @@ class NeoCardEditor extends HTMLElement {
         ? data
         : (Array.isArray(data?.modules) ? data.modules : []);
       this._storeItems = this._normalizeStoreItems(rawItems);
+      this._storeFetchedAt = Date.now(); // für TTL-basiertes Auto-Refresh
     } catch (e) {
       this._storeItems = [];
       this._storeErr = "Store-Index konnte nicht geladen werden. Prüfe die Internetverbindung und versuche es erneut.";
@@ -3936,7 +3947,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.92", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.93", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -4030,7 +4041,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.92 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.93 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
