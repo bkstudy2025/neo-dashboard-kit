@@ -545,8 +545,13 @@ const EN = {
   "✓ Modul „{name}” aktualisiert.": "✓ Module “{name}” updated.",
   "Speichern fehlgeschlagen: {err}": "Saving failed: {err}",
   "Installiere …": "Installing …",
+  "Aktualisiere …": "Updating …",
   "✓ „{name}” installiert.": "✓ “{name}” installed.",
+  "✓ „{name}” aktualisiert.": "✓ “{name}” updated.",
   "Installation fehlgeschlagen: {err}": "Installation failed: {err}",
+  "Aktualisierung fehlgeschlagen: {err}": "Update failed: {err}",
+  "Update verfügbar": "Update available",
+  "Installiert:": "Installed:", "Store:": "Store:",
   "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":
     "Module removed. (Already-loaded code disappears after a reload.)",
   // Reorder / Aktionen
@@ -3007,6 +3012,22 @@ class NeoCardEditor extends HTMLElement {
     }
     return false;
   }
+  // Update verfügbar? Store-Version vorhanden, installierte Version vorhanden und
+  // beide unterschiedlich. Store neuer → ja; installiert neuer (Downgrade) → nein;
+  // unterschiedlich, aber nicht numerisch vergleichbar → ja (z. B. "dev"≠"1.0.1").
+  _hasUpdate(installedV, storeV) {
+    if (!installedV || !storeV) return false;
+    if (String(installedV) === String(storeV)) return false;
+    if (this._verGt(storeV, installedV)) return true;
+    if (this._verGt(installedV, storeV)) return false;
+    return true;
+  }
+  // Cache-Busting NUR für manuelles Installieren/Aktualisieren — so lädt jsDelivr
+  // (@main) garantiert die frische Datei. Die URL in store/index.json bleibt clean.
+  _cacheBustUrl(url) {
+    const sep = url.includes("?") ? "&" : "?";
+    return `${url}${sep}t=${Date.now()}`;
+  }
   // Autor als farbiger Chip (Premium=Gold, Community=Türkis, sonst Standard) —
   // damit Herkunft/Vertrauen auf einen Blick erkennbar ist.
   _authorChip(author) {
@@ -3025,17 +3046,21 @@ class NeoCardEditor extends HTMLElement {
   _storeRow(o) {
     const homepage = safeUrl(o.homepage);
     const status = o.installed
-      ? (o.update
-          ? ` <span class="nmod-badge upd">⬆ ${this._t("Update")} → v${escapeHtml(o.update)}</span>`
+      ? (o.hasUpdate
+          ? ` <span class="nmod-badge upd">⬆ ${this._t("Update verfügbar")}</span>`
           : ` <span class="nmod-badge ok">${this._t("✓ Installiert")}</span>`)
       : "";
+    // Bei Update beide Versionen zeigen, sonst die (installierte bzw. Store-)Version.
+    const verLine = o.hasUpdate
+      ? `<span class="nmod-ver">${this._t("Installiert:")} v${escapeHtml(o.installedVersion)} · ${this._t("Store:")} v${escapeHtml(o.storeVersion)}</span>`
+      : (o.version ? `<span class="nmod-ver">v${escapeHtml(o.version)}</span>` : "");
     return `<div class="nmod-store">
         ${this._previewTile(o)}
         <div class="nmod-store-h">
           <span class="nmod-ic">${escapeHtml(o.icon || "🧩")}</span>
           <div class="nmod-meta">
             <div class="nmod-name">${escapeHtml(o.name)} <span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
-            <div class="nmod-sub">${this._authorChip(o.author)}${o.version ? `<span class="nmod-ver">v${escapeHtml(o.version)}</span>` : ""}</div>
+            <div class="nmod-sub">${this._authorChip(o.author)}${verLine}</div>
           </div>
         </div>
         ${o.description ? `<div class="nmod-desc" style="margin-top:8px;">${escapeHtml(o.description)}</div>` : ""}
@@ -3131,12 +3156,15 @@ class NeoCardEditor extends HTMLElement {
     const catalogRows = catalog.map((it) => {
       const installed = this._isInstalled(it.id);
       const reg = this._addonMeta(it.id);
-      const update = installed && this._verGt(it.version, reg.version) ? it.version : null;
-      const showInstall = !installed || !!update; // installiert & aktuell → nur Entfernen/Info
+      const installedVersion = installed ? reg.version : null;
+      const storeVersion = it.version;
+      const hasUpdate = installed && this._hasUpdate(installedVersion, storeVersion);
+      const showInstall = !installed || hasUpdate; // installiert & aktuell → nur Entfernen/Info
       return this._storeRow({
         icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
-        version: (installed && reg.version) || it.version, kind: (reg.isCard || it.kind === "card") ? "Karte" : "Modul",
-        installed, update, homepage: it.homepage || it.repo, image: it.image, description: it.description,
+        version: installedVersion || storeVersion, installedVersion, storeVersion,
+        kind: (reg.isCard || it.kind === "card") ? "Karte" : "Modul",
+        installed, hasUpdate, homepage: it.homepage || it.repo, image: it.image, description: it.description,
         // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
         // gefilterte Liste zwischen Render und Klick ändert.
         installId: showInstall ? it.id : "", installLabel: installed ? "Aktualisieren" : "Installieren",
@@ -3183,7 +3211,10 @@ class NeoCardEditor extends HTMLElement {
     });
     this._modPanel.querySelectorAll("[data-install-id]").forEach((b) =>
       b.addEventListener("click", () => {
+        if (b.disabled) return;
         const id = b.getAttribute("data-install-id");
+        b.disabled = true; // Doppelklick verhindern
+        b.textContent = this._t(this._isInstalled(id) ? "Aktualisiere …" : "Installiere …");
         this._installFromStore((this._storeItems || []).find((it) => it.id === id));
       }));
     this._modPanel.querySelectorAll("[data-uninstall]").forEach((b) =>
@@ -3281,17 +3312,25 @@ class NeoCardEditor extends HTMLElement {
   }
 
   async _installFromStore(item) {
-    if (!item) return;
-    this._msg(this._t("Installiere …"));
+    if (!item || this._installBusy) return;
+    this._installBusy = true;
+    const updating = this._isInstalled(item.id);
+    const name = item.name || item.id;
+    this._msg(this._t(updating ? "Aktualisiere …" : "Installiere …"));
     try {
-      const code = await NeoStore.fetch(item.url);
+      // Cache-Busting → frische Datei (auch bei jsDelivr @main), für Install UND Update.
+      const code = await NeoStore.fetch(this._cacheBustUrl(item.url));
       const res = neoLoadModule(code); // registriert das Modul sofort
       if (!res.ok) throw new Error("Code-Fehler");
+      // Nur bei erfolgreichem Laden serverseitig speichern (keine halbe Aktualisierung).
       if (NeoStore.available()) await NeoStore.save(item.id, code);
-      await this._refreshInstalled();
-      this._msg(this._t("✓ „{name}” installiert.").replace("{name}", item.name || item.id));
+      await this._refreshInstalled(); // re-rendert → neue Version + Badge
+      this._msg(this._t(updating ? "✓ „{name}” aktualisiert." : "✓ „{name}” installiert.").replace("{name}", name));
     } catch (e) {
-      this._msg(this._t("Installation fehlgeschlagen: {err}").replace("{err}", e?.message || e), true);
+      this._renderAddArea(); // Buttons wiederherstellen (alte Version bleibt erhalten)
+      this._msg(this._t(updating ? "Aktualisierung fehlgeschlagen: {err}" : "Installation fehlgeschlagen: {err}").replace("{err}", e?.message || e), true);
+    } finally {
+      this._installBusy = false;
     }
   }
 
@@ -3889,7 +3928,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.90", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.91", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -3983,7 +4022,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.90 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.91 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
