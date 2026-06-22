@@ -117,12 +117,16 @@ function validate() {
       err(`${ref}: version "${item.version}" is not SemVer-like (X.Y.Z).`);
     }
 
-    // url rules.
+    // url rules. Any ref is accepted (@<sha>, @<tag>, @main), but published
+    // entries should pin to an immutable commit SHA / tag — jsDelivr caches
+    // @main for hours and can serve stale files, so @main only warns.
     if (typeof item.url === "string" && item.url) {
       if (!item.url.startsWith(URL_PREFIX)) {
         err(`${ref}: url must start with ${URL_PREFIX}<ref> (no other host/repo).`);
       } else if (typeof id === "string" && id && !item.url.endsWith(`/store/modules/${id}.js`)) {
         err(`${ref}: url must end with /store/modules/${id}.js`);
+      } else if (item.url.startsWith(`${URL_PREFIX}main/`)) {
+        warn(`${ref}: url uses @main — pin to a commit SHA or tag for published versions (jsDelivr may serve stale @main content).`);
       }
     }
 

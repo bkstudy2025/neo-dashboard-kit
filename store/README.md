@@ -111,19 +111,29 @@ kaputte Einträge werden nicht gemergt. Details:
 |---|---|
 | `id` | eindeutige ID (muss der `id` im Modul entsprechen) |
 | `target` | für welche Karte(n) das Modul angeboten wird |
-| `url` | jsDelivr-URL zur eigenständigen Modul-Datei |
-| `version` | Versionsnummer — der Store vergleicht sie mit der installierten und zeigt **„⬆ Update verfügbar"** an, wenn sie abweicht |
+| `url` | jsDelivr-URL zur eigenständigen Modul-Datei — für veröffentlichte Versionen **auf einen Commit-SHA oder Release-Tag gepinnt**, nicht `@main` |
+| `version` | Versionsnummer — der Store vergleicht sie mit der installierten und zeigt **„⬆ Update verfügbar"** an, wenn sie abweicht. **Muss** zur Manifest-`version` der unter `url` referenzierten Datei passen |
 | `homepage` | (optional) Link für den **Info**-Button (Doku/Repo) |
 | `icon`, `image`, `description`, `author` | Anzeige im Store |
 
 > Die **`index.json`** wird über `raw.githubusercontent.com` geladen und ist nach
-> einem Merge in ~5 min bzw. sofort per **„⟳ Store aktualisieren"** aktuell. Die
-> **Modul-Dateien** liegen auf jsDelivr (`@main`, ~Stunden Cache): *neue* Dateien
-> erscheinen sofort (neue URL); *Updates* einer bestehenden Datei `version`
-> hochzählen — und ggf. den jsDelivr-Cache der Datei purgen
-> (`https://purge.jsdelivr.net/gh/...`). Premium-Module (Patreon) gehören
-> **nicht** in den öffentlichen Katalog; sie werden über „Module → Code einfügen"
-> eingespielt.
+> einem Merge in ~5 min bzw. sofort per **„⟳ Store aktualisieren"** aktuell.
+>
+> **Modul-`url` für veröffentlichte Versionen auf einen Commit-SHA (oder
+> Release-Tag) pinnen — nicht `@main`.** jsDelivr cacht `@main` über Stunden und
+> kann auch mit Query-Cache-Busting noch alten Inhalt liefern; ein Commit-SHA ist
+> unveränderlich und liefert garantiert die richtige Datei:
+>
+> ```
+> https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@<commit-sha>/store/modules/<id>.js
+> ```
+>
+> `@main` ist nur für die **lokale Entwicklung** bequem. Bei **jeder neuen
+> Modulversion** im Katalog **beide** Felder aktualisieren: `version` **und**
+> `url` (neuer Commit-SHA), sodass die geladene Manifest-`version` zur Store-
+> `version` passt. Der Store prüft das nach dem Laden und warnt bei Abweichung
+> (vermutlich CDN-Cache). Premium-Module (Patreon) gehören **nicht** in den
+> öffentlichen Katalog; sie werden über „Module → Code einfügen" eingespielt.
 
 ## Vertrauensmodell & Supply-Chain (bewusster Tradeoff)
 
