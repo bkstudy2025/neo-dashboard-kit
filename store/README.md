@@ -112,7 +112,7 @@ kaputte Einträge werden nicht gemergt. Details:
 | `id` | eindeutige ID (muss der `id` im Modul entsprechen) |
 | `target` | für welche Karte(n) das Modul angeboten wird |
 | `url` | jsDelivr-URL zur eigenständigen Modul-Datei |
-| `version` | Versionsnummer — der Store vergleicht sie mit der installierten und zeigt **„⬆ Update"** an, wenn neuer |
+| `version` | Versionsnummer — der Store vergleicht sie mit der installierten und zeigt **„⬆ Update verfügbar"** an, wenn sie abweicht |
 | `homepage` | (optional) Link für den **Info**-Button (Doku/Repo) |
 | `icon`, `image`, `description`, `author` | Anzeige im Store |
 

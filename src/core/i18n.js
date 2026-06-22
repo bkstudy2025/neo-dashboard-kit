@@ -75,8 +75,13 @@ const EN = {
   "✓ Modul „{name}” aktualisiert.": "✓ Module “{name}” updated.",
   "Speichern fehlgeschlagen: {err}": "Saving failed: {err}",
   "Installiere …": "Installing …",
+  "Aktualisiere …": "Updating …",
   "✓ „{name}” installiert.": "✓ “{name}” installed.",
+  "✓ „{name}” aktualisiert.": "✓ “{name}” updated.",
   "Installation fehlgeschlagen: {err}": "Installation failed: {err}",
+  "Aktualisierung fehlgeschlagen: {err}": "Update failed: {err}",
+  "Update verfügbar": "Update available",
+  "Installiert:": "Installed:", "Store:": "Store:",
   "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":
     "Module removed. (Already-loaded code disappears after a reload.)",
   // Reorder / Aktionen
