@@ -55,13 +55,14 @@ Everything else is added through **modules** and **Premium** — see the docs ab
 
 ---
 
-## 🧪 Beta & updates
+## 🧪 Release candidate & updates
 
-This project is currently published as **beta (pre-releases)**. HACS **hides
-pre-releases by default**, so updates only appear once you enable
-**“Show beta versions”** for this repository in HACS
-(repository → 3-dot menu → *Redownload* / settings → enable beta). A stable
-release will be cut later.
+This project is currently published as a **release candidate (`v1.0.0-rc.1`,
+pre-release)**. HACS **hides pre-releases by default**, so updates only appear
+once you enable **“Show beta versions”** for this repository in HACS
+(repository → 3-dot menu → *Redownload* / settings → enable beta). The stable
+`v1.0.0` will be cut after the real-device test matrix in the
+[release checklist](docs/RELEASE-CHECKLIST.md) is complete.
 
 > ℹ️ **First-open note:** When you open the repository in HACS for the first
 > time, the description box may briefly show *“the developer has not provided
