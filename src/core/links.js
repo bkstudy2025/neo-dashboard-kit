@@ -13,12 +13,17 @@ export const NEO_LINKS = {
   // direkt in die Einreichungs-Kategorie "Community Cards & Modules".
   newDiscussion: "https://github.com/bkstudy2025/neo-dashboard-kit/discussions/new?category=community-cards-modules",
   // Neo Store (Karten & Module) — Katalog liegt im Repo unter store/.
-  // index.json wird LIVE über raw.githubusercontent.com geladen: Änderungen auf
-  // main erscheinen in ~5 min bzw. sofort per "Store aktualisieren" (Cache-Bust),
-  // ganz OHNE neuen Kit-Release oder neues neo-dashboard.js-Bundle.
-  // Die einzelnen Modul-/Karten-Dateien (url im index.json) liegen weiter auf dem
-  // jsDelivr-CDN — neue Einträge sind neue Dateien (neue URL), also nie stale.
+  // index.json wird LIVE geladen, ganz OHNE neuen Kit-Release/Bundle:
+  //  - PRIMÄR über die GitHub-API (api.github.com/.../contents/...): Echtzeit,
+  //    KEIN Pfad-CDN-Cache → frisch gemergte Versionen erscheinen sofort.
+  //  - FALLBACK über raw.githubusercontent.com (falls die API mal scheitert,
+  //    z. B. Rate-Limit) — ~5 min CDN-Cache.
+  // Beide Quellen werden serverseitig über die Integration "Neo Dashboard Tools"
+  // geladen (CORS) und sind dort auf genau diesen Pfad beschränkt.
+  // Die einzelnen Modul-/Karten-Dateien (url im index.json) liegen auf jsDelivr
+  // und sind auf einen Commit-SHA gepinnt (unveränderlich, nie stale).
   // index.json = [{ id, kind?, name, description, target, author, version, icon, image, url, homepage }]
-  modulesIndex: "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/store/index.json",
+  modulesIndex: "https://api.github.com/repos/bkstudy2025/neo-dashboard-kit/contents/store/index.json?ref=main",
+  modulesIndexFallback: "https://raw.githubusercontent.com/bkstudy2025/neo-dashboard-kit/main/store/index.json",
   modulesRepo: "https://github.com/bkstudy2025/neo-dashboard-kit/tree/main/store",
 };
