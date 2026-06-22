@@ -80,6 +80,8 @@ const EN = {
   "✓ „{name}” aktualisiert.": "✓ “{name}” updated.",
   "Installation fehlgeschlagen: {err}": "Installation failed: {err}",
   "Aktualisierung fehlgeschlagen: {err}": "Update failed: {err}",
+  "Geladene Modulversion passt nicht zur Store-Version. Vermutlich CDN-Cache.":
+    "Loaded module version does not match the store version. Likely a CDN cache.",
   "Update verfügbar": "Update available",
   "Installiert:": "Installed:", "Store:": "Store:",
   "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":

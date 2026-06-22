@@ -683,6 +683,12 @@ class NeoCardEditor extends HTMLElement {
       const code = await NeoStore.fetch(this._cacheBustUrl(item.url));
       const res = neoLoadModule(code); // registriert das Modul sofort
       if (!res.ok) throw new Error("Code-Fehler");
+      // Sicherheitsnetz: geladene Manifest-Version muss zur Store-Version passen.
+      // Schützt vor stale CDN-Inhalten (v. a. bei @main-URLs) → nicht speichern.
+      const loadedVer = this._addonMeta(item.id).version;
+      if (item.version && loadedVer && String(loadedVer) !== String(item.version)) {
+        throw new Error(this._t("Geladene Modulversion passt nicht zur Store-Version. Vermutlich CDN-Cache."));
+      }
       // Nur bei erfolgreichem Laden serverseitig speichern (keine halbe Aktualisierung).
       if (NeoStore.available()) await NeoStore.save(item.id, code);
       await this._refreshInstalled(); // re-rendert → neue Version + Badge

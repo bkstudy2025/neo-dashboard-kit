@@ -550,6 +550,8 @@ const EN = {
   "✓ „{name}” aktualisiert.": "✓ “{name}” updated.",
   "Installation fehlgeschlagen: {err}": "Installation failed: {err}",
   "Aktualisierung fehlgeschlagen: {err}": "Update failed: {err}",
+  "Geladene Modulversion passt nicht zur Store-Version. Vermutlich CDN-Cache.":
+    "Loaded module version does not match the store version. Likely a CDN cache.",
   "Update verfügbar": "Update available",
   "Installiert:": "Installed:", "Store:": "Store:",
   "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":
@@ -3322,6 +3324,12 @@ class NeoCardEditor extends HTMLElement {
       const code = await NeoStore.fetch(this._cacheBustUrl(item.url));
       const res = neoLoadModule(code); // registriert das Modul sofort
       if (!res.ok) throw new Error("Code-Fehler");
+      // Sicherheitsnetz: geladene Manifest-Version muss zur Store-Version passen.
+      // Schützt vor stale CDN-Inhalten (v. a. bei @main-URLs) → nicht speichern.
+      const loadedVer = this._addonMeta(item.id).version;
+      if (item.version && loadedVer && String(loadedVer) !== String(item.version)) {
+        throw new Error(this._t("Geladene Modulversion passt nicht zur Store-Version. Vermutlich CDN-Cache."));
+      }
       // Nur bei erfolgreichem Laden serverseitig speichern (keine halbe Aktualisierung).
       if (NeoStore.available()) await NeoStore.save(item.id, code);
       await this._refreshInstalled(); // re-rendert → neue Version + Badge
@@ -3928,7 +3936,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "0.2.0-beta.91", // beim Build aus package.json ersetzt
+  version: "0.2.0-beta.92", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -4022,7 +4030,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v0.2.0-beta.91 ",
+  "%c NEO DASHBOARD KIT %c v0.2.0-beta.92 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

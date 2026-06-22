@@ -7,7 +7,7 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "🏷️",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-mini-badge.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@6656739e46a2a3f0671a86ee6c2518b63a7d1040/store/modules/neo-mini-badge.js"
   },
   {
     "id": "neo-glow-frame",
@@ -17,7 +17,7 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "✨",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-glow-frame.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@6656739e46a2a3f0671a86ee6c2518b63a7d1040/store/modules/neo-glow-frame.js"
   },
   {
     "id": "neo-accent-wash",
@@ -27,6 +27,6 @@
     "author": "Community",
     "version": "1.0.1",
     "icon": "🌈",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-accent-wash.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@6656739e46a2a3f0671a86ee6c2518b63a7d1040/store/modules/neo-accent-wash.js"
   }
 ]
