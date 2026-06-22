@@ -2,6 +2,10 @@
 
 A practical pre-release checklist. Tick everything before tagging a release.
 
+> **Release target:** `v1.0.0-rc.1` (Release Candidate). Do **not** tag a stable
+> `v1.0.0` before the real-device matrix below is completed on actual hardware.
+> See also [Free vs Premium](free-vs-premium.md).
+
 ---
 
 ## Cards — test matrices
@@ -59,12 +63,16 @@ A practical pre-release checklist. Tick everything before tagging a release.
 
 ## Store — test matrix
 
-> For the initial release the catalog (`store/index.json`) ships **empty (`[]`)**
-> on purpose — this is **not** a blocker, and no example modules need to be in
-> the store.
+> The catalog (`store/index.json`) ships **three curated free modules**:
+> **Neo Mini Badge**, **Neo Glow Frame**, **Neo Accent Wash**. All store URLs are
+> pinned to an **immutable commit SHA** (not `@main`). The Free/Premium split is
+> defined in [free-vs-premium.md](free-vs-premium.md).
 
 - [ ] Store tab loads (with **Neo Dashboard Tools** installed)
-- [ ] **Empty store** shows a clean empty-state message ("Aktuell keine
+- [ ] All three curated modules appear and install
+- [ ] Store URLs are **pinned to a commit SHA / tag** (no `@main`) — validator warns on `@main`
+- [ ] Module manifest `version` matches the `store/index.json` `version`
+- [ ] **Empty/old store** still shows a clean empty-state message ("Aktuell keine
       Store-Module verfügbar … Code einfügen"), not an error/blank
 - [ ] `node scripts/validate-store.mjs` on the empty catalog → **warning only**,
       exit 0 (CI stays green)
@@ -78,6 +86,26 @@ A practical pre-release checklist. Tick everything before tagging a release.
 - [ ] A **foreign/invalid store URL** is blocked (frontend skip + server
       `host_not_allowed` / `path_not_allowed`)
 - [ ] "Refresh store" picks up a freshly merged entry (no release needed)
+
+---
+
+## Real-device tests (on actual hardware)
+
+Tested with a real entity of each domain (Neo Control / Neo Display as
+appropriate). **Required before tagging stable `v1.0.0`.**
+
+- [ ] `light`
+- [ ] `switch`
+- [ ] `cover`
+- [ ] `climate`
+- [ ] `media_player`
+- [ ] `fan`
+- [ ] `lock`
+- [ ] `alarm_control_panel`
+- [ ] `sensor`
+- [ ] `binary_sensor`
+- [ ] `camera`
+- [ ] `weather`
 
 ---
 
