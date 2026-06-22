@@ -25,7 +25,7 @@
     "description": "Adds an always-on or state-aware accent background gradient to Neo cards.",
     "target": "*",
     "author": "Community",
-    "version": "1.0.4",
+    "version": "1.0.3",
     "icon": "🌈",
     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@a38df44cb59f9ae4d7ab11089c5c32725c4d134b/store/modules/neo-accent-wash.js"
   }
