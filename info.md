@@ -23,7 +23,7 @@ Everything else is added through **modules** and **Premium**.
 
 ## Updates (Release candidate)
 
-This project is published as a **release candidate (`v1.0.0-rc.2`, pre-release)**. HACS **hides pre-releases by default** — to receive new versions, enable **"Show beta versions"** for this repository in HACS (repository → 3-dot menu → *Redownload* / settings), then update as usual. The stable `v1.0.0` will follow after real-device testing.
+This project is published as a **release candidate (`v1.0.0-rc.3`, pre-release)**. HACS **hides pre-releases by default** — to receive new versions, enable **"Show beta versions"** for this repository in HACS (repository → 3-dot menu → *Redownload* / settings), then update as usual. The stable `v1.0.0` will follow after real-device testing.
 
 ## Notes
 
