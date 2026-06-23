@@ -82,6 +82,8 @@ const EN = {
   "Aktualisierung fehlgeschlagen: {err}": "Update failed: {err}",
   "Geladene Modulversion passt nicht zur Store-Version. Vermutlich CDN-Cache.":
     "Loaded module version does not match the store version. Likely a CDN cache.",
+  "Geladener Code registriert nicht die erwartete Karte/Modul-ID (evtl. CDN-Fehlerseite). Nicht gespeichert.":
+    "Loaded code did not register the expected card/module id (possibly a CDN error page). Not saved.",
   "Update verfügbar": "Update available",
   "Installiert:": "Installed:", "Store:": "Store:",
   "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":
