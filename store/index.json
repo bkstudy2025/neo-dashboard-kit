@@ -28,5 +28,49 @@
     "version": "1.0.4",
     "icon": "🌈",
     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@a4ad5542caaafae7c98f246f80e06f5bdb5ad5ea/store/modules/neo-accent-wash.js"
+  },
+  {
+    "id": "neo-pulse-ring",
+    "name": "Neo Pulse Ring",
+    "description": "Animated conic progress ring from a numeric entity (battery, humidity, CPU …).",
+    "target": ["neo-control-card", "neo-display-card"],
+    "kind": "module",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "🔆",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-pulse-ring.js"
+  },
+  {
+    "id": "neo-tilt-shine",
+    "name": "Neo Tilt Shine",
+    "description": "Pointer-reactive 3D tilt and specular glare for any Neo card.",
+    "target": "*",
+    "kind": "module",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "💠",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-tilt-shine.js"
+  },
+  {
+    "id": "neo-clock-card",
+    "name": "Neo Clock",
+    "description": "Live glass clock card with date, blinking colon and a seconds bar.",
+    "target": "*",
+    "kind": "card",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "🕒",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-clock-card.js"
+  },
+  {
+    "id": "neo-spark-card",
+    "name": "Neo Spark",
+    "description": "Sensor card with a live rolling sparkline (bars or line) and trend arrow.",
+    "target": "*",
+    "kind": "card",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "📈",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-spark-card.js"
   }
 ]
