@@ -84,6 +84,8 @@ const EN = {
     "Loaded module version does not match the store version. Likely a CDN cache.",
   "Geladener Code registriert nicht die erwartete Karte/Modul-ID (evtl. CDN-Fehlerseite). Nicht gespeichert.":
     "Loaded code did not register the expected card/module id (possibly a CDN error page). Not saved.",
+  "Karte konnte nicht geladen werden: {err}. Falls das Kit gerade aktualisiert wurde, bitte einmal hart neu laden (Strg/Cmd+Shift+R).":
+    "Card could not be loaded: {err}. If the kit was just updated, please do a hard reload once (Ctrl/Cmd+Shift+R).",
   "Update verfügbar": "Update available",
   "Installiert:": "Installed:", "Store:": "Store:",
   "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":

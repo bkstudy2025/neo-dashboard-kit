@@ -720,7 +720,11 @@ class NeoCardEditor extends HTMLElement {
       const registeredIds = (res.cards || []).map((c) => c.type)
         .concat((res.modules || []).map((m) => m.id));
       if (!registeredIds.includes(item.id)) {
-        throw new Error(this._t("Geladener Code registriert nicht die erwartete Karte/Modul-ID (evtl. CDN-Fehlerseite). Nicht gespeichert."));
+        // res.error gesetzt → Code warf zur Laufzeit (oft veraltetes Bundle nach
+        // Kit-Update); sonst lieferte der Fetch vermutlich keinen gültigen Code.
+        throw new Error(res.error
+          ? this._t("Karte konnte nicht geladen werden: {err}. Falls das Kit gerade aktualisiert wurde, bitte einmal hart neu laden (Strg/Cmd+Shift+R).").replace("{err}", res.error)
+          : this._t("Geladener Code registriert nicht die erwartete Karte/Modul-ID (evtl. CDN-Fehlerseite). Nicht gespeichert."));
       }
       // Sicherheitsnetz: geladene Manifest-Version muss zur Store-Version passen.
       // Schützt vor stale CDN-Inhalten (v. a. bei @main-URLs) → nicht speichern.
@@ -752,20 +756,35 @@ class NeoCardEditor extends HTMLElement {
     const card = (res.cards || [])[0];
     const mod = (res.modules || [])[0];
     if (!card && !mod) {
-      return this._msg(this._t("Kein Modul/Karte erkannt (registerModule/registerCard fehlt?)."), true);
+      // Nichts registriert. Hat der Code zur Laufzeit geworfen (res.error), liegt
+      // es meist an einem veralteten Bundle (fehlende API nach einem Kit-Update)
+      // → klare, handlungsleitende Meldung statt "registerCard fehlt?".
+      return this._msg(res.error
+        ? this._t("Karte konnte nicht geladen werden: {err}. Falls das Kit gerade aktualisiert wurde, bitte einmal hart neu laden (Strg/Cmd+Shift+R).").replace("{err}", res.error)
+        : this._t("Kein Modul/Karte erkannt (registerModule/registerCard fehlt?)."), true);
     }
     const id = card?.type || mod?.id || `neo-${Date.now()}`;
     try {
       if (NeoStore.available()) await NeoStore.save(id, code);
       await this._refreshInstalled();
-      this._renderTypePicker(); // neue/aktualisierte Karten sofort im Kartentyp-Dropdown
       let msg;
       if (card) {
         const name = card.name || card.type;
-        msg = cardsBefore.has(card.type)
-          ? this._t("✓ Karte „{name}” aktualisiert.").replace("{name}", name)
-          : this._t("✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.").replace("{name}", name);
+        const isNew = !cardsBefore.has(card.type);
+        // Live verwendbar machen, ohne Reload: ist noch keine Karte gewählt, die
+        // neue direkt auswählen + rendern. Sonst nur die Bereich-Auswahl auf ihre
+        // Kategorie stellen, damit sie sofort im Dropdown auftaucht.
+        if (isNew && !this._config.card_type) {
+          this._selectType(card.type); // wählt aus, mountet Editor, rendert, feuert
+        } else {
+          this._selectedCat = this._catOf(card.author);
+          this._renderTypePicker();
+        }
+        msg = isNew
+          ? this._t("✓ Karte „{name}” hinzugefügt — oben im Kartentyp wählbar.").replace("{name}", name)
+          : this._t("✓ Karte „{name}” aktualisiert.").replace("{name}", name);
       } else {
+        this._renderTypePicker();
         const name = mod.name || mod.id;
         msg = modsBefore.has(mod.id)
           ? this._t("✓ Modul „{name}” aktualisiert.").replace("{name}", name)
