@@ -72,5 +72,49 @@
     "version": "1.0.0",
     "icon": "📈",
     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-spark-card.js"
+  },
+  {
+    "id": "neo-greeting-hero",
+    "name": "Neo Greeting Hero",
+    "description": "Theme-adaptive page header: time-aware greeting, date and a weather glance. Light & dark.",
+    "target": "*",
+    "kind": "card",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "👋",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-greeting-hero.js"
+  },
+  {
+    "id": "neo-gauge-card",
+    "name": "Neo Gauge",
+    "description": "Theme-adaptive 270° radial gauge for any numeric sensor, with an optional danger zone.",
+    "target": "*",
+    "kind": "card",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "⏲️",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-gauge-card.js"
+  },
+  {
+    "id": "neo-scene-deck",
+    "name": "Neo Scene Deck",
+    "description": "Swipeable, mobile-first deck of one-tap scene/script/button launchers. Light & dark.",
+    "target": "*",
+    "kind": "card",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "🎬",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-scene-deck.js"
+  },
+  {
+    "id": "neo-ripple-touch",
+    "name": "Neo Ripple Touch",
+    "description": "Material-style touch ripple from the tap point for any card. Theme-adaptive.",
+    "target": "*",
+    "kind": "module",
+    "author": "Community",
+    "version": "1.0.0",
+    "icon": "🌊",
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-ripple-touch.js"
   }
 ]
