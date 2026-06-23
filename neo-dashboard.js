@@ -557,6 +557,8 @@ const EN = {
   "Aktualisierung fehlgeschlagen: {err}": "Update failed: {err}",
   "Geladene Modulversion passt nicht zur Store-Version. Vermutlich CDN-Cache.":
     "Loaded module version does not match the store version. Likely a CDN cache.",
+  "Geladener Code registriert nicht die erwartete Karte/Modul-ID (evtl. CDN-Fehlerseite). Nicht gespeichert.":
+    "Loaded code did not register the expected card/module id (possibly a CDN error page). Not saved.",
   "Update verfügbar": "Update available",
   "Installiert:": "Installed:", "Store:": "Store:",
   "Modul entfernt. (Bereits geladener Code verschwindet nach einem Reload.)":
@@ -3356,6 +3358,18 @@ class NeoCardEditor extends HTMLElement {
       const code = await NeoStore.fetch(this._cacheBustUrl(item.url));
       const res = neoLoadModule(code); // registriert das Modul sofort
       if (!res.ok) throw new Error("Code-Fehler");
+      // Verifikation: der geladene Code MUSS die erwartete ID registriert haben.
+      // `res.ok` heißt nur "Script eingehängt", nicht "Karte/Modul registriert".
+      // Liefert das CDN/der Proxy z. B. eine HTML-Fehlerseite (content-type
+      // text/html), wird sie als <script> mit stillem SyntaxError injiziert →
+      // es registriert sich nichts. Ohne diese Prüfung würde der kaputte Inhalt
+      // gespeichert und als "Installiert" angezeigt, taucht aber nie im Picker
+      // auf (und ein Update wird wegen passender Version nie angeboten).
+      const registeredIds = (res.cards || []).map((c) => c.type)
+        .concat((res.modules || []).map((m) => m.id));
+      if (!registeredIds.includes(item.id)) {
+        throw new Error(this._t("Geladener Code registriert nicht die erwartete Karte/Modul-ID (evtl. CDN-Fehlerseite). Nicht gespeichert."));
+      }
       // Sicherheitsnetz: geladene Manifest-Version muss zur Store-Version passen.
       // Schützt vor stale CDN-Inhalten (v. a. bei @main-URLs) → nicht speichern.
       const loadedVer = this._addonMeta(item.id).version;
