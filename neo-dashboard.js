@@ -3680,7 +3680,10 @@ class NeoCardEditor extends HTMLElement {
            Kante, egal ob/was die Zeile an Text hat. box-sizing:border-box, damit
            width:100% inkl. Padding exakt die Spaltenbreite trifft (sonst kann der
            Button je nach Client breiter werden und „springen"). */
-        .nmod-row-act { flex:0 0 108px; display:flex; align-items:center; justify-content:flex-end; }
+        /* margin-left:auto pinnt den Button IMMER an die rechte Kante – auch wenn
+           die mittlere Spalte bei kurzem Text nicht aufwächst (genau der Fall,
+           in dem der Button sonst nach links rutschte). */
+        .nmod-row-act { flex:0 0 108px; margin-left:auto; display:flex; align-items:center; justify-content:flex-end; }
         .nmod-row-act .nmod-mini { box-sizing:border-box; width:108px; margin-top:0;
           padding-left:6px; padding-right:6px; text-align:center; white-space:nowrap; }
         .nmod-links { display:inline-flex; gap:8px; align-items:center; }
@@ -4123,7 +4126,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "1.0.0-rc.8", // beim Build aus package.json ersetzt
+  version: "1.0.0-rc.9", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -4217,7 +4220,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v1.0.0-rc.8 ",
+  "%c NEO DASHBOARD KIT %c v1.0.0-rc.9 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
