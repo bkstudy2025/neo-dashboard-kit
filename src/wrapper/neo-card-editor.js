@@ -408,38 +408,52 @@ class NeoCardEditor extends HTMLElement {
   }
   // Kleine Vorschau: echtes Screenshot-Bild (image-Feld) ODER eine Icon-Kachel
   // als Fallback, damit jeder Eintrag visuell erkennbar ist.
-  _previewTile(o) {
+  // Kleines 42px-Thumbnail: echtes Screenshot-Bild ODER Icon-Kachel als Fallback.
+  _thumb(o) {
     const image = safeUrl(o.image);
     return image
-      ? `<div class="nmod-prev"><img src="${escapeAttr(image)}" loading="lazy" alt="" /></div>`
-      : `<div class="nmod-prev nmod-prev--icon"><span>${escapeHtml(o.icon || "🧩")}</span></div>`;
+      ? `<div class="nmod-thumb"><img src="${escapeAttr(image)}" loading="lazy" alt="" /></div>`
+      : `<div class="nmod-thumb nmod-thumb--icon"><span>${escapeHtml(o.icon || "🧩")}</span></div>`;
   }
+  // Kompakte Zeile: Thumbnail · Name/Beschreibung/Autor · Primär-Button rechts.
+  // Screenshot (falls vorhanden) ist als „Vorschau" aufklappbar (native <details>).
   _storeRow(o) {
     const homepage = safeUrl(o.homepage);
+    const image = safeUrl(o.image);
     const status = o.installed
       ? (o.hasUpdate
-          ? ` <span class="nmod-badge upd">⬆ ${this._t("Update verfügbar")}</span>`
-          : ` <span class="nmod-badge ok">${this._t("✓ Installiert")}</span>`)
+          ? `<span class="nmod-badge upd">⬆ ${this._t("Update")}</span>`
+          : `<span class="nmod-badge ok">${this._t("✓ Installiert")}</span>`)
       : "";
-    // Bei Update beide Versionen zeigen, sonst die (installierte bzw. Store-)Version.
     const verLine = o.hasUpdate
-      ? `<span class="nmod-ver">${this._t("Installiert:")} v${escapeHtml(o.installedVersion)} · ${this._t("Store:")} v${escapeHtml(o.storeVersion)}</span>`
+      ? `<span class="nmod-ver">v${escapeHtml(o.installedVersion)} → v${escapeHtml(o.storeVersion)}</span>`
       : (o.version ? `<span class="nmod-ver">v${escapeHtml(o.version)}</span>` : "");
-    return `<div class="nmod-store">
-        ${this._previewTile(o)}
-        <div class="nmod-store-h">
-          <span class="nmod-ic">${escapeHtml(o.icon || "🧩")}</span>
-          <div class="nmod-meta">
+
+    // Primärer Button rechts: Installieren/Aktualisieren — sonst Entfernen.
+    const primary = o.installId
+      ? `<button class="nmod-mini" data-install-id="${escapeAttr(o.installId)}">${this._t(o.installLabel)}</button>`
+      : (o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${escapeAttr(o.uninstallId)}">${this._t("Entfernen")}</button>` : "");
+    // Sekundär-Links (klein, dezent): Entfernen (nur wenn Primär=Install/Update) + Info.
+    const secondary = [
+      (o.installId && o.uninstallId) ? `<button class="nmod-link" data-uninstall="${escapeAttr(o.uninstallId)}">${this._t("Entfernen")}</button>` : "",
+      homepage ? `<a class="nmod-link" href="${escapeAttr(homepage)}" target="_blank" rel="noopener">${this._t("Info")}</a>` : "",
+    ].filter(Boolean).join("");
+    const preview = image
+      ? `<details class="nmod-prevwrap"><summary>${this._t("Vorschau")}</summary><div class="nmod-prev"><img src="${escapeAttr(image)}" loading="lazy" alt="" /></div></details>`
+      : "";
+    const search = `${o.name || ""} ${o.description || ""} ${o.author || ""}`.toLowerCase();
+
+    return `<div class="nmod-row" data-search="${escapeAttr(search)}">
+        <div class="nmod-row-main">
+          ${this._thumb(o)}
+          <div class="nmod-row-mid">
             <div class="nmod-name">${escapeHtml(o.name)} <span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
-            <div class="nmod-sub">${this._authorChip(o.author)}${verLine}</div>
+            ${o.description ? `<div class="nmod-desc nmod-desc--1">${escapeHtml(o.description)}</div>` : ""}
+            <div class="nmod-sub">${this._authorChip(o.author)}${verLine}${secondary ? `<span class="nmod-links">${secondary}</span>` : ""}</div>
           </div>
+          ${primary ? `<div class="nmod-row-act">${primary}</div>` : ""}
         </div>
-        ${o.description ? `<div class="nmod-desc" style="margin-top:8px;">${escapeHtml(o.description)}</div>` : ""}
-        <div class="nmod-store-row">
-          ${o.installId ? `<button class="nmod-mini" data-install-id="${escapeAttr(o.installId)}">${this._t(o.installLabel)}</button>` : ""}
-          ${o.uninstallId ? `<button class="nmod-mini ghost" data-uninstall="${escapeAttr(o.uninstallId)}">${this._t("Entfernen")}</button>` : ""}
-          ${homepage ? `<a class="nmod-mini ghost" href="${escapeAttr(homepage)}" target="_blank" rel="noopener" style="text-decoration:none;">${this._t("Info")}</a>` : ""}
-        </div>
+        ${preview}
         ${o.note ? `<div class="nmod-note" style="margin:6px 0 0;">${escapeHtml(o.note)}</div>` : ""}
       </div>`;
   }
@@ -534,24 +548,31 @@ class NeoCardEditor extends HTMLElement {
       return bar + `<div class="nmod-note">${this._t("Aktuell keine Store-Module verfügbar. Premium-Karten (z. B. Wetter) fügst du über <b>Code einfügen</b> hinzu.")}</div>` + this._storeSuggest();
     }
 
-    const catalogRows = catalog.map((it) => {
+    const mkRow = (it) => {
       const installed = this._isInstalled(it.id);
       const reg = this._addonMeta(it.id);
       const installedVersion = installed ? reg.version : null;
       const storeVersion = it.version;
       const hasUpdate = installed && this._hasUpdate(installedVersion, storeVersion);
       const showInstall = !installed || hasUpdate; // installiert & aktuell → nur Entfernen/Info
-      return this._storeRow({
-        icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
-        version: installedVersion || storeVersion, installedVersion, storeVersion,
-        kind: (reg.isCard || it.kind === "card") ? "Karte" : "Modul",
-        installed, hasUpdate, homepage: it.homepage || it.repo, image: it.image, description: it.description,
-        // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
-        // gefilterte Liste zwischen Render und Klick ändert.
-        installId: showInstall ? it.id : "", installLabel: installed ? "Aktualisieren" : "Installieren",
-        uninstallId: installed ? it.id : null,
-      });
-    });
+      const isCard = reg.isCard || it.kind === "card";
+      return {
+        isCard,
+        html: this._storeRow({
+          icon: it.icon || reg.icon, name: it.name || it.id, author: it.author || reg.author,
+          version: installedVersion || storeVersion, installedVersion, storeVersion,
+          kind: isCard ? "Karte" : "Modul",
+          installed, hasUpdate, homepage: it.homepage || it.repo, image: it.image, description: it.description,
+          // Per ID referenzieren (nicht Index) — bleibt korrekt, wenn sich die
+          // gefilterte Liste zwischen Render und Klick ändert.
+          installId: showInstall ? it.id : "", installLabel: installed ? "Aktualisieren" : "Installieren",
+          uninstallId: installed ? it.id : null,
+        }),
+      };
+    };
+    const rows = catalog.map(mkRow);
+    const cardRows = rows.filter((r) => r.isCard).map((r) => r.html);
+    const moduleRows = rows.filter((r) => !r.isCard).map((r) => r.html);
     // Installierte ohne Katalog-Eintrag (z. B. per Code eingefügt) — eigene,
     // klar abgegrenzte Sektion; keine Store-Quelle zum Aktualisieren.
     const extraRows = extra.map((id) => {
@@ -563,10 +584,23 @@ class NeoCardEditor extends HTMLElement {
       });
     });
 
+    // Gruppe nur rendern, wenn sie Einträge hat (Überschrift + Zähler).
+    const group = (key, title, arr) => arr.length
+      ? `<div class="nmod-group" data-group="${key}"><div class="nmod-grouph">${this._t(title)}<span class="nmod-grouph-c">· ${arr.length}</span></div>${arr.join("")}</div>`
+      : "";
+
+    // Suchfeld erst ab ~6 Einträgen — bei wenigen lohnt es nicht.
+    const total = cardRows.length + moduleRows.length + extraRows.length;
+    const search = total >= 6
+      ? `<div class="nmod-search"><span>🔎</span><input id="nmod-search" type="text" autocomplete="off" placeholder="${this._t("Store durchsuchen …")}"></div>`
+      : "";
+
     return bar
       + this._storeWarn()
-      + (catalogRows.length ? catalogRows.join("") : "")
-      + (extraRows.length ? `<div class="nmod-subh">${this._t("Installiert (per Code eingefügt)")}</div>` + extraRows.join("") : "")
+      + search
+      + group("cards", "Karten", cardRows)
+      + group("modules", "Module", moduleRows)
+      + group("installed", "Installiert (per Code eingefügt)", extraRows)
       + this._storeSuggest();
   }
 
@@ -600,6 +634,28 @@ class NeoCardEditor extends HTMLElement {
       }));
     this._modPanel.querySelectorAll("[data-uninstall]").forEach((b) =>
       b.addEventListener("click", () => this._removeInstalled(b.getAttribute("data-uninstall"))));
+
+    // Live-Suche: Zeilen per display ein-/ausblenden (kein Re-Render = kein
+    // Fokusverlust); leere Gruppen werden mit ausgeblendet. Term überlebt
+    // Re-Renders (z. B. nach Installation) und wird neu angewendet.
+    const searchEl = q("#nmod-search");
+    if (searchEl) {
+      const applyFilter = (val) => {
+        const term = (val || "").trim().toLowerCase();
+        this._storeSearch = val || "";
+        this._modPanel.querySelectorAll(".nmod-group").forEach((grp) => {
+          let visible = 0;
+          grp.querySelectorAll(".nmod-row").forEach((row) => {
+            const hit = !term || (row.getAttribute("data-search") || "").includes(term);
+            row.style.display = hit ? "" : "none";
+            if (hit) visible++;
+          });
+          grp.style.display = visible ? "" : "none";
+        });
+      };
+      searchEl.addEventListener("input", (e) => applyFilter(e.target.value));
+      if (this._storeSearch) { searchEl.value = this._storeSearch; applyFilter(this._storeSearch); }
+    }
   }
 
   _msg(text, err) {
@@ -926,6 +982,41 @@ class NeoCardEditor extends HTMLElement {
           background:var(--primary-color,#7C9CFF); color:#fff; font-size:12.5px; font-weight:600; }
         .nmod-mini.ghost { background:transparent; border:1px solid var(--neo-line2,rgba(255,255,255,.12)); color:var(--primary-text-color); }
         .nmod-msg { font-size:12px; margin-top:8px; min-height:14px; }
+
+        /* ── Kompakte Store-Liste (geordnete Variante) ── */
+        .nmod-search { display:flex; align-items:center; gap:8px; margin:0 0 12px;
+          background:var(--neo-fill1,rgba(255,255,255,.04)); border:1px solid var(--divider-color,rgba(255,255,255,.1));
+          border-radius:10px; padding:7px 11px; }
+        .nmod-search input { flex:1; border:none; background:transparent; outline:none;
+          color:var(--primary-text-color); font-size:12.5px; }
+        .nmod-group { margin:0 0 4px; }
+        .nmod-grouph { font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+          color:var(--secondary-text-color); margin:12px 2px 8px; }
+        .nmod-grouph-c { font-weight:600; opacity:.6; margin-left:5px; }
+        .nmod-row { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:11px; padding:9px;
+          margin-bottom:7px; background:var(--neo-fill1,rgba(255,255,255,.03)); }
+        .nmod-row-main { display:flex; align-items:center; gap:11px; }
+        .nmod-thumb { width:42px; height:42px; flex-shrink:0; border-radius:10px; overflow:hidden;
+          display:flex; align-items:center; justify-content:center; border:1px solid var(--divider-color,rgba(255,255,255,.08)); }
+        .nmod-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+        .nmod-thumb--icon { font-size:21px; background:linear-gradient(135deg, rgba(124,156,255,.20), rgba(94,220,184,.12)); }
+        .nmod-row-mid { flex:1; min-width:0; }
+        .nmod-desc--1 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+        .nmod-row-act { flex-shrink:0; }
+        .nmod-row-act .nmod-mini { margin-top:0; }
+        .nmod-links { display:inline-flex; gap:8px; align-items:center; }
+        .nmod-link { background:none; border:none; padding:0; cursor:pointer; font-weight:600;
+          font-size:11px; color:var(--primary-color,#7C9CFF); text-decoration:none; }
+        .nmod-link:hover { text-decoration:underline; }
+        .nmod-prevwrap { margin-top:8px; }
+        .nmod-prevwrap summary { cursor:pointer; list-style:none; user-select:none;
+          display:inline-flex; align-items:center; gap:5px; font-size:11.5px; color:var(--secondary-text-color); }
+        .nmod-prevwrap summary::-webkit-details-marker { display:none; }
+        .nmod-prevwrap summary::before { content:"▸"; font-size:10px; }
+        .nmod-prevwrap[open] summary::before { content:"▾"; }
+        .nmod-prevwrap .nmod-prev { margin-top:8px; border-radius:10px; overflow:hidden;
+          border:1px solid var(--divider-color,rgba(255,255,255,.08)); }
+        .nmod-prevwrap .nmod-prev img { width:100%; display:block; }
       </style>`;
   }
 
