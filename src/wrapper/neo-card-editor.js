@@ -441,20 +441,22 @@ class NeoCardEditor extends HTMLElement {
     const preview = image
       ? `<details class="nmod-prevwrap"><summary>${this._t("Vorschau")}</summary><div class="nmod-prev"><img src="${escapeAttr(image)}" loading="lazy" alt="" /></div></details>`
       : "";
-    const search = `${o.name || ""} ${o.description || ""} ${o.author || ""}`.toLowerCase();
+    // Beschreibung ODER (bei per-Code-Installierten) der Hinweis — beide als
+    // einheitliche 1-Zeilen-Beschreibung, damit alle Zeilen gleich aussehen.
+    const desc = o.description || o.note || "";
+    const search = `${o.name || ""} ${desc} ${o.author || ""}`.toLowerCase();
 
     return `<div class="nmod-row" data-search="${escapeAttr(search)}">
         <div class="nmod-row-main">
           ${this._thumb(o)}
           <div class="nmod-row-mid">
-            <div class="nmod-name">${escapeHtml(o.name)} <span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
-            ${o.description ? `<div class="nmod-desc nmod-desc--1">${escapeHtml(o.description)}</div>` : ""}
+            <div class="nmod-name"><span class="nmod-nm">${escapeHtml(o.name)}</span><span class="nmod-badge">${this._t(o.kind)}</span>${status}</div>
+            ${desc ? `<div class="nmod-desc nmod-desc--1" title="${escapeAttr(desc)}">${escapeHtml(desc)}</div>` : ""}
             <div class="nmod-sub">${this._authorChip(o.author)}${verLine}${secondary ? `<span class="nmod-links">${secondary}</span>` : ""}</div>
           </div>
           ${primary ? `<div class="nmod-row-act">${primary}</div>` : ""}
         </div>
         ${preview}
-        ${o.note ? `<div class="nmod-note" style="margin:6px 0 0;">${escapeHtml(o.note)}</div>` : ""}
       </div>`;
   }
 
@@ -1005,7 +1007,11 @@ class NeoCardEditor extends HTMLElement {
            damit lange Beschreibungen den Editor-Panel nicht horizontal aufblähen. */
         .nmod-desc--1 { margin-top:1px; overflow:hidden; display:-webkit-box;
           -webkit-box-orient:vertical; -webkit-line-clamp:1; line-clamp:1; }
-        .nmod-row .nmod-name { min-width:0; flex-wrap:wrap; }
+        /* Namenszeile bleibt EINZEILIG: Name kürzt mit Ellipsis, Badges inline
+           (kein Stapeln). Verhindert die unruhige Optik bei mehreren Badges. */
+        .nmod-row .nmod-name { min-width:0; flex-wrap:nowrap; }
+        .nmod-row .nmod-nm { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .nmod-row .nmod-name > .nmod-badge { flex-shrink:0; }
         .nmod-row-act { flex-shrink:0; }
         .nmod-row-act .nmod-mini { margin-top:0; }
         .nmod-links { display:inline-flex; gap:8px; align-items:center; }
