@@ -3659,13 +3659,17 @@ class NeoCardEditor extends HTMLElement {
         .nmod-grouph-c { font-weight:600; opacity:.6; margin-left:5px; }
         .nmod-row { border:1px solid var(--divider-color,rgba(255,255,255,.1)); border-radius:11px; padding:9px;
           margin-bottom:7px; background:var(--neo-fill1,rgba(255,255,255,.03)); }
-        .nmod-row-main { display:flex; align-items:center; gap:11px; }
+        .nmod-row-main { display:flex; align-items:center; gap:11px; min-width:0; }
         .nmod-thumb { width:42px; height:42px; flex-shrink:0; border-radius:10px; overflow:hidden;
           display:flex; align-items:center; justify-content:center; border:1px solid var(--divider-color,rgba(255,255,255,.08)); }
         .nmod-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
         .nmod-thumb--icon { font-size:21px; background:linear-gradient(135deg, rgba(124,156,255,.20), rgba(94,220,184,.12)); }
-        .nmod-row-mid { flex:1; min-width:0; }
-        .nmod-desc--1 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+        .nmod-row-mid { flex:1 1 auto; min-width:0; }
+        /* 1-Zeilen-Clamp OHNE white-space:nowrap → kleine min-content-Breite,
+           damit lange Beschreibungen den Editor-Panel nicht horizontal aufblähen. */
+        .nmod-desc--1 { margin-top:1px; overflow:hidden; display:-webkit-box;
+          -webkit-box-orient:vertical; -webkit-line-clamp:1; line-clamp:1; }
+        .nmod-row .nmod-name { min-width:0; flex-wrap:wrap; }
         .nmod-row-act { flex-shrink:0; }
         .nmod-row-act .nmod-mini { margin-top:0; }
         .nmod-links { display:inline-flex; gap:8px; align-items:center; }
@@ -4108,7 +4112,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "1.0.0-rc.4", // beim Build aus package.json ersetzt
+  version: "1.0.0-rc.5", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -4202,7 +4206,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v1.0.0-rc.4 ",
+  "%c NEO DASHBOARD KIT %c v1.0.0-rc.5 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
