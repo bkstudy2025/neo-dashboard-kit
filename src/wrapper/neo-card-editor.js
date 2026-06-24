@@ -1012,8 +1012,11 @@ class NeoCardEditor extends HTMLElement {
         .nmod-row .nmod-name { min-width:0; flex-wrap:nowrap; }
         .nmod-row .nmod-nm { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .nmod-row .nmod-name > .nmod-badge { flex-shrink:0; }
-        .nmod-row-act { flex-shrink:0; }
-        .nmod-row-act .nmod-mini { margin-top:0; }
+        /* Feste Button-Spalte rechts: jeder Button gleich breit + exakt gleiche
+           Kante, egal ob Text der Zeile umbricht oder nicht. */
+        .nmod-row-act { flex:0 0 106px; display:flex; align-items:center; justify-content:flex-end; }
+        .nmod-row-act .nmod-mini { width:100%; margin-top:0; padding-left:6px; padding-right:6px;
+          text-align:center; white-space:nowrap; }
         .nmod-links { display:inline-flex; gap:8px; align-items:center; }
         .nmod-link { background:none; border:none; padding:0; cursor:pointer; font-weight:600;
           font-size:11px; color:var(--primary-color,#7C9CFF); text-decoration:none; }
