@@ -21,17 +21,25 @@ const DIALOG_CSS = `
 ha-card{transition:none;}`;
 
 // Karten auf dem Smartphone dichter stapeln. Der vertikale Abstand ZWISCHEN
-// den Karten kommt aus der Lovelace-View (Masonry/Sections), nicht aus der
-// Karte selbst – daher hier in den View-Shadow-Root injizieren. Deckt beide
-// View-Typen ab; nicht passende Selektoren sind wirkungslos.
+// den Karten/Abschnitten kommt aus der Lovelace-View, nicht aus der Karte.
+//
+// Sections-View: steuert die Abstände über CSS-Custom-Properties, die durch
+// Shadow-Grenzen hindurch VERERBEN. Daher reicht es, sie weit oben (:root)
+// zu setzen – das ist der robuste, versionsstabile Weg (kein Shadow-Hack).
+const SPACING_VARS_CSS = `
+@media only screen and (max-width:768px){
+  :root{
+    --ha-view-sections-row-gap:6px!important;
+    --ha-view-sections-column-gap:12px!important;
+  }
+}`;
+// Masonry-View: kennt keine vererbende Variable → hier doch per Shadow-Inject
+// in den View-Root. Nicht passende Selektoren sind wirkungslos.
 const SPACING_CSS = `
 @media only screen and (max-width:768px){
-  /* Masonry-View */
-  #columns,.column{--masonry-view-card-margin:0 0 5px!important;}
-  .column>*{margin-top:0!important;margin-bottom:5px!important;}
-  /* Sections-View (Grid) */
-  .container{row-gap:5px!important;}
-  hui-section{--row-gap:5px!important;}
+  #columns,.column{--masonry-view-card-margin:0 0 6px!important;}
+  .column>*{margin-top:0!important;margin-bottom:6px!important;}
+  .container{row-gap:6px!important;}
 }`;
 
 function themeActive() {
@@ -62,6 +70,8 @@ function deepShadow(path) {
 
 function apply() {
   if (!themeActive()) return;
+  // 0) Sections-View-Abstände über vererbende CSS-Variablen (document-weit).
+  inject(document.head, "neo-global-spacing-vars", SPACING_VARS_CSS);
   // 1) Mobil-Header ausblenden → in den Shadow-Root von hui-root.
   const hui = deepShadow(["home-assistant", "home-assistant-main", "ha-panel-lovelace", "hui-root"]);
   if (hui && hui.appendChild) inject(hui, "neo-global-header", HEADER_CSS);
