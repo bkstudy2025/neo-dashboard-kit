@@ -20,6 +20,20 @@ const DIALOG_CSS = `
 .mdc-dialog .mdc-dialog__surface{box-shadow:none!important;}
 ha-card{transition:none;}`;
 
+// Karten auf dem Smartphone dichter stapeln. Der vertikale Abstand ZWISCHEN
+// den Karten kommt aus der Lovelace-View (Masonry/Sections), nicht aus der
+// Karte selbst – daher hier in den View-Shadow-Root injizieren. Deckt beide
+// View-Typen ab; nicht passende Selektoren sind wirkungslos.
+const SPACING_CSS = `
+@media only screen and (max-width:768px){
+  /* Masonry-View */
+  #columns,.column{--masonry-view-card-margin:0 0 5px!important;}
+  .column>*{margin-top:0!important;margin-bottom:5px!important;}
+  /* Sections-View (Grid) */
+  .container{row-gap:5px!important;}
+  hui-section{--row-gap:5px!important;}
+}`;
+
 function themeActive() {
   try {
     return !!getComputedStyle(document.documentElement)
@@ -51,6 +65,24 @@ function apply() {
   // 1) Mobil-Header ausblenden → in den Shadow-Root von hui-root.
   const hui = deepShadow(["home-assistant", "home-assistant-main", "ha-panel-lovelace", "hui-root"]);
   if (hui && hui.appendChild) inject(hui, "neo-global-header", HEADER_CSS);
+  // 1b) Karten-Abstand der aktuellen View verkleinern. Die Layout-View liegt
+  // (je nach HA-Version) direkt unter hui-root oder in einem hui-view-Wrapper.
+  if (hui && hui.querySelector) {
+    const views = [
+      hui.querySelector("hui-masonry-view"),
+      hui.querySelector("hui-sections-view"),
+      hui.querySelector("hui-panel-view"),
+    ];
+    const wrap = hui.querySelector("hui-view");
+    if (wrap?.shadowRoot) {
+      views.push(
+        wrap.shadowRoot.querySelector("hui-masonry-view"),
+        wrap.shadowRoot.querySelector("hui-sections-view"),
+        wrap.shadowRoot.querySelector("hui-panel-view"),
+      );
+    }
+    views.forEach((v) => { if (v?.shadowRoot) inject(v.shadowRoot, "neo-global-spacing", SPACING_CSS); });
+  }
   // 2) Glas-Look für offene More-Info-/HA-Dialoge.
   const haRoot = document.querySelector("home-assistant")?.shadowRoot;
   haRoot?.querySelectorAll?.("ha-more-info-dialog, ha-dialog").forEach((d) => {
