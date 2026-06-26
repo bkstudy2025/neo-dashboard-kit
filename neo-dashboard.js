@@ -254,8 +254,8 @@ const NEO_CSS = `
   @keyframes spin { from{transform:rotate(0)}to{transform:rotate(360deg)} }
   /* Responsives Layout (per data-neo-layout am Host gesetzt). min-height ist
      nur ein Boden → kleiner = kompakter, Inhalt wird nie abgeschnitten. */
-  :host([data-neo-layout="tablet"]) .neo-card { padding:14px !important; min-height:140px !important; }
-  :host([data-neo-layout="mobile"]) .neo-card { padding:12px !important; min-height:118px !important; }
+  :host([data-neo-layout="tablet"]) .neo-card { padding:13px !important; min-height:124px !important; }
+  :host([data-neo-layout="mobile"]) .neo-card { padding:10px !important; min-height:96px !important; }
   /* Auf dem Smartphone liegen die Karten nahezu randlos am Bildschirmrand – ein
      40px breiter Glow läuft dort über die Viewport-Kante und wirkt „abgeschnitten".
      Mobil daher ein engerer Schatten, der innerhalb des Karten-Abstands bleibt. */
@@ -4126,7 +4126,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "1.0.0-rc.9", // beim Build aus package.json ersetzt
+  version: "1.0.0-rc.10", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -4220,7 +4220,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v1.0.0-rc.9 ",
+  "%c NEO DASHBOARD KIT %c v1.0.0-rc.10 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );

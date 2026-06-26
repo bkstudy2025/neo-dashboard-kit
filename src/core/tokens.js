@@ -52,8 +52,8 @@ export const NEO_CSS = `
   @keyframes spin { from{transform:rotate(0)}to{transform:rotate(360deg)} }
   /* Responsives Layout (per data-neo-layout am Host gesetzt). min-height ist
      nur ein Boden → kleiner = kompakter, Inhalt wird nie abgeschnitten. */
-  :host([data-neo-layout="tablet"]) .neo-card { padding:14px !important; min-height:140px !important; }
-  :host([data-neo-layout="mobile"]) .neo-card { padding:12px !important; min-height:118px !important; }
+  :host([data-neo-layout="tablet"]) .neo-card { padding:13px !important; min-height:124px !important; }
+  :host([data-neo-layout="mobile"]) .neo-card { padding:10px !important; min-height:96px !important; }
   /* Auf dem Smartphone liegen die Karten nahezu randlos am Bildschirmrand – ein
      40px breiter Glow läuft dort über die Viewport-Kante und wirkt „abgeschnitten".
      Mobil daher ein engerer Schatten, der innerhalb des Karten-Abstands bleibt. */
