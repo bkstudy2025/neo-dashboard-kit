@@ -311,3 +311,11 @@ Neo Dashboard:
   # Marker: enables Neo's own global styler (hide mobile header + glass dialogs).
   # No Card Mod required — handled by neo-dashboard.js itself.
   neo-dashboard-theme: "1"
+
+  # Kompaktere Abstände in der Sections-/Abschnitts-Ansicht.
+  # HA-Defaults sind groß: zwischen Abschnitten 24px (row) / 32px (column),
+  # zwischen Karten im Abschnitt je 8px. Hier deutlich enger.
+  ha-view-sections-row-gap: "10px"
+  ha-view-sections-column-gap: "16px"
+  ha-section-grid-row-gap: "6px"
+  ha-section-grid-column-gap: "8px"

@@ -4126,7 +4126,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "1.0.0-rc.12", // beim Build aus package.json ersetzt
+  version: "1.0.0-rc.13", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -4160,12 +4160,16 @@ ha-card{transition:none;}`;
 // Sections-View: steuert die Abstände über CSS-Custom-Properties, die durch
 // Shadow-Grenzen hindurch VERERBEN. Daher reicht es, sie weit oben (:root)
 // zu setzen – das ist der robuste, versionsstabile Weg (kein Shadow-Hack).
+// Fallback OHNE !important, damit das Theme (das diese Variablen als Inline-
+// Style setzt) immer Vorrang hat. Greift nur, wenn ein älteres Theme die Werte
+// nicht selbst setzt. Werte identisch zum Theme. HA-Defaults: row 24 / col 32
+// (zwischen Abschnitten), je 8 (Karten im Abschnitt).
 const SPACING_VARS_CSS = `
-@media only screen and (max-width:768px){
-  :root{
-    --ha-view-sections-row-gap:6px!important;
-    --ha-view-sections-column-gap:12px!important;
-  }
+:root{
+  --ha-view-sections-row-gap:10px;
+  --ha-view-sections-column-gap:16px;
+  --ha-section-grid-row-gap:6px;
+  --ha-section-grid-column-gap:8px;
 }`;
 // Masonry-View: kennt keine vererbende Variable → hier doch per Shadow-Inject
 // in den View-Root. Nicht passende Selektoren sind wirkungslos.
@@ -4262,7 +4266,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v1.0.0-rc.12 ",
+  "%c NEO DASHBOARD KIT %c v1.0.0-rc.13 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
