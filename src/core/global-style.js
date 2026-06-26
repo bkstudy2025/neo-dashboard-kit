@@ -26,12 +26,16 @@ ha-card{transition:none;}`;
 // Sections-View: steuert die Abstände über CSS-Custom-Properties, die durch
 // Shadow-Grenzen hindurch VERERBEN. Daher reicht es, sie weit oben (:root)
 // zu setzen – das ist der robuste, versionsstabile Weg (kein Shadow-Hack).
+// Fallback OHNE !important, damit das Theme (das diese Variablen als Inline-
+// Style setzt) immer Vorrang hat. Greift nur, wenn ein älteres Theme die Werte
+// nicht selbst setzt. Werte identisch zum Theme. HA-Defaults: row 24 / col 32
+// (zwischen Abschnitten), je 8 (Karten im Abschnitt).
 const SPACING_VARS_CSS = `
-@media only screen and (max-width:768px){
-  :root{
-    --ha-view-sections-row-gap:6px!important;
-    --ha-view-sections-column-gap:12px!important;
-  }
+:root{
+  --ha-view-sections-row-gap:10px;
+  --ha-view-sections-column-gap:16px;
+  --ha-section-grid-row-gap:6px;
+  --ha-section-grid-column-gap:8px;
 }`;
 // Masonry-View: kennt keine vererbende Variable → hier doch per Shadow-Inject
 // in den View-Root. Nicht passende Selektoren sind wirkungslos.
