@@ -4,11 +4,16 @@
 // Validates store/index.json and each referenced local module/card file.
 // Exit code 1 on errors, 0 on success (warnings still exit 0 but are printed).
 //
-// Run: node scripts/validate-store.mjs
+// Run:  node scripts/validate-store.mjs
+//       node scripts/validate-store.mjs --write-hashes
+//         → trägt die sha256-Signaturen der lokalen Moduldateien in
+//           store/index.json ein (nach Modul-Änderungen ausführen).
 
-import { readFileSync, existsSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const INDEX_PATH = join(ROOT, "store", "index.json");
@@ -19,6 +24,8 @@ const URL_PREFIX = "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@";
 const HOMEPAGE_PREFIX = "https://github.com/bkstudy2025/neo-dashboard-kit";
 const ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/; // lowercase kebab-case
 const SEMVER_RE = /^\d+\.\d+\.\d+/; // loose SemVer
+const SHA256_RE = /^[0-9a-f]{64}$/; // Integritäts-Signatur (Hex, lowercase)
+const WRITE_HASHES = process.argv.includes("--write-hashes");
 // "target" is validated separately: it may be a string ("*" / card type) OR an
 // array of card types (the module system supports both — see src/core/modules.js).
 const REQUIRED_FIELDS = ["id", "name", "description", "author", "version", "icon", "url"];
@@ -31,6 +38,44 @@ const errors = [];
 const warnings = [];
 const err = (m) => errors.push(m);
 const warn = (m) => warnings.push(m);
+
+const sha256Hex = (text) => createHash("sha256").update(text, "utf8").digest("hex");
+
+// Inhalt der Moduldatei am gepinnten Git-Ref der Store-URL (für den
+// Konsistenz-Check Signatur ↔ ausgelieferter Inhalt). null, wenn die
+// Historie fehlt (z. B. Shallow-Clone) — dann wird der Check übersprungen.
+let gitHistoryWarned = false;
+function pinnedContent(url, id) {
+  if (!url.startsWith(URL_PREFIX)) return null;
+  const ref = url.slice(URL_PREFIX.length).split("/", 1)[0];
+  if (!ref || ref === "main") return null; // @main ist nicht immutabel → eigener Warn-Pfad
+  try {
+    return execFileSync("git", ["show", `${ref}:store/modules/${id}.js`], {
+      cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"],
+    });
+  } catch (_e) {
+    if (!gitHistoryWarned) {
+      gitHistoryWarned = true;
+      warn("git history not available — pinned-content consistency check skipped (use a full clone / fetch-depth: 0).");
+    }
+    return null;
+  }
+}
+
+// --write-hashes: sha256 der lokalen Moduldateien in den Index eintragen.
+// Direkt nach "url" platziert, damit die Reihenfolge im Index lesbar bleibt.
+function writeHashes(data) {
+  let changed = 0;
+  for (const item of data) {
+    if (!item || typeof item !== "object" || typeof item.id !== "string" || !ID_RE.test(item.id)) continue;
+    const file = join(MODULES_DIR, `${item.id}.js`);
+    if (!existsSync(file)) continue;
+    const digest = sha256Hex(readFileSync(file, "utf8"));
+    if (item.sha256 !== digest) { item.sha256 = digest; changed++; }
+  }
+  writeFileSync(INDEX_PATH, JSON.stringify(data, null, 2) + "\n");
+  console.log(`✍  ${changed} sha256 signature(s) updated in store/index.json.`);
+}
 
 function validate() {
   if (!existsSync(INDEX_PATH)) {
@@ -62,6 +107,8 @@ function validate() {
   if (data.length === 0) {
     warn("store/index.json is an empty array — no store items defined.");
   }
+
+  if (WRITE_HASHES) writeHashes(data); // aktualisiert data in-place + schreibt den Index
 
   const seenIds = new Set();
   let moduleCount = 0;
@@ -183,6 +230,26 @@ function validateModuleFile(item, ref) {
   } catch (e) {
     err(`${ref}: cannot read module file: ${e.message}`);
     return;
+  }
+
+  // Integritäts-Signatur: sha256 des lokalen Dateiinhalts muss im Index stehen.
+  // Das Frontend verweigert die Installation, wenn der vom CDN geladene Code
+  // nicht zu dieser Signatur passt (src/wrapper/neo-card-editor.js).
+  const digest = sha256Hex(code);
+  if (typeof item.sha256 !== "string" || !SHA256_RE.test(item.sha256)) {
+    err(`${ref}: missing/invalid "sha256" signature (run: node scripts/validate-store.mjs --write-hashes).`);
+  } else if (item.sha256 !== digest) {
+    err(`${ref}: sha256 does not match store/modules/${item.id}.js (run: node scripts/validate-store.mjs --write-hashes).`);
+  }
+
+  // Konsistenz: Inhalt am gepinnten @<ref> der URL muss dem lokalen Stand
+  // entsprechen — sonst schlägt die Signaturprüfung beim Install gegen den
+  // tatsächlich ausgelieferten CDN-Inhalt fehl.
+  if (typeof item.url === "string" && item.url) {
+    const pinned = pinnedContent(item.url, item.id);
+    if (pinned !== null && pinned !== code) {
+      err(`${ref}: content at pinned url ref differs from local file — update the @<ref> pin after changing the module.`);
+    }
   }
 
   const hasModule = code.includes("registerModule");

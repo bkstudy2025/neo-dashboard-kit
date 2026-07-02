@@ -1,0 +1,19 @@
+# Hält GitHub Actions und npm-devDependencies aktuell (wöchentlich, gebündelt).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm-dev:
+        dependency-type: development
+        patterns: ["*"]

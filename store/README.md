@@ -23,8 +23,9 @@ Community-Beitrag erscheint, genügt:
 
 1. Datei unter `store/modules/<id>.js` hinzufügen,
 2. Eintrag in `store/index.json` ergänzen,
-3. auf `main` mergen,
-4. im Editor unter **Erweiterungen → Offizieller Store** auf **„⟳ Store
+3. Signatur pflegen: `node scripts/validate-store.mjs --write-hashes`,
+4. auf `main` mergen,
+5. im Editor unter **Erweiterungen → Offizieller Store** auf **„⟳ Store
    aktualisieren"** klicken.
 
 **Kein HACS-Release nötig, kein neues `neo-dashboard.js`, kein App-Build.**
@@ -102,10 +103,14 @@ kaputte Einträge werden nicht gemergt. Details:
      "author": "Community",
      "version": "1.0.0",
      "icon": "✨",
-     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-mein-modul.js"
+     "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@main/store/modules/neo-mein-modul.js",
+     "sha256": "<wird von validate-store.mjs --write-hashes eingetragen>"
    }
    ```
-3. Auf `main` mergen (Maintainer).
+3. Signatur eintragen/aktualisieren: `node scripts/validate-store.mjs --write-hashes`
+   (berechnet die `sha256` der Moduldatei und schreibt sie in den Katalog —
+   ohne gültige Signatur schlägt die CI fehl und der Editor überspringt den Eintrag).
+4. Auf `main` mergen (Maintainer).
 
 | index.json-Feld | Zweck |
 |---|---|
@@ -113,6 +118,7 @@ kaputte Einträge werden nicht gemergt. Details:
 | `target` | für welche Karte(n) das Modul angeboten wird |
 | `url` | jsDelivr-URL zur eigenständigen Modul-Datei — für veröffentlichte Versionen **auf einen Commit-SHA oder Release-Tag gepinnt**, nicht `@main` |
 | `version` | Versionsnummer — der Store vergleicht sie mit der installierten und zeigt **„⬆ Update verfügbar"** an, wenn sie abweicht. **Muss** zur Manifest-`version` der unter `url` referenzierten Datei passen |
+| `sha256` | Integritäts-Signatur der Moduldatei — der Editor prüft den vom CDN geladenen Code **vor dem Ausführen** dagegen und verweigert bei Abweichung die Installation. Mit `node scripts/validate-store.mjs --write-hashes` pflegen |
 | `homepage` | (optional) Link für den **Info**-Button (Doku/Repo) |
 | `icon`, `image`, `description`, `author` | Anzeige im Store |
 
@@ -162,18 +168,19 @@ Der Store ist **kuratiert** und absichtlich **releasefrei**:
   jeder Einreichung und ein eng gehaltener Schreibzugriff auf `main`
   entscheidend.
 
+### Umgesetzte Härtung
+
+- ✅ **sha256-Signatur pro Store-Modul** in `store/index.json`: Der Editor prüft
+  den vom CDN geladenen Code **vor dem Ausführen** gegen die Signatur und
+  verweigert bei Abweichung die Installation. Die CI stellt sicher, dass jede
+  Signatur zur Moduldatei passt **und** dass der Inhalt am gepinnten `@<ref>`
+  der URL dem lokalen Stand entspricht. Pflege: `node scripts/validate-store.mjs
+  --write-hashes` (der releasefreie Workflow bleibt erhalten — die Signatur wird
+  einfach im selben Merge mitgepflegt).
+
 ### Spätere Härtungs-Optionen (optional, derzeit NICHT umgesetzt)
 
-Diese Punkte sind bewusst nur **dokumentiert/geplant** — sie würden den
-releasefreien Workflow verändern und werden hier *nicht* eingeführt:
-
-- **sha256-Checksumme pro Store-Modul** in `store/index.json`, vom Loader vor
-  der Ausführung geprüft.
 - **Automatische GitHub Action**, die Store-URLs beim Merge auf einen
-  **Commit-SHA** pinnt (statt `@main`), inkl. Checksummen-Update.
+  **Commit-SHA** pinnt (statt `@main`), inkl. Signatur-Update.
 - **Signierter Store-Index** (z. B. Signatur über `index.json`).
 - **Release-/Channel-Modell** (z. B. `stable` / `beta`) für den Store.
-
-> Hinweis: Solange diese Optionen nicht aktiv sind, bitte `@main`-URLs in
-> `store/index.json` **nicht** entfernen — das würde den releasefreien
-> Community-Store-Workflow brechen.
