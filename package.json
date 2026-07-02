@@ -10,9 +10,9 @@
     "lint": "eslint src/"
   },
   "devDependencies": {
-    "rollup": "^4.0.0",
-    "@rollup/plugin-node-resolve": "^15.0.0",
-    "eslint": "^8.0.0"
+    "rollup": "^4.62.2",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "eslint": "^10.6.0"
   },
   "keywords": [
     "home-assistant",
