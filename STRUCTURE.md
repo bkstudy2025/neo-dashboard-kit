@@ -126,3 +126,7 @@ Display und Control.
   escapen (`window.NeoDashboard.escapeHtml`/`escapeAttr`). Externe `href`-/`src`-Werte nie direkt
   rendern, sondern zuerst über `window.NeoDashboard.safeUrl` führen; erlaubt sind nur `http:`,
   `https:` und relative Pfade wie `/local/...`.
+- Store-Integrität: Jeder Katalog-Eintrag in `store/index.json` trägt eine
+  `sha256`-Signatur der Moduldatei (`node scripts/validate-store.mjs
+  --write-hashes`). Der Editor prüft den vom CDN geladenen Code vor dem
+  Ausführen dagegen (`src/core/sha256.js`) und installiert bei Abweichung nicht.

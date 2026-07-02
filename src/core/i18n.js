@@ -79,6 +79,8 @@ const EN = {
   "✓ Modul „{name}” hinzugefügt.": "✓ Module “{name}” added.",
   "✓ Modul „{name}” aktualisiert.": "✓ Module “{name}” updated.",
   "Speichern fehlgeschlagen: {err}": "Saving failed: {err}",
+  "Integritätsprüfung fehlgeschlagen: Der geladene Code passt nicht zur Signatur im Store-Index. Nicht installiert.":
+    "Integrity check failed: the downloaded code does not match the signature in the store index. Not installed.",
   "Installiere …": "Installing …",
   "Aktualisiere …": "Updating …",
   "✓ „{name}” installiert.": "✓ “{name}” installed.",

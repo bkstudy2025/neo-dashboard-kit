@@ -7,7 +7,8 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "🏷️",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@6656739e46a2a3f0671a86ee6c2518b63a7d1040/store/modules/neo-mini-badge.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@6656739e46a2a3f0671a86ee6c2518b63a7d1040/store/modules/neo-mini-badge.js",
+    "sha256": "0de859c26f1cbc4894efc942f487877743212ec193078db1de774a0175cf8fc2"
   },
   {
     "id": "neo-glow-frame",
@@ -17,7 +18,8 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "✨",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@6656739e46a2a3f0671a86ee6c2518b63a7d1040/store/modules/neo-glow-frame.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@6656739e46a2a3f0671a86ee6c2518b63a7d1040/store/modules/neo-glow-frame.js",
+    "sha256": "b3e226fd4509011dae995e93d04a54bc65e3974edc4ca2b215e4bd8275ed9a9f"
   },
   {
     "id": "neo-accent-wash",
@@ -27,18 +29,23 @@
     "author": "Community",
     "version": "1.0.4",
     "icon": "🌈",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@a4ad5542caaafae7c98f246f80e06f5bdb5ad5ea/store/modules/neo-accent-wash.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@a4ad5542caaafae7c98f246f80e06f5bdb5ad5ea/store/modules/neo-accent-wash.js",
+    "sha256": "de6290592df868aa55da8c77994ce96d6bd81cae59469ed8f3b0ac65d869fd1e"
   },
   {
     "id": "neo-pulse-ring",
     "name": "Neo Pulse Ring",
     "description": "Animated conic progress ring from a numeric entity (battery, humidity, CPU …).",
-    "target": ["neo-control-card", "neo-display-card"],
+    "target": [
+      "neo-control-card",
+      "neo-display-card"
+    ],
     "kind": "module",
     "author": "Community",
     "version": "1.0.0",
     "icon": "🔆",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-pulse-ring.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-pulse-ring.js",
+    "sha256": "e261bbb51176b81482a97c9e039975410bbc3329c2fa38628cbb685fdeff45e4"
   },
   {
     "id": "neo-tilt-shine",
@@ -49,7 +56,8 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "💠",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-tilt-shine.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-tilt-shine.js",
+    "sha256": "c19e3038050f0fb7f5909b0c8373cff628400c44f1ae8206791db1b53b45a69d"
   },
   {
     "id": "neo-clock-card",
@@ -60,7 +68,8 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "🕒",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-clock-card.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-clock-card.js",
+    "sha256": "2c026e498e8e6afa4de3b84388269ae3492fa55dd7677d1a470b7d038b386861"
   },
   {
     "id": "neo-spark-card",
@@ -71,7 +80,8 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "📈",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-spark-card.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@ea50e30403e6035f40c7bb3941970dd096bfd84a/store/modules/neo-spark-card.js",
+    "sha256": "d249c2840e645a9425bb59300921b6269471f6ee9fe2fca05b6dfe5c9ec1cb8c"
   },
   {
     "id": "neo-greeting-hero",
@@ -82,7 +92,8 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "👋",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-greeting-hero.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-greeting-hero.js",
+    "sha256": "591d5252c239dd19e72dfcc644dee8ee8e4698c3b7c5cb34b1fb908b9293251b"
   },
   {
     "id": "neo-gauge-card",
@@ -93,7 +104,8 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "⏲️",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-gauge-card.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-gauge-card.js",
+    "sha256": "603a89804f93bfe1703e8dc559260c8ce5edb4dd800ec5d7dd00d4a7318d2917"
   },
   {
     "id": "neo-scene-deck",
@@ -104,7 +116,8 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "🎬",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-scene-deck.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-scene-deck.js",
+    "sha256": "d58a6e577574f9cb586d2dbe5bf65978a2b52f44ce1cef1030b3e29d7696740b"
   },
   {
     "id": "neo-ripple-touch",
@@ -115,6 +128,7 @@
     "author": "Community",
     "version": "1.0.0",
     "icon": "🌊",
-    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-ripple-touch.js"
+    "url": "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@881ac4eb1887cc172e4cda59be199cb741e9d874/store/modules/neo-ripple-touch.js",
+    "sha256": "3d5dce0a1a35ac1c08478361c3357d45d17ba00252177f863d545bb712f6ce29"
   }
 ]

@@ -9,6 +9,7 @@ import { NeoStore } from "../store/module-store.js";
 import { neoLoadModule } from "../store/module-loader.js";
 import { neoT, neoLang } from "../core/i18n.js";
 import { escapeAttr, escapeHtml, safeUrl } from "../core/html.js";
+import { neoSha256Hex } from "../core/sha256.js";
 
 class NeoCardEditor extends HTMLElement {
   // Übersetzungs-Helfer: folgt der HA-Sprache (EN Standard, DE wenn HA Deutsch).
@@ -721,7 +722,8 @@ class NeoCardEditor extends HTMLElement {
     }
     const PREFIX = "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@";
     const ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-    const REQUIRED = ["id", "name", "description", "target", "author", "version", "icon", "url"];
+    const SHA256_RE = /^[0-9a-f]{64}$/;
+    const REQUIRED = ["id", "name", "description", "target", "author", "version", "icon", "url", "sha256"];
     const out = [];
     const seen = new Set();
     items.forEach((it, i) => {
@@ -751,6 +753,12 @@ class NeoCardEditor extends HTMLElement {
         console.warn(`[Neo Store] "${ref}" skipped — url not allowed: ${it.url}`);
         return;
       }
+      // Integritäts-Signatur ist Pflicht: ohne (gültige) sha256 ist der Eintrag
+      // nicht installierbar — die Download-Prüfung in _installFromStore braucht sie.
+      if (!SHA256_RE.test(it.sha256)) {
+        console.warn(`[Neo Store] "${ref}" skipped — missing/invalid sha256 signature.`);
+        return;
+      }
       seen.add(it.id);
       out.push(it);
     });
@@ -766,6 +774,13 @@ class NeoCardEditor extends HTMLElement {
     try {
       // Cache-Busting → frische Datei (auch bei jsDelivr @main), für Install UND Update.
       const code = await NeoStore.fetch(this._cacheBustUrl(item.url));
+      // Integritätsprüfung VOR dem Ausführen: Der geladene Code muss zur
+      // sha256-Signatur aus dem kuratierten Index passen (CI pflegt sie via
+      // validate-store.mjs). Fängt manipulierte/veraltete CDN-Inhalte ab,
+      // bevor irgendetwas injiziert oder gespeichert wird.
+      if (neoSha256Hex(code) !== item.sha256) {
+        throw new Error(this._t("Integritätsprüfung fehlgeschlagen: Der geladene Code passt nicht zur Signatur im Store-Index. Nicht installiert."));
+      }
       const res = neoLoadModule(code); // registriert das Modul sofort
       if (!res.ok) throw new Error("Code-Fehler");
       // Verifikation: der geladene Code MUSS die erwartete ID registriert haben.
