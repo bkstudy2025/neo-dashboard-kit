@@ -15,6 +15,11 @@ const EN = {
   // Startseite
   "Glassmorphism-Karten für dein Dashboard. Wähle oben einen <b>Kartentyp</b> — danach erscheinen hier die Einstellungen und rechts die Live-Vorschau.":
     "Glassmorphism cards for your dashboard. Pick a <b>card type</b> above — the settings appear here and the live preview on the right.",
+  // Wrapper-Karte (Platzhalter & Lade-/Fehlertexte)
+  "Wähle zuerst eine Karte: Header, Steuerung oder Anzeige. Danach wählst du den passenden Typ.":
+    "Pick a card first: Header, Control or Display. Then choose the matching type.",
+  "Unbekannter Neo-Kartentyp:": "Unknown Neo card type:",
+  "Modul wird geladen …": "Loading module …",
   // Erweiterungen / Module
   "Module": "Modules",
   "Erweiterungen": "Extensions",

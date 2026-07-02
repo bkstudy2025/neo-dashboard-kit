@@ -490,6 +490,11 @@ const EN = {
   // Startseite
   "Glassmorphism-Karten für dein Dashboard. Wähle oben einen <b>Kartentyp</b> — danach erscheinen hier die Einstellungen und rechts die Live-Vorschau.":
     "Glassmorphism cards for your dashboard. Pick a <b>card type</b> above — the settings appear here and the live preview on the right.",
+  // Wrapper-Karte (Platzhalter & Lade-/Fehlertexte)
+  "Wähle zuerst eine Karte: Header, Steuerung oder Anzeige. Danach wählst du den passenden Typ.":
+    "Pick a card first: Header, Control or Display. Then choose the matching type.",
+  "Unbekannter Neo-Kartentyp:": "Unknown Neo card type:",
+  "Modul wird geladen …": "Loading module …",
   // Erweiterungen / Module
   "Module": "Modules",
   "Erweiterungen": "Extensions",
@@ -2539,7 +2544,9 @@ NeoDashboardRegistry.registerCard("neo-header-card", NeoHeaderCard, {
 });
 
 // Neo Dashboard Kit — Extension loader (cards & modules)
-// Loads pasted extension code (cards or modules; script injection, deduped).
+// Loads extension code (cards or modules) via script injection. Re-loading the
+// same ID is intentional: the registries overwrite the entry, which is exactly
+// how updates go live without a page reload.
 // Used by the neo-card wrapper at runtime and by its editor's paste-code area.
 // Returns { ok, modules, cards } — the manifests that registered while the
 // pasted code ran (new installs AND updates of existing IDs). The two lists are
@@ -2548,7 +2555,6 @@ NeoDashboardRegistry.registerCard("neo-header-card", NeoHeaderCard, {
 
 function neoLoadModule(code) {
   if (!code || !code.trim()) return { ok: false, modules: [], cards: [], error: "leerer Code" };
-  window.__neoModules = window.__neoModules || new Set();
 
   const modules = [];
   const cards = [];
@@ -2583,9 +2589,6 @@ function neoLoadModule(code) {
     const s = document.createElement("script");
     s.textContent = code;
     document.head.appendChild(s);
-
-    const key = code.length + ":" + code.slice(0, 96);
-    window.__neoModules.add(key);
 
     // Live-Swap aller neo-card-Instanzen auf die (neue) Modul-Version – kein Reload nötig.
     window.dispatchEvent(new CustomEvent("neo-module-changed"));
@@ -4008,6 +4011,7 @@ class NeoCard extends HTMLElement {
     const type = this._config.card_type;
 
     if (!type) {
+      this._placeholderLang = neoLang(this._hass);
       this.innerHTML = `
         <ha-card style="
           padding:28px 24px;border-radius:24px;text-align:center;
@@ -4016,7 +4020,7 @@ class NeoCard extends HTMLElement {
           ${neoLogo({ size: 56, radius: 16 })}
           <div style="font-size:16px;font-weight:600;color:var(--primary-text-color);">Neo Card</div>
           <div style="font-size:13px;color:var(--secondary-text-color);max-width:240px;line-height:1.4;">
-            Wähle zuerst eine Karte: Header, Steuerung oder Anzeige. Danach wählst du den passenden Typ.
+            ${neoT(this._hass, "Wähle zuerst eine Karte: Header, Steuerung oder Anzeige. Danach wählst du den passenden Typ.")}
           </div>
         </ha-card>`;
       this._child = null;
@@ -4026,10 +4030,15 @@ class NeoCard extends HTMLElement {
 
     if (!NeoDashboardRegistry.getCard(type)) {
       // Module may still be loading from the backend store — retry once ready
+      this._placeholderLang = neoLang(this._hass);
       this.innerHTML = `
         <ha-card style="padding:24px;text-align:center;color:var(--secondary-text-color);">
-          ${NeoStore._loaded ? `Unbekannter Neo-Kartentyp: ${escapeHtml(type)}` : "Modul wird geladen …"}
+          ${NeoStore._loaded
+            ? `${neoT(this._hass, "Unbekannter Neo-Kartentyp:")} ${escapeHtml(type)}`
+            : neoT(this._hass, "Modul wird geladen …")}
         </ha-card>`;
+      this._child = null;
+      this._childType = null;
       if (!NeoStore._loaded && !this._waitingModules) {
         this._waitingModules = true;
         window.addEventListener("neo-modules-loaded", () => {
@@ -4061,7 +4070,11 @@ class NeoCard extends HTMLElement {
   set hass(h) {
     this._hass = h;
     NeoStore.setHass(h);
-    if (this._child) this._child.hass = h;
+    if (this._child) { this._child.hass = h; return; }
+    // Placeholder/Meldung sichtbar: Texte folgen der HA-Sprache. Neu rendern,
+    // sobald die Sprache erstmals bekannt ist oder wechselt (nicht bei jedem
+    // hass-Update — das käme bei jedem State-Change im System).
+    if (this._config && neoLang(h) !== this._placeholderLang) this.setConfig(this._config);
   }
   get hass() { return this._hass; }
 
@@ -4094,10 +4107,15 @@ customElements.define("neo-card", NeoCard);
 // Expose ONLY neo-card in HA's native picker
 window.customCards = window.customCards || [];
 if (!window.customCards.find((c) => c.type === "neo-card")) {
+  // Statische Registrierung — hier gibt es noch kein hass, daher entscheidet
+  // die Browser-Sprache über DE/EN im nativen HA-Karten-Picker.
+  const _de = (navigator.language || "").toLowerCase().startsWith("de");
   window.customCards.push({
     type: "neo-card",
     name: "Neo Card",
-    description: "Glassmorphism-Karten — Typ im Editor wählen",
+    description: _de
+      ? "Glassmorphism-Karten — Typ im Editor wählen"
+      : "Glassmorphism cards — pick the type in the editor",
     preview: true,
     documentationURL: "https://github.com/bkstudy2025/neo-dashboard-kit",
   });

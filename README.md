@@ -57,8 +57,8 @@ Everything else is added through **modules** and **Premium** — see the docs ab
 
 ## 🧪 Release candidate & updates
 
-This project is currently published as a **release candidate (`v1.0.0-rc.3`,
-pre-release)**. HACS **hides pre-releases by default**, so updates only appear
+This project is currently published as a **release candidate (pre-release)**.
+HACS **hides pre-releases by default**, so updates only appear
 once you enable **“Show beta versions”** for this repository in HACS
 (repository → 3-dot menu → *Redownload* / settings → enable beta). The stable
 `v1.0.0` will be cut after the real-device test matrix in the
