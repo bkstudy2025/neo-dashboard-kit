@@ -26,8 +26,29 @@ jobs:
       - name: Build bundle
         run: npm run build
 
+      # Das Root-Bundle ist ein bewusst committetes Build-Artefakt (HACS liefert
+      # es direkt aus). Schlägt fehl, wenn src/ geändert wurde, ohne das Bundle
+      # neu zu bauen und mitzucommitten.
+      - name: Check bundle is up to date
+        run: |
+          if ! git diff --exit-code neo-dashboard.js; then
+            echo "::error::neo-dashboard.js ist veraltet — 'npm run build' ausführen und das Bundle mitcommitten."
+            exit 1
+          fi
+
       - name: Lint
         run: npm run lint
 
       - name: Validate store catalog
         run: node scripts/validate-store.mjs
+
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: HACS validation
+        uses: hacs/action@main
+        with:
+          category: plugin

@@ -1,5 +1,7 @@
 // Neo Dashboard Kit — Extension loader (cards & modules)
-// Loads pasted extension code (cards or modules; script injection, deduped).
+// Loads extension code (cards or modules) via script injection. Re-loading the
+// same ID is intentional: the registries overwrite the entry, which is exactly
+// how updates go live without a page reload.
 // Used by the neo-card wrapper at runtime and by its editor's paste-code area.
 // Returns { ok, modules, cards } — the manifests that registered while the
 // pasted code ran (new installs AND updates of existing IDs). The two lists are
@@ -8,7 +10,6 @@
 
 export function neoLoadModule(code) {
   if (!code || !code.trim()) return { ok: false, modules: [], cards: [], error: "leerer Code" };
-  window.__neoModules = window.__neoModules || new Set();
 
   const modules = [];
   const cards = [];
@@ -43,9 +44,6 @@ export function neoLoadModule(code) {
     const s = document.createElement("script");
     s.textContent = code;
     document.head.appendChild(s);
-
-    const key = code.length + ":" + code.slice(0, 96);
-    window.__neoModules.add(key);
 
     // Live-Swap aller neo-card-Instanzen auf die (neue) Modul-Version – kein Reload nötig.
     window.dispatchEvent(new CustomEvent("neo-module-changed"));
