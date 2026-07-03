@@ -33,6 +33,7 @@
 //  - Editor UND Rendering leiten den Typ aus derselben Map ab (neoCapabilityType)
 import { makeNeoEditor } from "./editor-factory.js";
 import { neoActionFields, neoCleanActions } from "./action-editor.js";
+import { NEO_ICON_SELECTOR } from "./icons.js";
 
 const domainOf = (id) => (id ? String(id).split(".")[0] : "");
 export const neoTypeDef = (spec, t) => spec.types.find((x) => x.value === t);
@@ -124,7 +125,8 @@ function buildCapabilitySchema(config, spec) {
   // anzeigen. Darstellungsfelder würden sonst versteckte Optionen suggerieren.
   if (t || hasLegacyEntity) {
     const appearance = [];
-    if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: { icon: {} } });
+    // Combobox statt HA-Icon-Picker: der kennt die Neo-Icons nicht.
+    if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: NEO_ICON_SELECTOR });
     if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
     (spec.appearance || []).forEach((f) => appearance.push(f));
     sections.push({ type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance });

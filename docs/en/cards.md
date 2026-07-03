@@ -37,6 +37,11 @@ the matching controls:
 `icon`, `accent` (color), `layout`.
 *Advanced (YAML):* `step` (climate step), `code` (alarm code).
 
+> **Icons:** The `icon` field accepts the **bundled Neo icons** (plain names
+> like `lightbulb`, `bell`, `search` — offered as a dropdown in the editor)
+> **or** any HA icon with a prefix (e.g. `mdi:sofa`), which can be typed
+> freely into the same field.
+
 ### Control visibility
 All toggles default to **on** (except those marked below) and only take effect
 when the entity supports the feature.

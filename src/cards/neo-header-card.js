@@ -4,7 +4,7 @@
 import { NeoBaseCard } from "../core/base-card.js";
 import { NeoDashboardRegistry } from "../core/registry.js";
 import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "../core/tokens.js";
-import { neoIcon } from "../core/icons.js";
+import { neoIcon, NEO_ICON_SELECTOR } from "../core/icons.js";
 import { makeNeoEditor } from "../core/editor-factory.js";
 import { neoActionFields, neoCleanActions } from "../core/action-editor.js";
 import { escapeHtml } from "../core/html.js";
@@ -94,7 +94,8 @@ customElements.define("neo-header-card-editor", makeNeoEditor((config) => {
     {
       type: "expandable", title: "Darstellung", icon: "mdi:palette",
       schema: [
-        { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
+        // Combobox statt HA-Icon-Picker: der kennt die Neo-Icons nicht.
+        { name: "icon", label: "Icon (optional)", selector: NEO_ICON_SELECTOR },
         { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
       ],
     },

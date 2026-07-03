@@ -1,6 +1,6 @@
 {
   "name": "neo-dashboard-kit",
-  "version": "1.0.0-rc.13",
+  "version": "1.0.0-rc.14",
   "description": "A glassmorphism-style Home Assistant dashboard with community plugin support",
   "type": "module",
   "main": "neo-dashboard.js",
@@ -10,9 +10,11 @@
     "lint": "eslint src/"
   },
   "devDependencies": {
-    "rollup": "^4.62.2",
+    "@eslint/js": "^10.0.1",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "eslint": "^10.6.0"
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
+    "rollup": "^4.62.2"
   },
   "keywords": [
     "home-assistant",
