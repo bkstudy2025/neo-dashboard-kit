@@ -38,6 +38,11 @@ zeigt die passende Bedienung:
 (Untertitel), `icon`, `accent` (Farbe), `layout`.
 *Fortgeschritten (YAML):* `step` (Klima-Schrittweite), `code` (Alarm-Code).
 
+> **Icons:** Das `icon`-Feld akzeptiert die **mitgelieferten Neo-Icons**
+> (Namen ohne Präfix, z. B. `lightbulb`, `bell`, `search` — im Editor als
+> Auswahlliste) **oder** jedes HA-Icon mit Präfix (z. B. `mdi:sofa`), das
+> sich frei in dasselbe Feld eintippen lässt.
+
 ### Sichtbarkeit von Bedienelementen
 Alle Schalter sind standardmäßig **an** (außer den unten markierten) und nur
 wirksam, wenn die Entität die Funktion unterstützt.

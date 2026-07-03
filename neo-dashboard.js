@@ -315,6 +315,37 @@ function neoLogo({ size = 46, radius = 13 } = {}) {
     `style="width:${size}px;height:${size}px;border-radius:${radius}px;object-fit:cover;display:block;" />`;
 }
 
+// Neo Dashboard Kit — small HTML escaping helpers
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function safeUrl(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  // Relative HA/local paths are allowed; protocol-relative and malformed values
+  // are intentionally not allowed for card/store-rendered links and images.
+  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+
+  try {
+    const url = new URL(raw);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+  } catch (_err) {
+    return "";
+  }
+}
+
 // Neo Dashboard Kit — Icon-Set (SF-symbol style SVG, ported from prototype)
 // Returned as strings so cards can inline them via innerHTML.
 
@@ -429,8 +460,9 @@ const NEO_ICON_PATHS = {
 function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 } = {}) {
   // Name mit Doppelpunkt → HA-Icon (mdi:…, hue:… oder andere registrierte Sets).
   // So lassen sich Standard-MDI und installierte Custom-Icon-Sets nutzen.
+  // Name kommt aus Karten-Configs → escapen (Attribut-Injection ausschließen).
   if (typeof name === "string" && name.includes(":")) {
-    return `<ha-icon icon="${name}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px;color:${color};display:flex;align-items:center;justify-content:center;line-height:0;flex-shrink:0"></ha-icon>`;
+    return `<ha-icon icon="${escapeAttr(name)}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px;color:${color};display:flex;align-items:center;justify-content:center;line-height:0;flex-shrink:0"></ha-icon>`;
   }
   const inner = NEO_ICON_PATHS[name] || `<circle cx="12" cy="12" r="9"/>`;
   const paint = NEO_ICON_FILLED.has(name)
@@ -439,8 +471,18 @@ function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 } = {})
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color};display:block" ${paint}>${inner}</svg>`;
 }
 
-// Icon dropdown options for editors
-const NEO_ICON_OPTIONS = Object.keys(NEO_ICON_PATHS).map((k) => ({ value: k, label: k }));
+// Icon dropdown options for editors (alphabetisch, damit die Liste scanbar ist)
+const NEO_ICON_OPTIONS = Object.keys(NEO_ICON_PATHS)
+  .sort()
+  .map((k) => ({ value: k, label: k }));
+
+// Editor-Selector für Icon-Felder: Die Neo-Icons als Auswahlliste, per
+// custom_value bleibt zusätzlich freie Eingabe möglich (mdi:… und andere
+// registrierte HA-Icon-Sets). Der native HA-Icon-Picker (selector.icon) kennt
+// die Neo-Icons nicht — deshalb hier die eigene Combobox.
+const NEO_ICON_SELECTOR = {
+  select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true },
+};
 
 // Neo Dashboard Kit — Responsives Layout (geteilt von ALLEN Karten)
 // Jede Karte erhält eine "layout"-Option: auto | mobile | tablet | desktop.
@@ -947,37 +989,6 @@ function neoRenderReorder(container, items, labelFn, onChange) {
   container.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => del(+b.dataset.del)));
 }
 
-// Neo Dashboard Kit — small HTML escaping helpers
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function escapeAttr(value) {
-  return escapeHtml(value);
-}
-
-function safeUrl(value) {
-  const raw = String(value ?? "").trim();
-  if (!raw) return "";
-
-  // Relative HA/local paths are allowed; protocol-relative and malformed values
-  // are intentionally not allowed for card/store-rendered links and images.
-  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
-
-  try {
-    const url = new URL(raw);
-    return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
-  } catch (_err) {
-    return "";
-  }
-}
-
 // Neo Dashboard Kit — Home-Assistant-style action system
 // Shared tap/hold/double-tap action handling for all core cards.
 // Supported actions: more-info · toggle · navigate · url · call-service · none.
@@ -1466,7 +1477,8 @@ function buildCapabilitySchema(config, spec) {
   // anzeigen. Darstellungsfelder würden sonst versteckte Optionen suggerieren.
   if (t || hasLegacyEntity) {
     const appearance = [];
-    if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: { icon: {} } });
+    // Combobox statt HA-Icon-Picker: der kennt die Neo-Icons nicht.
+    if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: NEO_ICON_SELECTOR });
     if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
     (spec.appearance || []).forEach((f) => appearance.push(f));
     sections.push({ type: "expandable", title: "Darstellung", icon: "mdi:palette", schema: appearance });
@@ -2531,7 +2543,8 @@ customElements.define("neo-header-card-editor", makeNeoEditor((config) => {
     {
       type: "expandable", title: "Darstellung", icon: "mdi:palette",
       schema: [
-        { name: "icon", label: "Icon (optional)", selector: { icon: {} } },
+        // Combobox statt HA-Icon-Picker: der kennt die Neo-Icons nicht.
+        { name: "icon", label: "Icon (optional)", selector: NEO_ICON_SELECTOR },
         { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
       ],
     },
@@ -4211,6 +4224,7 @@ Object.assign(window.NeoDashboard, {
   capabilityType: neoCapabilityType,
   typeDef: neoTypeDef,
   iconOptions: NEO_ICON_OPTIONS,
+  iconSelector: NEO_ICON_SELECTOR, // fertiger Editor-Selector: Neo-Icons + freie mdi:-Eingabe
   accentOptions: NEO_ACCENT_OPTIONS,
   layoutOptions: NEO_LAYOUT_OPTS,
   normalizeLayout,

@@ -4,7 +4,7 @@
 //   const { BaseCard, icon, accents, registerCard, makeEditor } = window.NeoDashboard;
 // ══════════════════════════════════════════════════════════════
 import { NeoBaseCard } from "./base-card.js";
-import { neoIcon, NEO_ICON_OPTIONS } from "./icons.js";
+import { neoIcon, NEO_ICON_OPTIONS, NEO_ICON_SELECTOR } from "./icons.js";
 import { NEO_ACCENTS, NEO_ACCENT_OPTIONS } from "./tokens.js";
 import { makeNeoEditor } from "./editor-factory.js";
 import { makeNeoTypedEditor, neoCapabilityType, neoTypeDef } from "./capability.js";
@@ -21,6 +21,7 @@ Object.assign(window.NeoDashboard, {
   capabilityType: neoCapabilityType,
   typeDef: neoTypeDef,
   iconOptions: NEO_ICON_OPTIONS,
+  iconSelector: NEO_ICON_SELECTOR, // fertiger Editor-Selector: Neo-Icons + freie mdi:-Eingabe
   accentOptions: NEO_ACCENT_OPTIONS,
   layoutOptions: NEO_LAYOUT_OPTS,
   normalizeLayout,

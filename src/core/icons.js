@@ -1,5 +1,6 @@
 // Neo Dashboard Kit — Icon-Set (SF-symbol style SVG, ported from prototype)
 // Returned as strings so cards can inline them via innerHTML.
+import { escapeAttr } from "./html.js";
 
 const NEO_ICON_FILLED = new Set(["play", "pause", "next", "prev", "more", "starF", "dot"]);
 const NEO_ICON_PATHS = {
@@ -112,8 +113,9 @@ const NEO_ICON_PATHS = {
 export function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 } = {}) {
   // Name mit Doppelpunkt → HA-Icon (mdi:…, hue:… oder andere registrierte Sets).
   // So lassen sich Standard-MDI und installierte Custom-Icon-Sets nutzen.
+  // Name kommt aus Karten-Configs → escapen (Attribut-Injection ausschließen).
   if (typeof name === "string" && name.includes(":")) {
-    return `<ha-icon icon="${name}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px;color:${color};display:flex;align-items:center;justify-content:center;line-height:0;flex-shrink:0"></ha-icon>`;
+    return `<ha-icon icon="${escapeAttr(name)}" style="--mdc-icon-size:${size}px;width:${size}px;height:${size}px;color:${color};display:flex;align-items:center;justify-content:center;line-height:0;flex-shrink:0"></ha-icon>`;
   }
   const inner = NEO_ICON_PATHS[name] || `<circle cx="12" cy="12" r="9"/>`;
   const paint = NEO_ICON_FILLED.has(name)
@@ -122,5 +124,15 @@ export function neoIcon(name, { size = 22, color = "currentColor", stroke = 1.7 
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color};display:block" ${paint}>${inner}</svg>`;
 }
 
-// Icon dropdown options for editors
-export const NEO_ICON_OPTIONS = Object.keys(NEO_ICON_PATHS).map((k) => ({ value: k, label: k }));
+// Icon dropdown options for editors (alphabetisch, damit die Liste scanbar ist)
+export const NEO_ICON_OPTIONS = Object.keys(NEO_ICON_PATHS)
+  .sort()
+  .map((k) => ({ value: k, label: k }));
+
+// Editor-Selector für Icon-Felder: Die Neo-Icons als Auswahlliste, per
+// custom_value bleibt zusätzlich freie Eingabe möglich (mdi:… und andere
+// registrierte HA-Icon-Sets). Der native HA-Icon-Picker (selector.icon) kennt
+// die Neo-Icons nicht — deshalb hier die eigene Combobox.
+export const NEO_ICON_SELECTOR = {
+  select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true },
+};
