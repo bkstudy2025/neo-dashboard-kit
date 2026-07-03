@@ -2,6 +2,7 @@
 // Cards register here (core + community). They appear in the
 // neo-card dropdown automatically — only the single "neo-card"
 // wrapper is exposed in HA's native card picker.
+import { neoLog } from "./debug.js";
 
 const _registry = new Map();
 let _tagSeq = 0;
@@ -14,13 +15,13 @@ export const NeoDashboardRegistry = {
     const tag = `${type}--neo${++_tagSeq}`;
     try { customElements.define(tag, cls); } catch (e) { console.error("[Neo Dashboard]", e); return; }
     _registry.set(type, { cls, meta, tag }); // overwrite on update
-    console.info(`[Neo Dashboard] Registered: ${type} (${tag})`);
+    neoLog(`[Neo Dashboard] Registered: ${type} (${tag})`);
   },
   unregisterCard(type) {
     if (!type || type === "neo-card") return false;
     const removed = _registry.delete(type);
     if (removed) {
-      console.info(`[Neo Dashboard] Unregistered: ${type}`);
+      neoLog(`[Neo Dashboard] Unregistered: ${type}`);
       window.dispatchEvent(new CustomEvent("neo-module-changed"));
     }
     return removed;

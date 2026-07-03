@@ -17,6 +17,8 @@
 //   }
 // ctx = { hass, config, settings, card }
 
+import { neoLog } from "./debug.js";
+
 const _modules = new Map();
 
 function matches(target, cardType) {
@@ -32,14 +34,14 @@ export const NeoModules = {
       return null;
     }
     _modules.set(manifest.id, manifest); // overwrite on update
-    console.info(`[Neo Module] Registered: ${manifest.id} → ${manifest.target || "*"}`);
+    neoLog(`[Neo Module] Registered: ${manifest.id} → ${manifest.target || "*"}`);
     return manifest;
   },
   unregister(id) {
     if (!id) return false;
     const removed = _modules.delete(id);
     if (removed) {
-      console.info(`[Neo Module] Unregistered: ${id}`);
+      neoLog(`[Neo Module] Unregistered: ${id}`);
       window.dispatchEvent(new CustomEvent("neo-module-changed"));
     }
     return removed;

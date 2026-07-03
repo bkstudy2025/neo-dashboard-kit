@@ -38,9 +38,10 @@ the matching controls:
 *Advanced (YAML):* `step` (climate step), `code` (alarm code).
 
 > **Icons:** The `icon` field accepts the **bundled Neo icons** (plain names
-> like `lightbulb`, `bell`, `search` — offered as a dropdown in the editor)
-> **or** any HA icon with a prefix (e.g. `mdi:sofa`), which can be typed
-> freely into the same field.
+> like `lightbulb`, `bell`, `search`) **or** any registered HA icon with a
+> prefix (e.g. `mdi:sofa`, `hue:…`). In the editor: the **native HA icon
+> picker** on top (search + preview for mdi/hue/…), plus an expandable
+> **Neo icon grid** with previews below it.
 
 ### Control visibility
 All toggles default to **on** (except those marked below) and only take effect

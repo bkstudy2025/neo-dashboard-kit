@@ -39,9 +39,10 @@ zeigt die passende Bedienung:
 *Fortgeschritten (YAML):* `step` (Klima-Schrittweite), `code` (Alarm-Code).
 
 > **Icons:** Das `icon`-Feld akzeptiert die **mitgelieferten Neo-Icons**
-> (Namen ohne Präfix, z. B. `lightbulb`, `bell`, `search` — im Editor als
-> Auswahlliste) **oder** jedes HA-Icon mit Präfix (z. B. `mdi:sofa`), das
-> sich frei in dasselbe Feld eintippen lässt.
+> (Namen ohne Präfix, z. B. `lightbulb`, `bell`, `search`) **oder** jedes
+> registrierte HA-Icon mit Präfix (z. B. `mdi:sofa`, `hue:…`). Im Editor:
+> oben der **native HA-Icon-Picker** (Suche + Vorschau für mdi/hue/…),
+> darunter aufklappbar das **Neo-Icon-Raster** mit Vorschau.
 
 ### Sichtbarkeit von Bedienelementen
 Alle Schalter sind standardmäßig **an** (außer den unten markierten) und nur
