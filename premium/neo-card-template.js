@@ -55,15 +55,19 @@
 // Validierung rendern (escapeHtml/escapeAttr/safeUrl aus window.NeoDashboard).
 
 (function () {
+  "use strict";
+
+  // Genau EINE Registrierung pro Script-Ausführung. Ein erneutes Einfügen/Laden
+  // registriert bewusst NEU (Update-Pfad: die Registry überschreibt). KEIN
+  // customElements.get()-Guard: die Registry definiert versionierte Tags, der
+  // Guard griffe nie — und würde sonst Updates per Neu-Einfügen blockieren.
+  let registered = false;
+
   function init() {
+    if (registered) return;
     const NEO = window.NeoDashboard;
-    // Core noch nicht geladen? Kurz warten und erneut versuchen.
-    if (!NEO || !NEO.BaseCard) {
-      window.addEventListener("neo-dashboard-ready", init, { once: true });
-      setTimeout(init, 300);
-      return;
-    }
-    if (customElements.get("neo-example-card")) return; // schon registriert
+    if (!NEO || !NEO.BaseCard || !NEO.makeEditor) return; // Core fehlt noch — Retry unten
+    registered = true;
 
     const { BaseCard, icon, accents, registerCard, makeEditor, makeTypedEditor, capabilityType, typeDef, accentOptions, iconOptions } = NEO;
     const layoutOptions = NEO.layoutOptions || [{ value: "auto", label: "Automatisch" }];
@@ -111,7 +115,7 @@
     // ── Der Editor (HA-native ha-form über die Factory) ──────────
     // Dieses aktive Beispiel ist bewusst eine einfache Karte: makeEditor reicht.
     // Für getypte Karten siehe die Typed-Card Mini-Referenz oben.
-    void makeTypedEditor; void capabilityType; void typeDef;
+    void makeTypedEditor; void capabilityType; void typeDef; void iconOptions;
     // WICHTIG: Editor unter VERSIONIERTEM Tag definieren (nicht festem!). So
     // gehen auch Editor-Änderungen beim Modul-Update OHNE Browser-Reload live —
     // getConfigElement() nutzt immer den aktuellen Tag. Ein fester Tag würde
@@ -122,7 +126,9 @@
       customElements.define(ED_TAG, makeEditor([
         { name: "entity", label: "Entity", selector: { entity: {} } },
         { name: "name", label: "Name (optional)", selector: { text: {} } },
-        { name: "icon", label: "Icon", selector: { icon: {} } },
+        // Icon-Feld des Kits: nativer HA-Picker + Neo-Icon-Raster (ab rc.15);
+        // Fallback für ältere Kits: nativer Picker ohne Neo-Raster.
+        { name: "icon", label: "Icon", selector: NEO.iconSelector || { icon: {} } },
         { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: accentOptions } } },
         { name: "layout", label: "Layout / Gerät", selector: { select: { mode: "dropdown", options: layoutOptions } } },
       ], { name: "Neo Beispiel (Premium)", description: "Vorlage für eine externe Karte", icon: "⭐" }));
@@ -139,8 +145,22 @@
       author: "Community",
     });
 
-    console.info("[Neo Premium] neo-example-card geladen");
+    // Lade-Log NUR im Debug-Modus (localStorage "neo-debug" = "1"), damit die
+    // Browser-Konsole standardmäßig leise bleibt. NEO.log existiert ab rc.15.
+    NEO.log?.("[Neo Premium] neo-example-card geladen");
   }
 
+  // Sofort versuchen; ist der Core noch nicht geladen, übernimmt GENAU EIN
+  // Ready-Listener plus ein zeitlich begrenztes Polling als Sicherheitsnetz.
+  // Beides ist über das `registered`-Flag idempotent — keine Doppel-Registrierung.
   init();
+  if (!registered) {
+    window.addEventListener("neo-dashboard-ready", init, { once: true });
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      init();
+      if (registered || tries >= 50) clearInterval(timer); // max. ~15 s
+    }, 300);
+  }
 })();
