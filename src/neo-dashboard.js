@@ -16,6 +16,7 @@ import "./core/branding.js";
 import "./core/icons.js";
 import "./core/layout.js";
 import "./core/editor-factory.js";
+import "./core/icon-picker.js";
 import "./core/reorder.js";
 import "./core/base-card.js";
 

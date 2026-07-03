@@ -125,7 +125,7 @@ function buildCapabilitySchema(config, spec) {
   // anzeigen. Darstellungsfelder würden sonst versteckte Optionen suggerieren.
   if (t || hasLegacyEntity) {
     const appearance = [];
-    // Combobox statt HA-Icon-Picker: der kennt die Neo-Icons nicht.
+    // Eigenes Icon-Feld: nativer HA-Picker + Neo-Icon-Raster (icon-picker.js).
     if (def?.source !== "text") appearance.push({ name: "icon", label: "Icon", selector: NEO_ICON_SELECTOR });
     if (def?.unit) appearance.push({ name: "unit", label: "Einheit (optional)", selector: { text: {} } });
     (spec.appearance || []).forEach((f) => appearance.push(f));

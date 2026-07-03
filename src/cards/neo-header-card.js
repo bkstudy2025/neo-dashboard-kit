@@ -94,7 +94,7 @@ customElements.define("neo-header-card-editor", makeNeoEditor((config) => {
     {
       type: "expandable", title: "Darstellung", icon: "mdi:palette",
       schema: [
-        // Combobox statt HA-Icon-Picker: der kennt die Neo-Icons nicht.
+        // Eigenes Icon-Feld: nativer HA-Picker + Neo-Icon-Raster (icon-picker.js).
         { name: "icon", label: "Icon (optional)", selector: NEO_ICON_SELECTOR },
         { name: "accent", label: "Akzentfarbe", selector: { select: { mode: "dropdown", options: NEO_ACCENT_OPTIONS } } },
       ],

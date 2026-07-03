@@ -340,3 +340,18 @@ people car music volume heart trash refresh power server robot gauge flag
 
 Repo layout & conventions: [`STRUCTURE.md`](../../STRUCTURE.md) ·
 [`CONTRIBUTING.md`](../../CONTRIBUTING.md).
+
+## Debug logging
+
+The registration logs (`[Neo Dashboard] Registered: …`, `[Neo Module] …`) are
+**silent by default** to keep the browser console tidy — only the version
+banner is shown. Enable them for support/development:
+
+```js
+localStorage.setItem("neo-debug", "1");  // + reload the page
+localStorage.removeItem("neo-debug");    // disable again
+```
+
+Your own cards/modules can use the same switch:
+`window.NeoDashboard.log(...)` logs only while debug is active, and
+`window.NeoDashboard.debugEnabled()` reads the state.

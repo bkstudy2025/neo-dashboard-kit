@@ -11,6 +11,7 @@ import { makeNeoTypedEditor, neoCapabilityType, neoTypeDef } from "./capability.
 import { NEO_LAYOUT_OPTS, normalizeLayout, neoViewportLayout } from "./layout.js";
 import { neoRenderReorder } from "./reorder.js";
 import { escapeAttr, escapeHtml, safeUrl } from "./html.js";
+import { neoDebugEnabled, neoLog } from "./debug.js";
 
 Object.assign(window.NeoDashboard, {
   BaseCard: NeoBaseCard,
@@ -21,7 +22,9 @@ Object.assign(window.NeoDashboard, {
   capabilityType: neoCapabilityType,
   typeDef: neoTypeDef,
   iconOptions: NEO_ICON_OPTIONS,
-  iconSelector: NEO_ICON_SELECTOR, // fertiger Editor-Selector: Neo-Icons + freie mdi:-Eingabe
+  iconSelector: NEO_ICON_SELECTOR, // fertiges Icon-Feld: nativer HA-Picker + Neo-Raster
+  debugEnabled: neoDebugEnabled, // localStorage "neo-debug" === "1"
+  log: neoLog, // console.info, nur wenn Debug aktiv (für Premium-/Community-Karten)
   accentOptions: NEO_ACCENT_OPTIONS,
   layoutOptions: NEO_LAYOUT_OPTS,
   normalizeLayout,

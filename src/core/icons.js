@@ -129,10 +129,7 @@ export const NEO_ICON_OPTIONS = Object.keys(NEO_ICON_PATHS)
   .sort()
   .map((k) => ({ value: k, label: k }));
 
-// Editor-Selector für Icon-Felder: Die Neo-Icons als Auswahlliste, per
-// custom_value bleibt zusätzlich freie Eingabe möglich (mdi:… und andere
-// registrierte HA-Icon-Sets). Der native HA-Icon-Picker (selector.icon) kennt
-// die Neo-Icons nicht — deshalb hier die eigene Combobox.
-export const NEO_ICON_SELECTOR = {
-  select: { mode: "dropdown", options: NEO_ICON_OPTIONS, custom_value: true },
-};
+// Editor-Selector für Icon-Felder: rendert das eigene Feld-Element
+// ha-selector-neo_icon (siehe icon-picker.js) — nativer HA-Icon-Picker
+// (mdi:, hue:, … mit Vorschau) PLUS Neo-Icon-Raster mit SVG-Vorschau.
+export const NEO_ICON_SELECTOR = { neo_icon: {} };
