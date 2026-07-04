@@ -68,7 +68,6 @@ Neo Dashboard:
       border-color: "rgba(255,255,255,0.08)"
       grid-card-gap: "16px"
       horizontal-stack-card-margin: "0 8px"
-      divider-color: "rgba(255,255,255,0.08)"
       control-button-border-radius: "50px"
       control-button-background-color: "var(--ha-card-background)"
 
@@ -221,7 +220,7 @@ Neo Dashboard:
       ha-card-border-style: "solid"
       ha-card-border-width: "1px"
       ha-card-border-color: "rgba(28,40,72,0.11)"
-      border-color: "none"
+      border-color: "rgba(28,40,72,0.11)"
       grid-card-gap: "16px"
       horizontal-stack-card-margin: "0 8px"
       divider-color: "var(--background-color)"
