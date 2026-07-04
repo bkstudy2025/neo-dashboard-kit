@@ -998,7 +998,9 @@ class NeoIconSelectorField extends HTMLElement {
   get label() { return this._labelTxt; }
   set helper(h) { this._helperTxt = h; }
   set disabled(d) { this._disabled = !!d; if (this._sel) this._sel.disabled = this._disabled; }
-  set required(r) { this._required = !!r; }
+  // Muss an den inneren Picker durchgereicht werden: ha-selector hat
+  // required=true als Default und zeigt sonst fälschlich ein Pflicht-„*".
+  set required(r) { this._required = !!r; if (this._sel) this._sel.required = this._required; }
   set value(v) {
     const nv = v == null ? "" : String(v);
     if (nv === this._value) return;
@@ -1037,35 +1039,55 @@ class NeoIconSelectorField extends HTMLElement {
         }
         .neo-chip button:hover { background: var(--divider-color, rgba(127,127,127,.25)); }
         #toggle {
-          all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
-          margin-top:6px; padding:4px 8px; border-radius:8px; font-size:12px;
-          color: var(--secondary-text-color, inherit);
+          all:unset; box-sizing:border-box; width:100%; cursor:pointer;
+          display:flex; align-items:center; gap:10px;
+          margin-top:8px; padding:10px 12px; border-radius:12px;
+          font-size:14px; font-weight:500;
+          color: var(--primary-text-color, inherit);
+          background: var(--secondary-background-color, rgba(127,127,127,.08));
+          border: 1px solid var(--divider-color, rgba(127,127,127,.2));
+          transition: border-color .15s ease, background .15s ease;
         }
-        #toggle:hover { background: var(--secondary-background-color, rgba(127,127,127,.12)); }
-        #toggle .chev { transition: transform .15s ease; }
+        #toggle:hover { border-color: var(--primary-color, #7C9CFF); }
+        #toggle:focus-visible { outline: 2px solid var(--primary-color, #7C9CFF); outline-offset: 2px; }
+        #toggle .cnt { color: var(--secondary-text-color, inherit); font-size:12px; font-weight:400; }
+        #toggle .sp { flex:1; }
+        #toggle .peek { display:flex; align-items:center; gap:7px; color: var(--secondary-text-color, inherit); opacity:.9; }
+        #toggle .chev { display:flex; align-items:center; transition: transform .18s ease; color: var(--secondary-text-color, inherit); }
         #toggle.open .chev { transform: rotate(180deg); }
         #grid {
-          display:grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap:4px;
-          margin-top:6px; padding:8px; max-height:190px; overflow-y:auto;
-          border-radius:12px;
+          display:grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap:6px;
+          margin-top:6px; padding:10px; max-height:236px; overflow-y:auto;
+          border-radius:12px; box-sizing:border-box;
           background: var(--secondary-background-color, rgba(127,127,127,.08));
           border: 1px solid var(--divider-color, rgba(127,127,127,.2));
         }
         #grid button {
-          all:unset; cursor:pointer; height:34px; border-radius:8px;
+          all:unset; box-sizing:border-box; cursor:pointer; height:42px; border-radius:10px;
           display:flex; align-items:center; justify-content:center;
           color: var(--primary-text-color, inherit);
+          transition: background .12s ease, transform .12s ease, color .12s ease;
         }
-        #grid button:hover { background: var(--divider-color, rgba(127,127,127,.25)); }
+        #grid button:hover {
+          background: var(--divider-color, rgba(127,127,127,.25));
+          color: var(--primary-color, #7C9CFF);
+          transform: scale(1.08);
+        }
         #grid button.sel {
           outline: 2px solid var(--primary-color, #7C9CFF);
-          background: var(--divider-color, rgba(127,127,127,.2));
+          background: rgba(124,156,255,.16);
+          color: var(--primary-color, #7C9CFF);
         }
         [hidden] { display:none !important; }
       </style>
       <div id="native"></div>
       <div id="chip" class="neo-chip" hidden></div>
-      <button type="button" id="toggle">🧩 Neo-Icons <span class="chev">▾</span></button>
+      <button type="button" id="toggle">
+        <span>🧩 Neo-Icons</span><span class="cnt">(${NEO_ICON_OPTIONS.length})</span>
+        <span class="sp"></span>
+        <span class="peek">${["lightbulb", "thermo", "camera", "bell"].map((n) => neoIcon(n, { size: 16 })).join("")}</span>
+        <span class="chev">${neoIcon("chevD", { size: 16 })}</span>
+      </button>
       <div id="grid" hidden></div>
     `;
 
@@ -1078,6 +1100,8 @@ class NeoIconSelectorField extends HTMLElement {
       if (this._hass) sel.hass = this._hass;
       if (this._labelTxt) sel.label = this._labelTxt;
       if (this._disabled) sel.disabled = true;
+      // ha-selector-Default ist required=true (zeigt sonst fälschlich „*").
+      sel.required = !!this._required;
       sel.addEventListener("value-changed", (e) => {
         e.stopPropagation(); // wir melden selbst (einheitlich für beide Quellen)
         this._set(e.detail?.value || "");
@@ -1100,7 +1124,7 @@ class NeoIconSelectorField extends HTMLElement {
     toggle.addEventListener("click", () => {
       if (grid.hidden && !grid.childElementCount) {
         grid.innerHTML = NEO_ICON_OPTIONS.map((o) =>
-          `<button type="button" data-v="${escapeAttr(o.value)}" title="${escapeAttr(o.value)}">${neoIcon(o.value, { size: 18 })}</button>`
+          `<button type="button" data-v="${escapeAttr(o.value)}" title="${escapeAttr(o.value)}">${neoIcon(o.value, { size: 22 })}</button>`
         ).join("");
       }
       grid.hidden = !grid.hidden;
@@ -4455,7 +4479,7 @@ Object.assign(window.NeoDashboard, {
   escapeHtml,
   escapeAttr,
   safeUrl,
-  version: "1.0.0-rc.15", // beim Build aus package.json ersetzt
+  version: "1.0.0-rc.16", // beim Build aus package.json ersetzt
   ready: true,
 });
 // Let external files that loaded first know the API is now available
@@ -4595,7 +4619,7 @@ function neoInitGlobalStyle() {
 neoInitGlobalStyle();
 
 console.info(
-  "%c NEO DASHBOARD KIT %c v1.0.0-rc.15 ",
+  "%c NEO DASHBOARD KIT %c v1.0.0-rc.16 ",
   "background:#7C9CFF;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:700;",
   "background:#1a1f2e;color:#7C9CFF;padding:2px 6px;border-radius:0 4px 4px 0;"
 );
