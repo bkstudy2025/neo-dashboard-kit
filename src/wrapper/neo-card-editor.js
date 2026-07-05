@@ -723,7 +723,11 @@ class NeoCardEditor extends HTMLElement {
     const PREFIX = "https://cdn.jsdelivr.net/gh/bkstudy2025/neo-dashboard-kit@";
     const ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
     const SHA256_RE = /^[0-9a-f]{64}$/;
-    const REQUIRED = ["id", "name", "description", "target", "author", "version", "icon", "url", "sha256"];
+    // "target" NICHT hier: es darf ein String ("*"/Kartentyp) ODER ein Array von
+    // Kartentypen sein → separat geprüft (siehe unten). Die generische Schleife
+    // verlangt String und würde ein gültiges Array-Target fälschlich als „fehlend"
+    // melden und den Eintrag stumm aus dem Store werfen.
+    const REQUIRED = ["id", "name", "description", "author", "version", "icon", "url", "sha256"];
     const out = [];
     const seen = new Set();
     items.forEach((it, i) => {
@@ -735,6 +739,18 @@ class NeoCardEditor extends HTMLElement {
       const missing = REQUIRED.filter((f) => typeof it[f] !== "string" || !it[f].trim());
       if (missing.length) {
         console.warn(`[Neo Store] "${ref}" skipped — missing field(s): ${missing.join(", ")}.`);
+        return;
+      }
+      // target: nicht-leerer String ("*" / Kartentyp) ODER nicht-leeres Array
+      // nicht-leerer Strings. Spiegelt das Runtime-Targeting (src/core/modules.js)
+      // und die CI (scripts/validate-store.mjs). Ein auf bestimmte Karten
+      // beschränktes Modul (Array-Target, z. B. neo-pulse-ring) ist gültig.
+      const tgt = it.target;
+      const validTarget =
+        (typeof tgt === "string" && tgt.trim() !== "") ||
+        (Array.isArray(tgt) && tgt.length > 0 && tgt.every((x) => typeof x === "string" && x.trim() !== ""));
+      if (!validTarget) {
+        console.warn(`[Neo Store] "${ref}" skipped — invalid target (need non-empty string or array of strings).`);
         return;
       }
       if (!ID_RE.test(it.id)) {
