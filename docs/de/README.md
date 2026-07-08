@@ -11,6 +11,7 @@ die sich an dein Gerät anpasst. Erweiterbar über **Module** und **Premium**.
 - [Module & Store](module.md) — Karten erweitern
 - [Entwicklung](entwicklung.md) — eigene Karten/Module bauen
 - [Mitmachen](mitmachen.md) — Karten/Module teilen & einreichen
+- [Design-Prompt: Mobile Tabs](design-prompt-mobile-tabs.md) — Richtung für Server-, Kalender- & Raum-Tab (Mobile)
 
 ---
 
