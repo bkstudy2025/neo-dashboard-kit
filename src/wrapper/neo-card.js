@@ -39,20 +39,34 @@ class NeoCard extends HTMLElement {
     if (!NeoDashboardRegistry.getCard(type)) {
       // Module may still be loading from the backend store — retry once ready
       this._placeholderLang = neoLang(this._hass);
+      const loaded = NeoStore._loaded;
+      // Ruhiger Platzhalter mit reservierter Höhe (kein Layout-Sprung beim
+      // Austausch). Die „Modul wird geladen …"-Zeile wird bewusst NICHT sofort
+      // gezeigt: Bei schnellem Laden (Cache/lokaler Store) würde sie nur kurz
+      // aufblitzen und wie ein Fehler wirken. Nur bei genuin unbekanntem Typ
+      // (Store bereits geladen) sofort Klartext.
       this.innerHTML = `
-        <ha-card style="padding:24px;text-align:center;color:var(--secondary-text-color);">
-          ${NeoStore._loaded
+        <ha-card style="padding:24px;min-height:88px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--secondary-text-color);">
+          <span class="neo-ph-msg">${loaded
             ? `${neoT(this._hass, "Unbekannter Neo-Kartentyp:")} ${escapeHtml(type)}`
-            : neoT(this._hass, "Modul wird geladen …")}
+            : ""}</span>
         </ha-card>`;
       this._child = null;
       this._childType = null;
-      if (!NeoStore._loaded && !this._waitingModules) {
+      if (!loaded && !this._waitingModules) {
         this._waitingModules = true;
-        window.addEventListener("neo-modules-loaded", () => {
+        // Erst nach kurzer Schwelle den Ladetext einblenden (Anti-Flackern,
+        // analog zur MIN_SKELETON_MS-Logik im Store-Editor).
+        this._phTimer = setTimeout(() => {
+          const el = this.querySelector(".neo-ph-msg");
+          if (el && !NeoStore._loaded) el.textContent = neoT(this._hass, "Modul wird geladen …");
+        }, 300);
+        this._onModsLoaded = () => {
           this._waitingModules = false;
+          clearTimeout(this._phTimer);
           this.setConfig(this._config);
-        }, { once: true });
+        };
+        window.addEventListener("neo-modules-loaded", this._onModsLoaded, { once: true });
       }
       return;
     }
@@ -95,6 +109,11 @@ class NeoCard extends HTMLElement {
 
   disconnectedCallback() {
     if (this._onModChange) window.removeEventListener("neo-module-changed", this._onModChange);
+    // Warte-Zustand aufräumen: sonst feuert der {once}-Listener noch für eine
+    // längst entfernte Karte und der Ladetext-Timer läuft ins Leere.
+    if (this._onModsLoaded) window.removeEventListener("neo-modules-loaded", this._onModsLoaded);
+    clearTimeout(this._phTimer);
+    this._waitingModules = false;
   }
 
   getCardSize() {

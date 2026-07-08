@@ -39,6 +39,14 @@ import "./wrapper/neo-card.js";
 // 7. Public API for external/premium modules + ready event
 import "./core/public-api.js";
 
+// 7b. Zuletzt bekannte Store-Module aus dem localStorage-Cache SOFORT injizieren.
+//     Jetzt ist die komplette Public API (BaseCard, makeEditor, …) vorhanden,
+//     die Karten-Module beim Registrieren erwarten. So sind ihre Karten schon
+//     vor dem ersten Render registriert und der „Modul wird geladen …"-
+//     Platzhalter entfällt. Der WS-Abgleich (NeoStore._init) korrigiert danach.
+import { NeoStore } from "./store/module-store.js";
+NeoStore._seedFromCache();
+
 // 8. Global polish (mobile header / glass dialogs) — self-contained, no Card Mod
 import { neoInitGlobalStyle } from "./core/global-style.js";
 neoInitGlobalStyle();
