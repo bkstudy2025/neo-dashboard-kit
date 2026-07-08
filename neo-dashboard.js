@@ -2881,22 +2881,38 @@ function neoLoadModule(code) {
 // Der WS-Abgleich (_init) bleibt Quelle der Wahrheit und aktualisiert den Cache.
 // Schlüssel ist origin-gebunden (localStorage) → pro HA-Instanz eindeutig.
 const CACHE_KEY = "neo-modules-cache";
+// Format-Version des Cache-Envelopes. NUR erhöhen, wenn sich das gecachte
+// Format oder die erwartete Modul-API inkompatibel ändert — dann wird ein alter
+// Cache beim Lesen verworfen (einmaliges Flackern, danach frisch befüllt). An
+// die Bundle-Version bewusst NICHT gekoppelt, damit normale Updates den Cache
+// nicht bei jedem Release invalidieren.
+const CACHE_VERSION = 1;
 
 const NeoStore = {
   _hass: null, _initStarted: false, _available: false, _loaded: false, _cache: [], _seeded: false,
 
   // Cache-Helfer: robust gegen deaktiviertes/volles localStorage (Sonderkontexte).
+  // Envelope: { v: CACHE_VERSION, modules: [{name, code}] }. Ein Envelope mit
+  // abweichender Version (oder das alte reine Array-Format) wird verworfen.
   _readCache() {
     try {
       const raw = window.localStorage?.getItem(CACHE_KEY);
-      const data = raw ? JSON.parse(raw) : [];
-      return Array.isArray(data) ? data : [];
+      if (!raw) return [];
+      const data = JSON.parse(raw);
+      if (!data || data.v !== CACHE_VERSION || !Array.isArray(data.modules)) return [];
+      return data.modules;
     } catch (e) { return []; }
   },
   _writeCache(modules) {
     try {
-      window.localStorage?.setItem(CACHE_KEY, JSON.stringify(modules || []));
+      window.localStorage?.setItem(
+        CACHE_KEY,
+        JSON.stringify({ v: CACHE_VERSION, modules: modules || [] }),
+      );
     } catch (e) { /* Quota/blockiert → Cache ist nur ein Beschleuniger, ignorieren */ }
+  },
+  _clearCache() {
+    try { window.localStorage?.removeItem(CACHE_KEY); } catch (e) { /* ignorieren */ }
   },
   // Beim Bundle-Start einmal ausführen: injiziert die zuletzt bekannten Module
   // synchron, damit ihre Karten schon vor dem ersten Render in der Registry sind.
@@ -2930,6 +2946,11 @@ const NeoStore = {
       this._writeCache(this._cache);
     } catch (e) {
       this._available = false; // integration not installed → fallback mode
+      // Ist die Integration wirklich weg (WS-Command nicht registriert →
+      // „unknown_command"), den Cache leeren, damit gecachte Karten beim
+      // nächsten Reload nicht als „Geister" hängenbleiben. Bloße Verbindungs-
+      // fehler (Timeout etc.) lassen den funktionierenden Cache unberührt.
+      if (e?.code === "unknown_command") this._clearCache();
     }
     this._loaded = true;
     window.dispatchEvent(new CustomEvent("neo-modules-loaded"));
@@ -4397,6 +4418,29 @@ customElements.define("neo-card-editor", NeoCardEditor);
 // every registered Neo card (core + community plugins).
 // ══════════════════════════════════════════════════════════════
 
+// Dezenter Skeleton-Shimmer für den (jetzt selten sichtbaren) Warte-Platzhalter.
+// Einmalig ins document.head injiziert; die Karten-Platzhalter liegen im Light-
+// DOM, teilen sich also diese Klassen. prefers-reduced-motion respektiert: statt
+// des Sweeps nur ein sanftes Pulsieren.
+function neoEnsurePlaceholderStyle() {
+  if (typeof document === "undefined" || document.getElementById("neo-card-ph-style")) return;
+  const s = document.createElement("style");
+  s.id = "neo-card-ph-style";
+  s.textContent = `
+    .neo-card-skel{position:relative;overflow:hidden;border-radius:10px;
+      background:var(--divider-color,rgba(127,127,127,.16));height:13px;}
+    .neo-card-skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
+      background:linear-gradient(90deg,transparent,rgba(160,160,160,.28),transparent);
+      animation:neo-card-shimmer 1.4s ease-in-out infinite;}
+    @keyframes neo-card-shimmer{100%{transform:translateX(100%);}}
+    @media (prefers-reduced-motion:reduce){
+      .neo-card-skel::after{animation:none;}
+      .neo-card-skel{animation:neo-card-pulse 1.6s ease-in-out infinite;}
+      @keyframes neo-card-pulse{0%,100%{opacity:.55;}50%{opacity:.9;}}
+    }`;
+  document.head.appendChild(s);
+}
+
 class NeoCard extends HTMLElement {
   setConfig(config) {
     this._config = config || {};
@@ -4428,16 +4472,21 @@ class NeoCard extends HTMLElement {
       this._placeholderLang = neoLang(this._hass);
       const loaded = NeoStore._loaded;
       // Ruhiger Platzhalter mit reservierter Höhe (kein Layout-Sprung beim
-      // Austausch). Die „Modul wird geladen …"-Zeile wird bewusst NICHT sofort
-      // gezeigt: Bei schnellem Laden (Cache/lokaler Store) würde sie nur kurz
-      // aufblitzen und wie ein Fehler wirken. Nur bei genuin unbekanntem Typ
-      // (Store bereits geladen) sofort Klartext.
-      this.innerHTML = `
-        <ha-card style="padding:24px;min-height:88px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--secondary-text-color);">
-          <span class="neo-ph-msg">${loaded
-            ? `${neoT(this._hass, "Unbekannter Neo-Kartentyp:")} ${escapeHtml(type)}`
-            : ""}</span>
-        </ha-card>`;
+      // Austausch). Beim Warten ein dezenter Skeleton-Shimmer statt sofortigem
+      // Text: Bei schnellem Laden (Cache/lokaler Store) würde ein Ladetext nur
+      // kurz aufblitzen und wie ein Fehler wirken. Der Text wird erst nach einer
+      // kurzen Schwelle nachgeblendet. Nur bei genuin unbekanntem Typ (Store
+      // bereits geladen) sofort Klartext, kein Skeleton.
+      if (!loaded) neoEnsurePlaceholderStyle();
+      this.innerHTML = loaded
+        ? `<ha-card style="padding:24px;min-height:88px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--secondary-text-color);">
+            <span class="neo-ph-msg">${neoT(this._hass, "Unbekannter Neo-Kartentyp:")} ${escapeHtml(type)}</span>
+          </ha-card>`
+        : `<ha-card style="padding:24px;min-height:88px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:10px;color:var(--secondary-text-color);">
+            <div class="neo-card-skel" style="width:55%"></div>
+            <div class="neo-card-skel" style="width:80%"></div>
+            <span class="neo-ph-msg" style="font-size:13px;text-align:center;"></span>
+          </ha-card>`;
       this._child = null;
       this._childType = null;
       if (!loaded && !this._waitingModules) {
