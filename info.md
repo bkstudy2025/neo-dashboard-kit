@@ -21,9 +21,9 @@ Everything else is added through **modules** and **Premium**.
 - Deutsch: https://github.com/bkstudy2025/neo-dashboard-kit/blob/main/docs/de/README.md
 - English: https://github.com/bkstudy2025/neo-dashboard-kit/blob/main/docs/en/README.md
 
-## Updates (Release candidate)
+## Updates
 
-This project is published as a **release candidate (pre-release)**. HACS **hides pre-releases by default** — to receive new versions, enable **"Show beta versions"** for this repository in HACS (repository → 3-dot menu → *Redownload* / settings), then update as usual. The stable `v1.0.0` will follow after real-device testing.
+This project is published as a **stable release** (`v1.0.0` and later). Install and update through HACS as usual — no beta setting required.
 
 ## Notes
 
