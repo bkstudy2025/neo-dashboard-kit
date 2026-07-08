@@ -12,22 +12,38 @@ import { neoLoadModule } from "./module-loader.js";
 // Der WS-Abgleich (_init) bleibt Quelle der Wahrheit und aktualisiert den Cache.
 // Schlüssel ist origin-gebunden (localStorage) → pro HA-Instanz eindeutig.
 const CACHE_KEY = "neo-modules-cache";
+// Format-Version des Cache-Envelopes. NUR erhöhen, wenn sich das gecachte
+// Format oder die erwartete Modul-API inkompatibel ändert — dann wird ein alter
+// Cache beim Lesen verworfen (einmaliges Flackern, danach frisch befüllt). An
+// die Bundle-Version bewusst NICHT gekoppelt, damit normale Updates den Cache
+// nicht bei jedem Release invalidieren.
+const CACHE_VERSION = 1;
 
 export const NeoStore = {
   _hass: null, _initStarted: false, _available: false, _loaded: false, _cache: [], _seeded: false,
 
   // Cache-Helfer: robust gegen deaktiviertes/volles localStorage (Sonderkontexte).
+  // Envelope: { v: CACHE_VERSION, modules: [{name, code}] }. Ein Envelope mit
+  // abweichender Version (oder das alte reine Array-Format) wird verworfen.
   _readCache() {
     try {
       const raw = window.localStorage?.getItem(CACHE_KEY);
-      const data = raw ? JSON.parse(raw) : [];
-      return Array.isArray(data) ? data : [];
+      if (!raw) return [];
+      const data = JSON.parse(raw);
+      if (!data || data.v !== CACHE_VERSION || !Array.isArray(data.modules)) return [];
+      return data.modules;
     } catch (e) { return []; }
   },
   _writeCache(modules) {
     try {
-      window.localStorage?.setItem(CACHE_KEY, JSON.stringify(modules || []));
+      window.localStorage?.setItem(
+        CACHE_KEY,
+        JSON.stringify({ v: CACHE_VERSION, modules: modules || [] }),
+      );
     } catch (e) { /* Quota/blockiert → Cache ist nur ein Beschleuniger, ignorieren */ }
+  },
+  _clearCache() {
+    try { window.localStorage?.removeItem(CACHE_KEY); } catch (e) { /* ignorieren */ }
   },
   // Beim Bundle-Start einmal ausführen: injiziert die zuletzt bekannten Module
   // synchron, damit ihre Karten schon vor dem ersten Render in der Registry sind.
@@ -61,6 +77,11 @@ export const NeoStore = {
       this._writeCache(this._cache);
     } catch (e) {
       this._available = false; // integration not installed → fallback mode
+      // Ist die Integration wirklich weg (WS-Command nicht registriert →
+      // „unknown_command"), den Cache leeren, damit gecachte Karten beim
+      // nächsten Reload nicht als „Geister" hängenbleiben. Bloße Verbindungs-
+      // fehler (Timeout etc.) lassen den funktionierenden Cache unberührt.
+      if (e?.code === "unknown_command") this._clearCache();
     }
     this._loaded = true;
     window.dispatchEvent(new CustomEvent("neo-modules-loaded"));
