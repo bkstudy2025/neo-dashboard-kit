@@ -1,0 +1,332 @@
+/* ============================================================================
+   Neo Dashboard Kit — Mobile Screens · Shared Design System
+   ----------------------------------------------------------------------------
+   Single source of truth for the "Neo" look across Server, Kalender & Raum.
+   Tokens mirror src/core/tokens.js (glass fills, hairlines, text, accents).
+   This file is inlined into each standalone screen by build.mjs.
+   ========================================================================== */
+
+:root {
+  /* Accents (semantic) — identical to NEO_ACCENTS ------------------------- */
+  --blue:   #7C9CFF;  --blue-glow:   rgba(124,156,255,.35);
+  --amber:  #FFB26B;  --amber-glow:  rgba(255,178,107,.35);
+  --mint:   #5EDCB8;  --mint-glow:   rgba(94,220,184,.35);
+  --violet: #C084FC;  --violet-glow: rgba(192,132,252,.35);
+  --rose:   #F87171;  --rose-glow:   rgba(248,113,113,.35);
+
+  /* Glass fills & hairlines ---------------------------------------------- */
+  --fill0: rgba(255,255,255,.02);
+  --fill1: rgba(255,255,255,.04);
+  --fill2: rgba(255,255,255,.055);
+  --line1: rgba(255,255,255,.06);
+  --line2: rgba(255,255,255,.08);
+  --line3: rgba(255,255,255,.10);
+  --line4: rgba(255,255,255,.12);
+  --line5: rgba(255,255,255,.14);
+  --line6: rgba(255,255,255,.16);
+
+  /* Type ratios ----------------------------------------------------------- */
+  --text1: #F4F6FB;
+  --text2: rgba(244,246,251,.72);
+  --text3: rgba(244,246,251,.50);
+
+  --shadow1: rgba(0,0,0,.55);
+  --blur: blur(24px) saturate(140%);
+  --radius: 24px;
+  --font: -apple-system, "SF Pro Display", "Inter", system-ui, sans-serif;
+
+  /* Layout — iPhone portrait, single column ------------------------------ */
+  --phone: 420px;
+  --pad: 16px;
+  --nav-h: 74px;
+  --sa-top: env(safe-area-inset-top, 0px);
+  --sa-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font);
+  color: var(--text1);
+  /* Dark, blue-tinted near-black with a faint blue undertone */
+  background:
+    radial-gradient(120% 80% at 50% -10%, #0d1424 0%, #080b14 46%, #05070d 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Phone frame ------------------------------------------------------------- */
+.phone {
+  position: relative;
+  width: 100%;
+  max-width: var(--phone);
+  min-height: 100vh;
+  background:
+    radial-gradient(140% 70% at 50% 0%, #0e1626 0%, #080c15 55%, #06080f 100%);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Scroll region (everything above the fixed nav) -------------------------- */
+.scroll {
+  position: relative;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: calc(var(--nav-h) + var(--sa-bottom) + 22px);
+  scrollbar-width: none;
+}
+.scroll::-webkit-scrollbar { display: none; }
+
+/* Atmospheric hero photo (built from gradients, self-contained) ----------- */
+.hero-photo {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 340px;
+  z-index: 0;
+  pointer-events: none;
+}
+.hero-photo::after {           /* soft dark fade downwards into the bg */
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    rgba(6,8,15,0) 0%,
+    rgba(6,8,15,.10) 34%,
+    rgba(6,8,15,.55) 66%,
+    rgba(6,8,15,.92) 88%,
+    #06080f 100%);
+}
+
+/* Top bar ----------------------------------------------------------------- */
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(var(--sa-top) + 14px) var(--pad) 12px;
+  background: linear-gradient(180deg, rgba(8,11,20,.72), rgba(8,11,20,0));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.topbar h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+.topbar .spacer { flex: 1; }
+
+/* Round icon button (44px hit area) --------------------------------------- */
+.iconbtn {
+  width: 42px; height: 42px; flex: 0 0 42px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  color: var(--text1);
+  background: var(--fill2);
+  border: 1px solid var(--line3);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  cursor: pointer;
+}
+.iconbtn svg { width: 20px; height: 20px; }
+.iconbtn:active { transform: scale(.9); }
+
+/* Content column ---------------------------------------------------------- */
+.content { position: relative; z-index: 10; padding: 0 var(--pad); }
+.content > * + * { margin-top: 14px; }
+.stack-sm > * + * { margin-top: 10px; }
+
+/* ---- Glass card --------------------------------------------------------- */
+.glass {
+  position: relative;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, var(--fill2), var(--fill0));
+  border: 1px solid var(--line4);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  box-shadow: 0 18px 40px -20px var(--shadow1);
+  overflow: hidden;
+}
+.glass::before {               /* top edge sheen */
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+  opacity: .7;
+}
+.pad { padding: 16px; }
+[role="button"], button, .tap { cursor: pointer; }
+[role="button"]:active, .tap:active { transform: scale(.97); }
+
+/* Accent glow ring applied to a card by adding .glow + --a / --ag */
+.glow { box-shadow: 0 18px 44px -18px var(--shadow1), 0 0 0 1px var(--a-line, var(--line4)) inset; }
+
+/* ---- Section header ----------------------------------------------------- */
+.sechead {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 4px 2px 2px;
+}
+.sechead h2 { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+.sechead .all {
+  margin-left: auto; font-size: 13px; font-weight: 600;
+  color: var(--violet); display: inline-flex; align-items: center; gap: 3px;
+}
+.sechead .all svg { width: 14px; height: 14px; }
+
+/* ---- Pills (status: icon + big value + small label) --------------------- */
+.pill {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 9px 14px; border-radius: 999px;
+  background: var(--fill1); border: 1px solid var(--line3);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+}
+.pill svg { width: 17px; height: 17px; color: var(--text2); }
+.pill .v { font-size: 15px; font-weight: 700; color: var(--text1); }
+.pill .l { font-size: 12px; color: var(--text3); }
+
+/* ---- Control chips (icon + state + name, accent fill when active) ------- */
+.chip {
+  display: inline-flex; flex-direction: column; gap: 7px;
+  min-width: 116px; padding: 13px 14px;
+  border-radius: 20px;
+  background: var(--fill1); border: 1px solid var(--line3);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  text-align: left;
+}
+.chip .top { display: flex; align-items: center; justify-content: space-between; }
+.chip .ico {
+  width: 34px; height: 34px; border-radius: 11px;
+  display: grid; place-items: center;
+  background: var(--fill2); color: var(--text2);
+  border: 1px solid var(--line3);
+}
+.chip .ico svg { width: 19px; height: 19px; }
+.chip .state { font-size: 12px; color: var(--text3); font-weight: 600; }
+.chip .name { font-size: 14px; font-weight: 600; color: var(--text1); }
+/* Active chip: accent-tinted fill + glowing icon */
+.chip.on {
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--a) 20%, transparent),
+      color-mix(in srgb, var(--a) 7%, transparent));
+  border-color: color-mix(in srgb, var(--a) 42%, transparent);
+  box-shadow: 0 12px 30px -16px var(--ag);
+}
+.chip.on .ico {
+  background: color-mix(in srgb, var(--a) 26%, transparent);
+  border-color: color-mix(in srgb, var(--a) 46%, transparent);
+  color: var(--a);
+}
+.chip.on .state { color: var(--a); }
+
+/* ---- Status dot & count badge ------------------------------------------ */
+.dot { width: 8px; height: 8px; border-radius: 999px; flex: 0 0 8px; display: inline-block; }
+.dot.g { background: var(--mint); box-shadow: 0 0 8px var(--mint-glow); }
+.dot.r { background: var(--rose); box-shadow: 0 0 8px var(--rose-glow); }
+.dot.b { background: var(--blue); }
+.dot.a { background: var(--amber); }
+.dot.v { background: var(--violet); }
+.dot.pulse { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.badge {
+  min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: 999px; display: inline-grid; place-items: center;
+  font-size: 12px; font-weight: 800; line-height: 1;
+  color: #1a0f2b;
+  background: var(--violet);
+  box-shadow: 0 4px 12px -3px var(--violet-glow);
+}
+
+/* ---- Horizontal scrollers ---------------------------------------------- */
+.hscroll {
+  display: flex; gap: 10px; overflow-x: auto;
+  padding: 2px 2px 6px; margin: 0 -2px;
+  scroll-snap-type: x proximity; scrollbar-width: none;
+}
+.hscroll::-webkit-scrollbar { display: none; }
+.hscroll > * { scroll-snap-align: start; flex: 0 0 auto; }
+
+/* ---- Generic accent button --------------------------------------------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 40px; padding: 0 16px; border-radius: 999px;
+  font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
+  border: 1px solid transparent; cursor: pointer; color: var(--text1);
+}
+.btn svg { width: 16px; height: 16px; }
+.btn.ghost { background: var(--fill2); border-color: var(--line3); color: var(--text2); }
+.btn.amber {
+  color: #2a1706;
+  background: linear-gradient(180deg, var(--amber), color-mix(in srgb, var(--amber) 86%, #000));
+  box-shadow: 0 8px 20px -8px var(--amber-glow);
+}
+.btn.mint  { color: #05231a; background: linear-gradient(180deg,var(--mint), color-mix(in srgb,var(--mint) 86%,#000)); box-shadow: 0 8px 20px -8px var(--mint-glow); }
+.btn.blue  { color: #0a1330; background: linear-gradient(180deg,var(--blue), color-mix(in srgb,var(--blue) 86%,#000)); box-shadow: 0 8px 20px -8px var(--blue-glow); }
+.btn.full { width: 100%; }
+
+/* ---- Rings / meters ----------------------------------------------------- */
+.ring { position: relative; width: 62px; height: 62px; }
+.ring svg { transform: rotate(-90deg); }
+.ring .rv {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 16px; font-weight: 800; letter-spacing: -0.02em;
+}
+
+/* ---- Avatars ------------------------------------------------------------ */
+.avatar {
+  width: 26px; height: 26px; border-radius: 999px;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; color: #0b1020;
+  border: 2px solid rgba(10,14,24,.9);
+}
+.avstack { display: flex; }
+.avstack .avatar + .avatar { margin-left: -8px; }
+
+/* ---- Bottom navigation (identical on every screen) ---------------------- */
+.nav {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 40;
+  height: calc(var(--nav-h) + var(--sa-bottom));
+  padding-bottom: var(--sa-bottom);
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: center;
+  background: linear-gradient(180deg, rgba(10,13,22,.55), rgba(8,10,18,.92));
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border-top: 1px solid var(--line2);
+}
+.nav .tab {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--text3); font-size: 10.5px; font-weight: 600;
+  background: none; border: 0; cursor: pointer;
+}
+.nav .tab svg { width: 23px; height: 23px; }
+.nav .tab.active { color: var(--blue); }
+.nav .tab.active svg { filter: drop-shadow(0 0 8px var(--blue-glow)); }
+
+/* Center raised Home slot */
+.nav .home {
+  position: relative; top: -18px;
+  width: 58px; height: 58px; border-radius: 999px;
+  display: grid; place-items: center; justify-self: center;
+  color: #eaf0ff;
+  background: radial-gradient(120% 120% at 50% 20%, #9fb4ff 0%, #6f8dff 42%, #3f5cd8 100%);
+  border: 4px solid #0a0d16;
+  box-shadow: 0 0 0 1px var(--blue) , 0 12px 30px -6px var(--blue-glow), 0 0 26px 2px var(--blue-glow);
+}
+.nav .home svg { width: 26px; height: 26px; }
+.nav .home-label {
+  position: absolute; bottom: 8px; font-size: 10.5px; font-weight: 700; color: var(--blue);
+}
+
+/* ---- Icon default sizing (component selectors above override these) ----- */
+.i { width: 20px; height: 20px; flex: none; }
+.i.sm { width: 16px; height: 16px; }
+.i.lg { width: 24px; height: 24px; }
+.fchip svg { width: 16px; height: 16px; }
+
+/* ---- Small utilities ---------------------------------------------------- */
+.row { display: flex; align-items: center; gap: 10px; }
+.between { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.muted { color: var(--text3); }
+.lbl { color: var(--text2); }
+.big { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.unit { font-size: 14px; font-weight: 600; color: var(--text3); }
+.divider { height: 1px; background: var(--line2); margin: 2px 0; }
+.a-blue{--a:var(--blue);--ag:var(--blue-glow)} .a-amber{--a:var(--amber);--ag:var(--amber-glow)}
+.a-mint{--a:var(--mint);--ag:var(--mint-glow)} .a-violet{--a:var(--violet);--ag:var(--violet-glow)}
+.a-rose{--a:var(--rose);--ag:var(--rose-glow)}

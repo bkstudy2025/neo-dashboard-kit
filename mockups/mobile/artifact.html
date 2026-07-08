@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neo · Mobile Screens</title>
+<style>
+/* ============================================================================
+   Neo Dashboard Kit — Mobile Screens · Shared Design System
+   ----------------------------------------------------------------------------
+   Single source of truth for the "Neo" look across Server, Kalender & Raum.
+   Tokens mirror src/core/tokens.js (glass fills, hairlines, text, accents).
+   This file is inlined into each standalone screen by build.mjs.
+   ========================================================================== */
+
+:root {
+  /* Accents (semantic) — identical to NEO_ACCENTS ------------------------- */
+  --blue:   #7C9CFF;  --blue-glow:   rgba(124,156,255,.35);
+  --amber:  #FFB26B;  --amber-glow:  rgba(255,178,107,.35);
+  --mint:   #5EDCB8;  --mint-glow:   rgba(94,220,184,.35);
+  --violet: #C084FC;  --violet-glow: rgba(192,132,252,.35);
+  --rose:   #F87171;  --rose-glow:   rgba(248,113,113,.35);
+
+  /* Glass fills & hairlines ---------------------------------------------- */
+  --fill0: rgba(255,255,255,.02);
+  --fill1: rgba(255,255,255,.04);
+  --fill2: rgba(255,255,255,.055);
+  --line1: rgba(255,255,255,.06);
+  --line2: rgba(255,255,255,.08);
+  --line3: rgba(255,255,255,.10);
+  --line4: rgba(255,255,255,.12);
+  --line5: rgba(255,255,255,.14);
+  --line6: rgba(255,255,255,.16);
+
+  /* Type ratios ----------------------------------------------------------- */
+  --text1: #F4F6FB;
+  --text2: rgba(244,246,251,.72);
+  --text3: rgba(244,246,251,.50);
+
+  --shadow1: rgba(0,0,0,.55);
+  --blur: blur(24px) saturate(140%);
+  --radius: 24px;
+  --font: -apple-system, "SF Pro Display", "Inter", system-ui, sans-serif;
+
+  /* Layout — iPhone portrait, single column ------------------------------ */
+  --phone: 420px;
+  --pad: 16px;
+  --nav-h: 74px;
+  --sa-top: env(safe-area-inset-top, 0px);
+  --sa-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font);
+  color: var(--text1);
+  /* Dark, blue-tinted near-black with a faint blue undertone */
+  background:
+    radial-gradient(120% 80% at 50% -10%, #0d1424 0%, #080b14 46%, #05070d 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Phone frame ------------------------------------------------------------- */
+.phone {
+  position: relative;
+  width: 100%;
+  max-width: var(--phone);
+  min-height: 100vh;
+  background:
+    radial-gradient(140% 70% at 50% 0%, #0e1626 0%, #080c15 55%, #06080f 100%);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Scroll region (everything above the fixed nav) -------------------------- */
+.scroll {
+  position: relative;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: calc(var(--nav-h) + var(--sa-bottom) + 22px);
+  scrollbar-width: none;
+}
+.scroll::-webkit-scrollbar { display: none; }
+
+/* Atmospheric hero photo (built from gradients, self-contained) ----------- */
+.hero-photo {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 340px;
+  z-index: 0;
+  pointer-events: none;
+}
+.hero-photo::after {           /* soft dark fade downwards into the bg */
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    rgba(6,8,15,0) 0%,
+    rgba(6,8,15,.10) 34%,
+    rgba(6,8,15,.55) 66%,
+    rgba(6,8,15,.92) 88%,
+    #06080f 100%);
+}
+
+/* Top bar ----------------------------------------------------------------- */
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(var(--sa-top) + 14px) var(--pad) 12px;
+  background: linear-gradient(180deg, rgba(8,11,20,.72), rgba(8,11,20,0));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.topbar h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+.topbar .spacer { flex: 1; }
+
+/* Round icon button (44px hit area) --------------------------------------- */
+.iconbtn {
+  width: 42px; height: 42px; flex: 0 0 42px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  color: var(--text1);
+  background: var(--fill2);
+  border: 1px solid var(--line3);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  cursor: pointer;
+}
+.iconbtn svg { width: 20px; height: 20px; }
+.iconbtn:active { transform: scale(.9); }
+
+/* Content column ---------------------------------------------------------- */
+.content { position: relative; z-index: 10; padding: 0 var(--pad); }
+.content > * + * { margin-top: 14px; }
+.stack-sm > * + * { margin-top: 10px; }
+
+/* ---- Glass card --------------------------------------------------------- */
+.glass {
+  position: relative;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, var(--fill2), var(--fill0));
+  border: 1px solid var(--line4);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  box-shadow: 0 18px 40px -20px var(--shadow1);
+  overflow: hidden;
+}
+.glass::before {               /* top edge sheen */
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+  opacity: .7;
+}
+.pad { padding: 16px; }
+[role="button"], button, .tap { cursor: pointer; }
+[role="button"]:active, .tap:active { transform: scale(.97); }
+
+/* Accent glow ring applied to a card by adding .glow + --a / --ag */
+.glow { box-shadow: 0 18px 44px -18px var(--shadow1), 0 0 0 1px var(--a-line, var(--line4)) inset; }
+
+/* ---- Section header ----------------------------------------------------- */
+.sechead {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 4px 2px 2px;
+}
+.sechead h2 { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+.sechead .all {
+  margin-left: auto; font-size: 13px; font-weight: 600;
+  color: var(--violet); display: inline-flex; align-items: center; gap: 3px;
+}
+.sechead .all svg { width: 14px; height: 14px; }
+
+/* ---- Pills (status: icon + big value + small label) --------------------- */
+.pill {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 9px 14px; border-radius: 999px;
+  background: var(--fill1); border: 1px solid var(--line3);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+}
+.pill svg { width: 17px; height: 17px; color: var(--text2); }
+.pill .v { font-size: 15px; font-weight: 700; color: var(--text1); }
+.pill .l { font-size: 12px; color: var(--text3); }
+
+/* ---- Control chips (icon + state + name, accent fill when active) ------- */
+.chip {
+  display: inline-flex; flex-direction: column; gap: 7px;
+  min-width: 116px; padding: 13px 14px;
+  border-radius: 20px;
+  background: var(--fill1); border: 1px solid var(--line3);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  text-align: left;
+}
+.chip .top { display: flex; align-items: center; justify-content: space-between; }
+.chip .ico {
+  width: 34px; height: 34px; border-radius: 11px;
+  display: grid; place-items: center;
+  background: var(--fill2); color: var(--text2);
+  border: 1px solid var(--line3);
+}
+.chip .ico svg { width: 19px; height: 19px; }
+.chip .state { font-size: 12px; color: var(--text3); font-weight: 600; }
+.chip .name { font-size: 14px; font-weight: 600; color: var(--text1); }
+/* Active chip: accent-tinted fill + glowing icon */
+.chip.on {
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--a) 20%, transparent),
+      color-mix(in srgb, var(--a) 7%, transparent));
+  border-color: color-mix(in srgb, var(--a) 42%, transparent);
+  box-shadow: 0 12px 30px -16px var(--ag);
+}
+.chip.on .ico {
+  background: color-mix(in srgb, var(--a) 26%, transparent);
+  border-color: color-mix(in srgb, var(--a) 46%, transparent);
+  color: var(--a);
+}
+.chip.on .state { color: var(--a); }
+
+/* ---- Status dot & count badge ------------------------------------------ */
+.dot { width: 8px; height: 8px; border-radius: 999px; flex: 0 0 8px; display: inline-block; }
+.dot.g { background: var(--mint); box-shadow: 0 0 8px var(--mint-glow); }
+.dot.r { background: var(--rose); box-shadow: 0 0 8px var(--rose-glow); }
+.dot.b { background: var(--blue); }
+.dot.a { background: var(--amber); }
+.dot.v { background: var(--violet); }
+.dot.pulse { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.badge {
+  min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: 999px; display: inline-grid; place-items: center;
+  font-size: 12px; font-weight: 800; line-height: 1;
+  color: #1a0f2b;
+  background: var(--violet);
+  box-shadow: 0 4px 12px -3px var(--violet-glow);
+}
+
+/* ---- Horizontal scrollers ---------------------------------------------- */
+.hscroll {
+  display: flex; gap: 10px; overflow-x: auto;
+  padding: 2px 2px 6px; margin: 0 -2px;
+  scroll-snap-type: x proximity; scrollbar-width: none;
+}
+.hscroll::-webkit-scrollbar { display: none; }
+.hscroll > * { scroll-snap-align: start; flex: 0 0 auto; }
+
+/* ---- Generic accent button --------------------------------------------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 40px; padding: 0 16px; border-radius: 999px;
+  font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
+  border: 1px solid transparent; cursor: pointer; color: var(--text1);
+}
+.btn svg { width: 16px; height: 16px; }
+.btn.ghost { background: var(--fill2); border-color: var(--line3); color: var(--text2); }
+.btn.amber {
+  color: #2a1706;
+  background: linear-gradient(180deg, var(--amber), color-mix(in srgb, var(--amber) 86%, #000));
+  box-shadow: 0 8px 20px -8px var(--amber-glow);
+}
+.btn.mint  { color: #05231a; background: linear-gradient(180deg,var(--mint), color-mix(in srgb,var(--mint) 86%,#000)); box-shadow: 0 8px 20px -8px var(--mint-glow); }
+.btn.blue  { color: #0a1330; background: linear-gradient(180deg,var(--blue), color-mix(in srgb,var(--blue) 86%,#000)); box-shadow: 0 8px 20px -8px var(--blue-glow); }
+.btn.full { width: 100%; }
+
+/* ---- Rings / meters ----------------------------------------------------- */
+.ring { position: relative; width: 62px; height: 62px; }
+.ring svg { transform: rotate(-90deg); }
+.ring .rv {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 16px; font-weight: 800; letter-spacing: -0.02em;
+}
+
+/* ---- Avatars ------------------------------------------------------------ */
+.avatar {
+  width: 26px; height: 26px; border-radius: 999px;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; color: #0b1020;
+  border: 2px solid rgba(10,14,24,.9);
+}
+.avstack { display: flex; }
+.avstack .avatar + .avatar { margin-left: -8px; }
+
+/* ---- Bottom navigation (identical on every screen) ---------------------- */
+.nav {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 40;
+  height: calc(var(--nav-h) + var(--sa-bottom));
+  padding-bottom: var(--sa-bottom);
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: center;
+  background: linear-gradient(180deg, rgba(10,13,22,.55), rgba(8,10,18,.92));
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border-top: 1px solid var(--line2);
+}
+.nav .tab {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--text3); font-size: 10.5px; font-weight: 600;
+  background: none; border: 0; cursor: pointer;
+}
+.nav .tab svg { width: 23px; height: 23px; }
+.nav .tab.active { color: var(--blue); }
+.nav .tab.active svg { filter: drop-shadow(0 0 8px var(--blue-glow)); }
+
+/* Center raised Home slot */
+.nav .home {
+  position: relative; top: -18px;
+  width: 58px; height: 58px; border-radius: 999px;
+  display: grid; place-items: center; justify-self: center;
+  color: #eaf0ff;
+  background: radial-gradient(120% 120% at 50% 20%, #9fb4ff 0%, #6f8dff 42%, #3f5cd8 100%);
+  border: 4px solid #0a0d16;
+  box-shadow: 0 0 0 1px var(--blue) , 0 12px 30px -6px var(--blue-glow), 0 0 26px 2px var(--blue-glow);
+}
+.nav .home svg { width: 26px; height: 26px; }
+.nav .home-label {
+  position: absolute; bottom: 8px; font-size: 10.5px; font-weight: 700; color: var(--blue);
+}
+
+/* ---- Icon default sizing (component selectors above override these) ----- */
+.i { width: 20px; height: 20px; flex: none; }
+.i.sm { width: 16px; height: 16px; }
+.i.lg { width: 24px; height: 24px; }
+.fchip svg { width: 16px; height: 16px; }
+
+/* ---- Small utilities ---------------------------------------------------- */
+.row { display: flex; align-items: center; gap: 10px; }
+.between { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.muted { color: var(--text3); }
+.lbl { color: var(--text2); }
+.big { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.unit { font-size: 14px; font-weight: 600; color: var(--text3); }
+.divider { height: 1px; background: var(--line2); margin: 2px 0; }
+.a-blue{--a:var(--blue);--ag:var(--blue-glow)} .a-amber{--a:var(--amber);--ag:var(--amber-glow)}
+.a-mint{--a:var(--mint);--ag:var(--mint-glow)} .a-violet{--a:var(--violet);--ag:var(--violet-glow)}
+.a-rose{--a:var(--rose);--ag:var(--rose-glow)}
+
+
+  .hero-photo.server {
+    background:
+      radial-gradient(80% 60% at 18% 8%, rgba(124,156,255,.34), transparent 60%),
+      radial-gradient(70% 55% at 88% 2%, rgba(192,132,252,.22), transparent 62%),
+      repeating-linear-gradient(115deg, rgba(124,156,255,.05) 0 2px, transparent 2px 22px),
+      linear-gradient(160deg, #0f1830 0%, #0a0f1e 60%);
+  }
+  .kpi { padding:15px; display:flex; flex-direction:column; gap:12px; }
+  .kpi .head { display:flex; align-items:center; justify-content:space-between; }
+  .kpi .cap { font-size:13px; color:var(--text2); font-weight:600; display:flex; align-items:center; gap:7px; }
+  .kpi .cap svg { width:15px; height:15px; color:var(--text3); }
+  .kpi .num { font-size:30px; font-weight:800; letter-spacing:-.03em; line-height:1; }
+  .kpi .sub { font-size:12px; color:var(--text3); }
+  .listrow { display:flex; align-items:center; gap:12px; padding:12px 15px; }
+  .listrow + .listrow { border-top:1px solid var(--line1); }
+  .listrow .nm { font-size:14px; font-weight:600; }
+  .listrow .st { margin-left:auto; font-size:12.5px; font-weight:600; color:var(--text3); display:flex; align-items:center; gap:7px; }
+  .listrow .ig { width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--fill2);border:1px solid var(--line3);color:var(--text2); }
+  .listrow .ig svg{width:18px;height:18px}
+  .listrow.err .ig { background:color-mix(in srgb,var(--rose) 20%,transparent); border-color:color-mix(in srgb,var(--rose) 40%,transparent); color:var(--rose); }
+  .listrow.err .st { color:var(--rose); }
+  .updrow { display:flex; align-items:center; gap:12px; padding:12px 15px; }
+  .updrow + .updrow { border-top:1px solid var(--line1); }
+  .updrow .nm { font-size:14px; font-weight:600; }
+  .updrow .ver { font-size:12px; color:var(--text3); }
+  .netcol { flex:1; display:flex; flex-direction:column; gap:3px; align-items:flex-start; }
+  .warn { display:flex; gap:12px; padding:13px 15px; align-items:flex-start; }
+  .warn + .warn { border-top:1px solid var(--line1); }
+  .warn .wi { width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:grid;place-items:center;
+    background:color-mix(in srgb,var(--rose) 18%,transparent); color:var(--rose); border:1px solid color-mix(in srgb,var(--rose) 34%,transparent); }
+  .warn .wi svg{width:17px;height:17px}
+  .warn .wt { font-size:13.5px; font-weight:600; line-height:1.3; }
+  .warn .wm { font-size:12px; color:var(--text3); margin-top:2px; }
+  
+
+  .hero-photo.cal {
+    background:
+      radial-gradient(72% 60% at 22% 6%, rgba(192,132,252,.34), transparent 60%),
+      radial-gradient(66% 52% at 90% 0%, rgba(124,156,255,.24), transparent 62%),
+      linear-gradient(160deg, #171126 0%, #0b0f1f 60%);
+  }
+  .seg { display:flex; gap:2px; padding:3px; border-radius:999px; background:var(--fill1); border:1px solid var(--line3); }
+  .seg button { border:0; background:none; color:var(--text3); font-size:12.5px; font-weight:600;
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-family:var(--font); }
+  .seg button.on { background:var(--fill2); color:var(--text1); box-shadow:0 2px 8px -3px var(--shadow1); }
+  .week { display:flex; gap:8px; }
+  .day { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 0 8px;
+    border-radius:16px; background:var(--fill1); border:1px solid var(--line2); cursor:pointer; }
+  .day .dn { font-size:11px; color:var(--text3); font-weight:600; }
+  .day .dd { font-size:16px; font-weight:700; }
+  .day .ev { width:5px; height:5px; border-radius:999px; }
+  .day.on { background:linear-gradient(180deg, color-mix(in srgb,var(--violet) 26%,transparent), color-mix(in srgb,var(--violet) 10%,transparent));
+    border-color:color-mix(in srgb,var(--violet) 46%,transparent); box-shadow:0 10px 24px -12px var(--violet-glow); }
+  .day.on .dn, .day.on .dd { color:var(--text1); }
+  .agenda { display:grid; grid-template-columns:52px 1fr; gap:12px; }
+  .agenda .time { text-align:right; padding-top:14px; }
+  .agenda .time .t { font-size:14px; font-weight:700; }
+  .agenda .time .m { font-size:11px; color:var(--text3); }
+  .evcard { position:relative; padding:13px 15px 13px 18px; }
+  .evcard::before { content:""; position:absolute; left:0; top:10px; bottom:10px; width:4px; border-radius:999px; background:var(--cc, var(--blue)); }
+  .evcard .et { font-size:14.5px; font-weight:700; }
+  .evcard .em { font-size:12px; color:var(--text3); margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .locchip { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:var(--fill2); border:1px solid var(--line3); font-size:11px; color:var(--text2); }
+  .locchip svg { width:12px; height:12px; }
+  .allday { display:flex; align-items:center; gap:10px; padding:11px 15px; border-radius:999px;
+    background:linear-gradient(90deg, color-mix(in srgb,var(--mint) 16%,transparent), var(--fill1));
+    border:1px solid color-mix(in srgb,var(--mint) 26%,transparent); }
+  .allday .nm { font-size:13.5px; font-weight:600; }
+  .groupdate { font-size:12px; font-weight:700; color:var(--text2); letter-spacing:.02em; text-transform:uppercase; padding:6px 2px 0; }
+  .fchip { display:inline-flex; align-items:center; gap:8px; padding:9px 14px; border-radius:999px;
+    background:var(--fill1); border:1px solid var(--line3); font-size:13px; font-weight:600; color:var(--text1); cursor:pointer; }
+  .fchip.off { color:var(--text3); background:var(--fill0); }
+  .fchip.off .dot { opacity:.4; }
+  
+
+  .roomhero { position:relative; height:300px; z-index:0; overflow:hidden; }
+  .roomhero .photo {
+    position:absolute; inset:0;
+    background:
+      radial-gradient(60% 50% at 78% 24%, rgba(255,178,107,.55), transparent 60%),
+      radial-gradient(48% 44% at 22% 30%, rgba(255,150,80,.30), transparent 60%),
+      radial-gradient(90% 70% at 50% 0%, rgba(124,110,90,.35), transparent 70%),
+      linear-gradient(165deg, #2a1d14 0%, #1a130f 42%, #0c0a0d 78%, #06080f 100%);
+  }
+  .roomhero .photo::after {
+    content:""; position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(180deg, rgba(0,0,0,.06) 0 3px, transparent 3px 8px),
+      linear-gradient(180deg, rgba(6,8,15,0) 40%, rgba(6,8,15,.55) 74%, #06080f 100%);
+  }
+  .roomhero .toppills { position:absolute; left:16px; right:16px; top:calc(var(--sa-top) + 14px);
+    display:flex; justify-content:space-between; z-index:2; }
+  .gpill { display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border-radius:999px;
+    background:rgba(12,14,22,.5); border:1px solid var(--line4); backdrop-filter:var(--blur); -webkit-backdrop-filter:var(--blur);
+    font-size:13px; font-weight:600; color:var(--text1); cursor:pointer; }
+  .gpill svg { width:15px; height:15px; color:var(--text2); }
+  .roomhero .caption { position:absolute; left:16px; right:16px; bottom:16px; z-index:2; }
+  .roomhero .caption h1 { font-size:34px; font-weight:800; letter-spacing:-.035em; }
+  .roomhero .caption .sub { font-size:14px; color:var(--text2); font-weight:600; margin-top:2px;
+    display:inline-flex; align-items:center; gap:7px; }
+
+  .statpill { flex:1; display:flex; align-items:center; gap:11px; padding:13px 15px; }
+  .statpill .si { width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--fill2);border:1px solid var(--line3);color:var(--text2); }
+  .statpill .si svg { width:20px; height:20px; }
+  .statpill .sv { font-size:20px; font-weight:800; letter-spacing:-.02em; }
+  .statpill .sl { font-size:11.5px; color:var(--text3); }
+
+  .scene { position:relative; width:132px; height:96px; border-radius:20px; overflow:hidden;
+    border:1px solid var(--line3); cursor:pointer; }
+  .scene .sph { position:absolute; inset:0; }
+  .scene .sph::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.55)); }
+  .scene .lbl { position:absolute; left:12px; bottom:11px; z-index:2; display:flex; align-items:center; gap:7px;
+    font-size:13.5px; font-weight:700; }
+  .scene .lbl svg { width:15px; height:15px; }
+  .scene .play { position:absolute; right:10px; bottom:10px; z-index:2; width:30px; height:30px; border-radius:999px;
+    display:grid; place-items:center; background:rgba(12,14,22,.55); border:1px solid var(--line5); backdrop-filter:blur(8px); color:#fff; }
+  .scene .play svg { width:14px; height:14px; }
+  .scene.on-rose  { border-color:color-mix(in srgb,var(--rose) 60%,transparent); box-shadow:0 0 0 1px var(--rose) inset, 0 10px 26px -12px var(--rose-glow); }
+  .scene.on-amber { border-color:color-mix(in srgb,var(--amber) 60%,transparent); box-shadow:0 0 0 1px var(--amber) inset, 0 10px 26px -12px var(--amber-glow); }
+  .scene.on-blue  { border-color:color-mix(in srgb,var(--blue) 60%,transparent); box-shadow:0 0 0 1px var(--blue) inset, 0 10px 26px -12px var(--blue-glow); }
+
+  .devgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .dev { padding:14px; display:flex; flex-direction:column; gap:11px; min-height:112px; }
+  .dev .top { display:flex; align-items:flex-start; justify-content:space-between; }
+  .dev .di { width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--fill2);border:1px solid var(--line3);color:var(--text2); }
+  .dev .di svg { width:20px; height:20px; }
+  .dev .nm { font-size:14px; font-weight:700; letter-spacing:-.01em; }
+  .dev .stt { font-size:12px; color:var(--text3); margin-top:2px; }
+  .dev .foot { margin-top:auto; }
+  .sw { width:38px; height:23px; border-radius:999px; background:var(--fill2); border:1px solid var(--line4); position:relative; }
+  .sw::after { content:""; position:absolute; top:2px; left:2px; width:17px; height:17px; border-radius:999px; background:var(--text3); transition:.2s; }
+  .dev.on .di { background:color-mix(in srgb,var(--a) 24%,transparent); border-color:color-mix(in srgb,var(--a) 44%,transparent); color:var(--a); }
+  .dev.on { background:linear-gradient(180deg, color-mix(in srgb,var(--a) 12%,transparent), var(--fill0)); border-color:color-mix(in srgb,var(--a) 30%,transparent); }
+  .dev.on .sw { background:color-mix(in srgb,var(--a) 55%,transparent); border-color:color-mix(in srgb,var(--a) 60%,transparent); }
+  .dev.on .sw::after { left:18px; background:#fff; }
+  .dev.on .stt { color:var(--a); font-weight:600; }
+  .dev.problem { border-color:color-mix(in srgb,var(--rose) 46%,transparent); box-shadow:0 0 0 1px color-mix(in srgb,var(--rose) 30%,transparent) inset; }
+  .dev.problem .di { background:color-mix(in srgb,var(--rose) 20%,transparent); border-color:color-mix(in srgb,var(--rose) 40%,transparent); color:var(--rose); }
+  .dev.problem .stt { color:var(--rose); font-weight:600; }
+  .grouplabel { font-size:12px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.03em; padding:8px 2px 0; }
+  .mediabar { display:flex; align-items:center; gap:6px; }
+  .mbtn { width:30px;height:30px;border-radius:999px;display:grid;place-items:center;background:color-mix(in srgb,var(--blue) 22%,transparent);border:1px solid color-mix(in srgb,var(--blue) 40%,transparent);color:var(--blue); }
+  .mbtn svg { width:14px; height:14px; }
+  .vol { flex:1; height:5px; border-radius:999px; background:var(--fill2); position:relative; overflow:hidden; }
+  .vol i { position:absolute; left:0; top:0; bottom:0; width:46%; background:var(--blue); }
+  
+
+  body { display:block; padding:40px 16px 64px; overflow-x:hidden; }
+  .a-head { max-width:1200px; margin:0 auto 30px; }
+  .a-head h1 { font-size:clamp(24px,5vw,32px); font-weight:800; letter-spacing:-.03em; }
+  .a-head p { color:var(--text3); margin-top:8px; font-size:15px; line-height:1.55; max-width:680px; }
+  .gallery { display:flex; gap:34px; justify-content:center; align-items:flex-start; flex-wrap:wrap; max-width:1300px; margin:0 auto; }
+  .dev-frame { display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .dev-frame .phone {
+    width:390px; height:800px; min-height:0; border-radius:46px;
+    box-shadow:0 44px 100px -34px rgba(0,0,0,.85), 0 0 0 11px #0a0d16, 0 0 0 12px rgba(255,255,255,.08);
+  }
+  .dev-frame .scroll { height:800px; }
+  .dev-frame figcaption { font-size:14px; font-weight:600; color:var(--text2); }
+  @media (max-width:460px){
+    .dev-frame .phone{ width:min(90vw,390px); height:min(185vw,800px); }
+    .dev-frame .scroll{ height:min(185vw,800px); }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2v-9z"/></symbol><symbol id="i-rooms" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol><symbol id="i-devices" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol><symbol id="i-energy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></symbol><symbol id="i-scenes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3l-1.4-1.4M19.1 19.1l-1.4-1.4M17.7 6.3l1.4-1.4M4.9 19.1l1.4-1.4"/><circle cx="12" cy="12" r="4"/></symbol><symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol><symbol id="i-lightbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></symbol><symbol id="i-thermo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.8V4a2 2 0 1 0-4 0v10.8a4 4 0 1 0 4 0z"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol><symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3l2-3h8l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></symbol><symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></symbol><symbol id="i-speaker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><circle cx="12" cy="14" r="3"/><circle cx="12" cy="7" r="1" fill="currentColor"/></symbol><symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></symbol><symbol id="i-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol><symbol id="i-next" viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8V4zM17 4h2v16h-2z"/></symbol><symbol id="i-prev" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4L9 12l10 8V4zM5 4h2v16H5z"/></symbol><symbol id="i-blinds" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="3"/><rect x="3" y="8" width="18" height="2"/><rect x="3" y="12" width="18" height="2"/><path d="M12 16v5M10 21h4"/></symbol><symbol id="i-vacuum" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></symbol><symbol id="i-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h11a3 3 0 1 0-3-3M3 16h15a3 3 0 1 1-3 3M3 12h17"/></symbol><symbol id="i-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M7 8h10v3a5 5 0 0 1-10 0V8zM12 16v6"/></symbol><symbol id="i-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/></symbol><symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></symbol><symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></symbol><symbol id="i-chevR" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></symbol><symbol id="i-chevL" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></symbol><symbol id="i-chevD" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></symbol><symbol id="i-chevU" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></symbol><symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M5 12H2M22 12h-3M6.3 6.3L4.2 4.2M19.8 19.8l-2.1-2.1M17.7 6.3l2.1-2.1M4.2 19.8l2.1-2.1"/></symbol><symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol><symbol id="i-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21c0-9 7-16 16-16 0 9-7 16-16 16zM5 21c4-4 8-6 12-7"/></symbol><symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r="1" fill="currentColor"/></symbol><symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol><symbol id="i-garage" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l9-5 9 5v12"/><rect x="6" y="12" width="12" height="9"/><path d="M6 15h12M6 18h12"/></symbol><symbol id="i-motion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><path d="M9 8a6 6 0 0 1 0 8"/><path d="M13 5a10 10 0 0 1 0 14"/><path d="M17 2a14 14 0 0 1 0 20"/></symbol><symbol id="i-coffee" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 9h2a2 2 0 0 1 0 4h-2"/><path d="M8 2v2.5M12 2v2.5"/></symbol><symbol id="i-washer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="14" r="5"/><circle cx="12" cy="14" r="2"/><path d="M7 6h.01M10 6h.01"/></symbol><symbol id="i-dishwasher" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M4 7h16"/><path d="M8 4.5h.01M11 4.5h.01"/><path d="M9 11c1 1 2 1 3 0s2-1 3 0M9 15c1 1 2 1 3 0s2-1 3 0"/></symbol><symbol id="i-outlet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9v2M15 9v2M9 14h6"/></symbol><symbol id="i-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="8" rx="4"/><circle cx="8" cy="12" r="2.5" fill="currentColor"/></symbol><symbol id="i-valve" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 9V3M12 21v-6M9 12H3M21 12h-6M9.5 9.5L7 7M14.5 9.5L17 7M9.5 14.5L7 17M14.5 14.5L17 17"/></symbol><symbol id="i-smoke" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></symbol><symbol id="i-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v4"/><circle cx="12" cy="17.5" r="1" fill="currentColor"/></symbol><symbol id="i-solar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="11" rx="1"/><path d="M3 9h18M3 12.5h18M9 5v11M15 5v11M12 19v2M9 21h6"/></symbol><symbol id="i-bed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-5h18v5"/><path d="M3 13V8h8v5"/><path d="M3 18v2M21 18v2"/><circle cx="7" cy="10.5" r="1.5"/></symbol><symbol id="i-sofa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 12a2 2 0 0 1 2 2v3h14v-3a2 2 0 0 1 2-2"/><path d="M5 17v2M19 17v2"/></symbol><symbol id="i-shower" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M6 12V7a3 3 0 0 1 6 0"/><path d="M12 7h4a3 3 0 0 1 3 3"/><path d="M8 16v1M12 16v2M16 16v1"/></symbol><symbol id="i-bath" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M6 12V6a2 2 0 0 1 4 0"/><path d="M6 19l-1 2M18 19l1 2"/></symbol><symbol id="i-toilet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v7a5 5 0 0 0 10 0V4"/><path d="M5 4h14"/><path d="M11 16v4M8 20h6"/></symbol><symbol id="i-plant" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-7"/><path d="M12 14c0-3-2-5-5-5 0 3 2 5 5 5z"/><path d="M12 12c0-3 2-5 5-5 0 3-2 5-5 5z"/></symbol><symbol id="i-paw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="11" r="1.6"/><circle cx="10" cy="8" r="1.6"/><circle cx="14" cy="8" r="1.6"/><circle cx="18" cy="11" r="1.6"/><path d="M8 16a4 4 0 0 1 8 0 3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3z"/></symbol><symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4"/><path d="M11 11l9 9M17 17l2-2M19 19l2-2"/></symbol><symbol id="i-remote" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="3"/><circle cx="12" cy="6" r="1.2" fill="currentColor"/><path d="M10 10h4M10 13h4M10 16h4"/></symbol><symbol id="i-sprinkler" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6M5 9h14"/><path d="M5 9c-1 3-1 6 0 9M19 9c1 3 1 6 0 9M12 9v10"/></symbol><symbol id="i-gate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h18M3 20V8M21 20V8M7 20V8M11 20V8M15 20V8M19 20V8"/></symbol><symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></symbol><symbol id="i-shieldOk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="i-water" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s-7 8-7 13a7 7 0 0 0 14 0c0-5-7-13-7-13z"/></symbol><symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/></symbol><symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol><symbol id="i-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></symbol><symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></symbol><symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol><symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7 7 .5-5.5 4.5L18 21l-6-4-6 4 1.5-7L2 9.5 9 9l3-7z"/></symbol><symbol id="i-starF" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7 7 .5-5.5 4.5L18 21l-6-4-6 4 1.5-7L2 9.5 9 9l3-7z"/></symbol><symbol id="i-sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6M12 15v6M3 12h6M15 12h6M5.5 5.5l3 3M15.5 15.5l3 3M18.5 5.5l-3 3M8.5 15.5l-3 3"/></symbol><symbol id="i-kettle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9h12l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9zM17 11l3-2-3-2M9 5h4"/></symbol><symbol id="i-tv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 21h8"/></symbol><symbol id="i-fridge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M5 10h14M8 6v1M8 14v3"/></symbol><symbol id="i-dot" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></symbol><symbol id="i-arrUp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></symbol><symbol id="i-arrDown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 18z"/></symbol><symbol id="i-rain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 19l-1 2M12 19l-1 2M16 19l-1 2"/></symbol><symbol id="i-snow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M8 19v.01M12 20v.01M16 19v.01"/></symbol><symbol id="i-storm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4 4 0 0 1 .5-7.97 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17.5 15z"/><path d="M12 16l-2 3h3l-2 3"/></symbol><symbol id="i-fog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16M4 13h16M6 17h12"/></symbol><symbol id="i-partly" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><path d="M8 2v1.5M3 8H1.5M13 3l-1 1M3 13l1-1"/><path d="M10 18a3.5 3.5 0 0 1 .4-6.98 4.8 4.8 0 0 1 9.2 1.3A3 3 0 0 1 19 18z"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></symbol><symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="i-fan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><path d="M12 10.5C12 7 13.5 4 16 4c1.5 0 2 2 0 3.5-1.5 1-4 3-4 3zM13.5 12c3.5 0 6.5 1.5 6.5 4 0 1.5-2 2-3.5 0-1-1.5-3-4-3-4zM12 13.5c0 3.5-1.5 6.5-4 6.5-1.5 0-2-2 0-3.5 1.5-1 4-3 4-3zM10.5 12c-3.5 0-6.5-1.5-6.5-4 0-1.5 2-2 3.5 0 1 1.5 3 4 3 4z"/></symbol><symbol id="i-door" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v17M4 21h14M13.5 12h.01"/></symbol><symbol id="i-window" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18M4 12h16"/></symbol><symbol id="i-battery" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></symbol><symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s5 4 5 9a5 5 0 0 1-10 0c0-2 1-3 1-3s0 2 1.5 2C12 12 9 9 12 2z"/></symbol><symbol id="i-snowflake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"/></symbol><symbol id="i-person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol><symbol id="i-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 5a3.5 3.5 0 0 1 0 7M17 13.5a6.5 6.5 0 0 1 4.5 6.5"/></symbol><symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11M4 11h16v6h-2M4 11v6h2m0 0h12M7 17v2M17 17v2"/><circle cx="7.5" cy="14.5" r="1"/><circle cx="16.5" cy="14.5" r="1"/></symbol><symbol id="i-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol><symbol id="i-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/></symbol><symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20l-7-7a4 4 0 0 1 5.6-5.6L12 8.8l1.4-1.4A4 4 0 0 1 19 13l-7 7z"/></symbol><symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 7M21 3v4h-4"/></symbol><symbol id="i-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9M6.6 6.6a9 9 0 1 0 10.8 0"/></symbol><symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="8" rx="2"/><rect x="4" y="13" width="16" height="8" rx="2"/><path d="M8 7h.01M8 17h.01"/></symbol><symbol id="i-robot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5M9 3h6"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/><path d="M8 16h8"/></symbol><symbol id="i-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14l3-3"/><path d="M4 18a9 9 0 1 1 16 0"/><circle cx="12" cy="14" r="1"/></symbol><symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol><symbol id="i-router_wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 17h.01M11 17h.01M12 6a6 6 0 0 1 6 6M12 9a3 3 0 0 1 3 3"/></symbol></svg>
+<div class="a-head">
+  <h1>Neo Dashboard — Mobile Screens</h1>
+  <p>Drei zusammengehörige Screens im „Neo"-Look: Server, Kalender und Wohnzimmer.
+     Identische Design-Sprache (Glaskarten, Blur, semantische Akzente) und dieselbe
+     Bottom-Navigation. iPhone-Hochformat, ein-spaltig — jeder Screen ist scrollbar.</p>
+</div>
+<div class="gallery">
+    <figure class="dev-frame">
+      <div class="phone">
+        <div class="scroll">
+
+    <div class="hero-photo server"></div>
+
+    <div class="topbar">
+      <h1>Server</h1>
+      <span class="dot g pulse" style="margin-top:4px"></span>
+      <div class="spacer"></div>
+      <button class="iconbtn" aria-label="Aktualisieren"><svg class="i"><use href="#i-refresh"/></svg></button>
+    </div>
+
+    <div class="content">
+
+      <!-- Health hero -->
+      <section class="glass pad glow a-mint" style="--a-line:color-mix(in srgb,var(--mint) 22%,transparent)">
+        <div class="row" style="gap:14px">
+          <div style="width:52px;height:52px;border-radius:16px;display:grid;place-items:center;
+              background:color-mix(in srgb,var(--mint) 20%,transparent);border:1px solid color-mix(in srgb,var(--mint) 40%,transparent);color:var(--mint)">
+            <svg class="i lg"><use href="#i-shieldOk"/></svg>
+          </div>
+          <div>
+            <div style="font-size:22px;font-weight:800;letter-spacing:-.03em;color:var(--mint)">Alles läuft</div>
+            <div class="muted" style="font-size:13px;margin-top:2px">Home Assistant · Beitcore Core</div>
+          </div>
+        </div>
+        <div class="hscroll" style="margin-top:14px">
+          <span class="pill"><svg class="i"><use href="#i-clock"/></svg><span><span class="v">14 T</span> <span class="l">Uptime</span></span></span>
+          <span class="pill"><svg class="i"><use href="#i-info"/></svg><span><span class="v">2026.7.1</span> <span class="l">HA</span></span></span>
+          <span class="pill"><svg class="i"><use href="#i-cloud"/></svg><span><span class="v">03:12</span> <span class="l">Backup</span></span></span>
+        </div>
+      </section>
+
+      <!-- 2×2 KPI grid -->
+      <div class="grid2">
+        <div class="glass kpi">
+          <div class="head">
+            <div class="cap"><svg class="i"><use href="#i-gauge"/></svg> CPU-Last</div>
+            <div class="ring">
+    <svg width="62" height="62" viewBox="0 0 62 62">
+      <circle cx="31" cy="31" r="26" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+      <circle cx="31" cy="31" r="26" fill="none" stroke="var(--mint)" stroke-width="6"
+        stroke-linecap="round" stroke-dasharray="163.4" stroke-dashoffset="107.8"
+        style="filter:drop-shadow(0 0 5px var(--mint))"/>
+    </svg>
+    <div class="rv"><span style="font-size:0">.</span></div>
+  </div>
+          </div>
+          <div><span class="num">34</span><span class="unit"> %</span></div>
+          <div class="sub">4 Kerne · Ø 1.1 GHz</div>
+        </div>
+
+        <div class="glass kpi">
+          <div class="head">
+            <div class="cap"><svg class="i"><use href="#i-server"/></svg> RAM</div>
+            <div class="ring">
+    <svg width="62" height="62" viewBox="0 0 62 62">
+      <circle cx="31" cy="31" r="26" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+      <circle cx="31" cy="31" r="26" fill="none" stroke="var(--blue)" stroke-width="6"
+        stroke-linecap="round" stroke-dasharray="163.4" stroke-dashoffset="68.6"
+        style="filter:drop-shadow(0 0 5px var(--blue))"/>
+    </svg>
+    <div class="rv"><span style="font-size:0">.</span></div>
+  </div>
+          </div>
+          <div><span class="num">58</span><span class="unit"> %</span></div>
+          <div class="sub">4,6 / 8,0 GB</div>
+        </div>
+
+        <div class="glass kpi">
+          <div class="head">
+            <div class="cap"><svg class="i"><use href="#i-devices"/></svg> Speicher</div>
+            <svg width="84" height="30" viewBox="0 0 84 30" style="display:block">
+    <polyline points="0.0,28.0 14.0,20.6 28.0,24.3 42.0,13.1 56.0,5.7 70.0,9.4 84.0,2.0" fill="none" stroke="var(--blue)" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 4px var(--blue))"/>
+  </svg>
+          </div>
+          <div><span class="num">182</span><span class="unit"> GB frei</span></div>
+          <div class="sub">von 256 GB · 71 % belegt</div>
+        </div>
+
+        <div class="glass kpi">
+          <div class="head">
+            <div class="cap"><svg class="i"><use href="#i-thermo"/></svg> CPU-Temp</div>
+            <div class="ring">
+    <svg width="62" height="62" viewBox="0 0 62 62">
+      <circle cx="31" cy="31" r="26" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+      <circle cx="31" cy="31" r="26" fill="none" stroke="var(--amber)" stroke-width="6"
+        stroke-linecap="round" stroke-dasharray="163.4" stroke-dashoffset="62.1"
+        style="filter:drop-shadow(0 0 5px var(--amber))"/>
+    </svg>
+    <div class="rv"><span style="font-size:0">.</span></div>
+  </div>
+          </div>
+          <div><span class="num" style="color:var(--amber)">62</span><span class="unit"> °C</span></div>
+          <div class="sub">Grenzwert 90 °C</div>
+        </div>
+      </div>
+
+      <!-- Integrations & Add-ons -->
+      <div class="sechead"><h2>Integrationen &amp; Add-ons</h2><span class="all">Alle anzeigen <svg class="i"><use href="#i-chevR"/></svg></span></div>
+      <section class="glass">
+        <div class="listrow err">
+          <div class="ig"><svg class="i"><use href="#i-warning"/></svg></div>
+          <div><div class="nm">Zigbee2MQTT</div></div>
+          <div class="st"><span class="dot r"></span>Fehler</div>
+        </div>
+        <div class="listrow err">
+          <div class="ig"><svg class="i"><use href="#i-camera"/></svg></div>
+          <div><div class="nm">Frigate NVR</div></div>
+          <div class="st"><span class="dot r"></span>Neustart</div>
+        </div>
+        <div class="listrow">
+          <div class="ig"><svg class="i"><use href="#i-home"/></svg></div>
+          <div><div class="nm">Mosquitto Broker</div></div>
+          <div class="st"><span class="dot g"></span>läuft</div>
+        </div>
+        <div class="listrow">
+          <div class="ig"><svg class="i"><use href="#i-router_wifi"/></svg></div>
+          <div><div class="nm">UniFi Network</div></div>
+          <div class="st"><span class="dot g"></span>läuft</div>
+        </div>
+        <div class="listrow">
+          <div class="ig"><svg class="i"><use href="#i-music"/></svg></div>
+          <div><div class="nm">Music Assistant</div></div>
+          <div class="st"><span class="dot g"></span>läuft</div>
+        </div>
+      </section>
+
+      <!-- Network -->
+      <div class="sechead"><h2>Netzwerk</h2></div>
+      <section class="glass pad">
+        <div class="row" style="gap:14px">
+          <div style="width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+              background:color-mix(in srgb,var(--blue) 18%,transparent);border:1px solid color-mix(in srgb,var(--blue) 36%,transparent);color:var(--blue)">
+            <svg class="i lg"><use href="#i-wifi"/></svg>
+          </div>
+          <div class="netcol">
+            <div style="font-size:14px;font-weight:700">Beitcore-WLAN</div>
+            <div class="muted" style="font-size:12px">32 Clients verbunden</div>
+          </div>
+          <div style="text-align:right">
+            <div class="row" style="justify-content:flex-end;gap:5px;color:var(--mint)"><svg class="i"><use href="#i-arrDown"/></svg><span style="font-weight:700;font-size:15px">86,4</span></div>
+            <div class="row" style="justify-content:flex-end;gap:5px;color:var(--blue);margin-top:3px"><svg class="i"><use href="#i-arrUp"/></svg><span style="font-weight:700;font-size:15px">12,1</span></div>
+            <div class="muted" style="font-size:10px;text-align:right;margin-top:1px">Mbit/s</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Updates -->
+      <div class="sechead"><h2>Updates</h2><span class="badge" style="margin-left:auto">3</span></div>
+      <section class="glass">
+        <div class="updrow">
+          <div><div class="nm">Home Assistant Core</div><div class="ver">2026.7.1 → 2026.7.3</div></div>
+          <button class="btn amber" style="margin-left:auto"><svg class="i"><use href="#i-arrUp"/></svg>Aktualisieren</button>
+        </div>
+        <div class="updrow">
+          <div><div class="nm">Operating System</div><div class="ver">13.1 → 13.2</div></div>
+          <button class="btn amber" style="margin-left:auto"><svg class="i"><use href="#i-arrUp"/></svg>Aktualisieren</button>
+        </div>
+        <div class="updrow">
+          <div><div class="nm">3 Add-ons</div><div class="ver">File editor, Samba, Node-RED</div></div>
+          <button class="btn amber" style="margin-left:auto"><svg class="i"><use href="#i-arrUp"/></svg>Alle</button>
+        </div>
+      </section>
+
+      <!-- Backup -->
+      <section class="glass pad">
+        <div class="between">
+          <div class="row" style="gap:13px">
+            <div style="width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--fill2);border:1px solid var(--line3);color:var(--text2)"><svg class="i lg"><use href="#i-cloud"/></svg></div>
+            <div>
+              <div style="font-size:14px;font-weight:700">Backup</div>
+              <div class="muted" style="font-size:12px">Zuletzt heute 03:12 · 1,2 GB</div>
+            </div>
+          </div>
+          <button class="btn mint"><svg class="i"><use href="#i-shieldOk"/></svg>Jetzt sichern</button>
+        </div>
+      </section>
+
+      <!-- Warnings / errors -->
+      <div class="sechead"><h2 style="color:var(--rose)">Letzte Warnungen</h2></div>
+      <section class="glass" style="border-color:color-mix(in srgb,var(--rose) 26%,transparent)">
+        <div class="warn">
+          <div class="wi"><svg class="i"><use href="#i-warning"/></svg></div>
+          <div><div class="wt">Zigbee-Koordinator antwortet nicht</div><div class="wm">Zigbee2MQTT · vor 6 Min</div></div>
+        </div>
+        <div class="warn">
+          <div class="wi"><svg class="i"><use href="#i-warning"/></svg></div>
+          <div><div class="wt">Kamera „Einfahrt" offline</div><div class="wm">Frigate NVR · vor 22 Min</div></div>
+        </div>
+        <div class="warn">
+          <div class="wi" style="background:color-mix(in srgb,var(--amber) 16%,transparent);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 30%,transparent)"><svg class="i"><use href="#i-info"/></svg></div>
+          <div><div class="wt">Datenbank &gt; 2 GB — Aufräumen empfohlen</div><div class="wm">Recorder · vor 1 Std</div></div>
+        </div>
+      </section>
+
+    </div>
+        </div>
+        <nav class="nav">
+    <button class="tab"><svg class="i"><use href="#i-grid"/></svg><span>Übersicht</span></button>
+    <button class="tab active"><svg class="i"><use href="#i-server"/></svg><span>Server</span></button>
+    <button class="home tap" aria-label="Home"><svg class="i"><use href="#i-home"/></svg></button>
+    <button class="tab"><svg class="i"><use href="#i-energy"/></svg><span>Energie</span></button>
+    <button class="tab"><svg class="i"><use href="#i-settings"/></svg><span>Einstellungen</span></button>
+  </nav>
+      </div>
+      <figcaption>Server</figcaption>
+    </figure>
+    <figure class="dev-frame">
+      <div class="phone">
+        <div class="scroll">
+
+    <div class="hero-photo cal"></div>
+
+    <div class="topbar">
+      <h1>Kalender</h1>
+      <div class="spacer"></div>
+      <span class="pill a-violet" style="padding:7px 13px;background:color-mix(in srgb,var(--violet) 16%,transparent);border-color:color-mix(in srgb,var(--violet) 32%,transparent)">
+        <svg class="i"><use href="#i-calendar"/></svg><span class="v" style="color:var(--violet)">Heute</span>
+      </span>
+    </div>
+
+    <div class="content">
+
+      <!-- toggle -->
+      <div class="seg" style="align-self:flex-start;width:max-content">
+        <button class="on">Tag</button><button>Woche</button><button>Monat</button>
+      </div>
+
+      <!-- Next event hero -->
+      <section class="glass pad glow a-violet" style="--a-line:color-mix(in srgb,var(--violet) 24%,transparent);
+          background:linear-gradient(180deg, color-mix(in srgb,var(--violet) 15%,transparent), var(--fill0))">
+        <div class="between">
+          <div class="row" style="gap:8px"><span class="dot v"></span><span class="muted" style="font-size:12px;font-weight:600">Nächster Termin · Arbeit</span></div>
+          <span class="pill" style="padding:5px 11px;background:color-mix(in srgb,var(--violet) 18%,transparent);border-color:color-mix(in srgb,var(--violet) 34%,transparent)">
+            <span class="v" style="color:var(--violet);font-size:13px">in 40 Min</span></span>
+        </div>
+        <div style="font-size:22px;font-weight:800;letter-spacing:-.03em;margin-top:12px">Sprint-Planning</div>
+        <div class="row" style="gap:12px;margin-top:8px">
+          <span class="row" style="gap:6px;color:var(--text2);font-size:14px;font-weight:600"><svg class="i sm"><use href="#i-clock"/></svg>09:30 – 10:30</span>
+          <span class="locchip"><svg class="i"><use href="#i-home"/></svg>Büro · Raum 2.14</span>
+        </div>
+        <div class="between" style="margin-top:14px">
+          <div class="avstack">
+            <span class="avatar" style="background:linear-gradient(135deg,#c084fc,#8b5cf6)">AB</span><span class="avatar" style="background:linear-gradient(135deg,#7C9CFF,#5570e6)">MK</span><span class="avatar" style="background:linear-gradient(135deg,#5EDCB8,#2fb894)">TS</span>
+            <span class="avatar" style="background:var(--fill2);color:var(--text2);border-color:rgba(10,14,24,.9)">+2</span>
+          </div>
+          <button class="btn ghost"><svg class="i"><use href="#i-chevR"/></svg>Details</button>
+        </div>
+      </section>
+
+      <!-- Week strip -->
+      <div class="week">
+        <div class="day"><span class="dn">Mo</span><span class="dd">6</span><span class="ev" style="background:var(--blue)"></span></div>
+        <div class="day"><span class="dn">Di</span><span class="dd">7</span><span class="ev" style="background:var(--mint)"></span></div>
+        <div class="day on"><span class="dn">Mi</span><span class="dd">8</span><span class="ev" style="background:var(--violet)"></span></div>
+        <div class="day"><span class="dn">Do</span><span class="dd">9</span><span class="ev" style="background:transparent"></span></div>
+        <div class="day"><span class="dn">Fr</span><span class="dd">10</span><span class="ev" style="background:var(--amber)"></span></div>
+        <div class="day"><span class="dn">Sa</span><span class="dd">11</span><span class="ev" style="background:var(--rose)"></span></div>
+        <div class="day"><span class="dn">So</span><span class="dd">12</span><span class="ev" style="background:transparent"></span></div>
+      </div>
+
+      <!-- Agenda: Heute -->
+      <div class="groupdate">Heute · Mittwoch, 8. Juli</div>
+
+      <div class="allday">
+        <span class="dot g"></span><span class="nm">Urlaub — Team Design</span>
+        <span class="muted" style="margin-left:auto;font-size:11px">ganztägig</span>
+      </div>
+
+      <div class="agenda">
+        <div class="time"><div class="t">09:30</div><div class="m">1 Std</div></div>
+        <div class="glass evcard" style="--cc:var(--violet)">
+          <div class="et">Sprint-Planning</div>
+          <div class="em"><span class="locchip"><svg class="i"><use href="#i-home"/></svg>Büro 2.14</span>
+            <span class="avstack" style="margin-left:2px"><span class="avatar" style="background:linear-gradient(135deg,#c084fc,#8b5cf6)">AB</span><span class="avatar" style="background:linear-gradient(135deg,#7C9CFF,#5570e6)">MK</span><span class="avatar" style="background:linear-gradient(135deg,#5EDCB8,#2fb894)">TS</span></span></div>
+        </div>
+
+        <div class="time"><div class="t">12:15</div><div class="m">45 Min</div></div>
+        <div class="glass evcard" style="--cc:var(--blue)">
+          <div class="et">Mittagessen mit Lena</div>
+          <div class="em"><span class="locchip"><svg class="i"><use href="#i-coffee"/></svg>Café Nord</span></div>
+        </div>
+
+        <div class="time"><div class="t">16:00</div><div class="m">30 Min</div></div>
+        <div class="glass evcard" style="--cc:var(--amber)">
+          <div class="et">Zahnarzt Dr. Weber</div>
+          <div class="em"><span class="locchip"><svg class="i"><use href="#i-home"/></svg>Hauptstr. 12</span></div>
+        </div>
+      </div>
+
+      <!-- Agenda: Morgen -->
+      <div class="groupdate">Morgen · Donnerstag, 9. Juli</div>
+      <div class="agenda">
+        <div class="time"><div class="t">08:00</div><div class="m">ganztg.</div></div>
+        <div class="glass evcard" style="--cc:var(--rose)">
+          <div class="et">Müllabfuhr — Restmüll</div>
+          <div class="em"><span class="locchip"><svg class="i"><use href="#i-trash"/></svg>Tonne rausstellen</span></div>
+        </div>
+
+        <div class="time"><div class="t">19:30</div><div class="m">2 Std</div></div>
+        <div class="glass evcard" style="--cc:var(--mint)">
+          <div class="et">Geburtstag Opa Karl</div>
+          <div class="em"><span class="locchip"><svg class="i"><use href="#i-home"/></svg>Bei den Großeltern</span>
+            <span class="avstack" style="margin-left:2px"><span class="avatar" style="background:linear-gradient(135deg,#FFB26B,#f2914a)">KK</span><span class="avatar" style="background:linear-gradient(135deg,#5EDCB8,#2fb894)">OM</span></span></div>
+        </div>
+      </div>
+
+      <!-- Calendar filters -->
+      <div class="sechead"><h2>Kalender</h2></div>
+      <div class="hscroll">
+        <span class="fchip"><svg class="i"><use href="#i-people"/></svg><span class="dot" style="background:var(--mint)"></span>Familie</span>
+        <span class="fchip"><svg class="i"><use href="#i-grid"/></svg><span class="dot" style="background:var(--violet)"></span>Arbeit</span>
+        <span class="fchip off"><svg class="i"><use href="#i-trash"/></svg><span class="dot" style="background:var(--rose)"></span>Müllabfuhr</span>
+        <span class="fchip"><svg class="i"><use href="#i-heart"/></svg><span class="dot" style="background:var(--amber)"></span>Geburtstage</span>
+      </div>
+
+    </div>
+        </div>
+        <nav class="nav">
+    <button class="tab active"><svg class="i"><use href="#i-grid"/></svg><span>Übersicht</span></button>
+    <button class="tab"><svg class="i"><use href="#i-server"/></svg><span>Server</span></button>
+    <button class="home tap" aria-label="Home"><svg class="i"><use href="#i-home"/></svg></button>
+    <button class="tab"><svg class="i"><use href="#i-energy"/></svg><span>Energie</span></button>
+    <button class="tab"><svg class="i"><use href="#i-settings"/></svg><span>Einstellungen</span></button>
+  </nav>
+      </div>
+      <figcaption>Kalender</figcaption>
+    </figure>
+    <figure class="dev-frame">
+      <div class="phone">
+        <div class="scroll">
+
+    <!-- Full-bleed room photo -->
+    <div class="roomhero">
+      <div class="photo"></div>
+      <div class="toppills">
+        <span class="gpill"><svg class="i"><use href="#i-chevL"/></svg>17 Geräte</span>
+        <span class="gpill" style="border-color:color-mix(in srgb,var(--rose) 42%,transparent)">
+          <span class="dot r pulse"></span>9 Probleme</span>
+      </div>
+      <div class="caption">
+        <h1>Wohnzimmer</h1>
+        <div class="sub"><svg class="i sm"><use href="#i-sun"/></svg>Szene: Hell</div>
+      </div>
+    </div>
+
+    <div class="content" style="margin-top:14px">
+
+      <!-- Stat pills -->
+      <div class="row" style="gap:12px">
+        <div class="glass statpill">
+          <div class="si"><svg class="i"><use href="#i-thermo"/></svg></div>
+          <div><div class="sv">23 °C</div><div class="sl">Temperatur</div></div>
+        </div>
+        <div class="glass statpill">
+          <div class="si"><svg class="i"><use href="#i-water"/></svg></div>
+          <div><div class="sv">61 %</div><div class="sl">Luftfeuchtigkeit</div></div>
+        </div>
+      </div>
+
+      <!-- Quick controls -->
+      <div class="hscroll">
+        <button class="chip on a-amber">
+          <div class="top"><div class="ico"><svg class="i"><use href="#i-lightbulb"/></svg></div><span class="dot a"></span></div>
+          <div><div class="state">Aus</div><div class="name">Licht an</div></div>
+        </button>
+        <button class="chip on a-amber">
+          <div class="top"><div class="ico"><svg class="i"><use href="#i-blinds"/></svg></div><span class="dot a"></span></div>
+          <div><div class="state">Offen</div><div class="name">Rolladen</div></div>
+        </button>
+        <button class="chip on a-blue">
+          <div class="top"><div class="ico"><svg class="i"><use href="#i-robot"/></svg></div><span class="dot b"></span></div>
+          <div><div class="state">An</div><div class="name">Robby A…</div></div>
+        </button>
+        <button class="chip on a-blue">
+          <div class="top"><div class="ico"><svg class="i"><use href="#i-robot"/></svg></div><span class="dot b"></span></div>
+          <div><div class="state">An</div><div class="name">Robby C…</div></div>
+        </button>
+      </div>
+
+      <!-- Scenes -->
+      <div class="sechead"><h2>Szenen</h2><span class="all">Alle anzeigen <svg class="i"><use href="#i-chevR"/></svg></span></div>
+      <div class="hscroll">
+        <div class="scene on-rose">
+          <div class="sph" style="background:linear-gradient(160deg,#2a0f12,#0c0a0d)"></div>
+          <div class="lbl" style="color:var(--rose)"><svg class="i"><use href="#i-power"/></svg>Alles Aus</div>
+          <div class="play"><svg class="i"><use href="#i-play"/></svg></div>
+        </div>
+        <div class="scene on-amber">
+          <div class="sph" style="background:radial-gradient(70% 70% at 60% 30%,rgba(255,178,107,.7),transparent 65%),linear-gradient(160deg,#3a2413,#140f0c)"></div>
+          <div class="lbl" style="color:var(--amber)"><svg class="i"><use href="#i-settings"/></svg>Hell</div>
+          <div class="play"><svg class="i"><use href="#i-play"/></svg></div>
+        </div>
+        <div class="scene on-blue">
+          <div class="sph" style="background:radial-gradient(70% 70% at 40% 30%,rgba(124,156,255,.55),transparent 65%),linear-gradient(160deg,#111a33,#0a0d18)"></div>
+          <div class="lbl" style="color:var(--blue)"><svg class="i"><use href="#i-tv"/></svg>Filmabend</div>
+          <div class="play"><svg class="i"><use href="#i-play"/></svg></div>
+        </div>
+        <div class="scene">
+          <div class="sph" style="background:radial-gradient(70% 70% at 50% 30%,rgba(94,220,184,.4),transparent 65%),linear-gradient(160deg,#0f2620,#0a0d14)"></div>
+          <div class="lbl"><svg class="i"><use href="#i-leaf"/></svg>Gute Nacht</div>
+          <div class="play"><svg class="i"><use href="#i-play"/></svg></div>
+        </div>
+      </div>
+
+      <!-- Devices by group -->
+      <div class="sechead"><h2>Geräte</h2><span class="muted" style="margin-left:auto;font-size:12px">17 · Wohnzimmer</span></div>
+
+      <div class="grouplabel">Licht &amp; Beschattung</div>
+      <div class="devgrid stack-reset">
+        <div class="dev glass on a-amber">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-lightbulb"/></svg></div><div class="sw"></div></div>
+          <div class="foot"><div class="nm">Deckenlicht</div><div class="stt">An · 80 % · Warmweiß</div></div>
+        </div>
+        <div class="dev glass on a-amber">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-lightbulb"/></svg></div><div class="sw"></div></div>
+          <div class="foot"><div class="nm">Stehlampe</div><div class="stt">An · 45 %</div></div>
+        </div>
+        <div class="dev glass on a-amber">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-blinds"/></svg></div><div class="sw"></div></div>
+          <div class="foot"><div class="nm">Rollladen</div><div class="stt">Offen · Position 100 %</div></div>
+        </div>
+        <div class="dev glass">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-window"/></svg></div><div class="sw"></div></div>
+          <div class="foot"><div class="nm">Gardine</div><div class="stt">Geschlossen</div></div>
+        </div>
+      </div>
+
+      <div class="grouplabel">Klima &amp; Luft</div>
+      <div class="devgrid">
+        <div class="dev glass on a-amber">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-flame"/></svg></div><div class="sw"></div></div>
+          <div class="foot"><div class="nm">Heizung</div><div class="stt">23,0 → 22,0 °C · Heizen</div></div>
+        </div>
+        <div class="dev glass on a-blue">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-fan"/></svg></div><div class="sw"></div></div>
+          <div class="foot"><div class="nm">Ventilator</div><div class="stt">An · Stufe 2</div></div>
+        </div>
+      </div>
+
+      <div class="grouplabel">Medien &amp; Roboter</div>
+      <div class="devgrid">
+        <div class="dev glass on a-blue" style="grid-column:1 / -1">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-music"/></svg></div>
+            <span class="muted" style="font-size:11px">Sonos · Wohnzimmer</span></div>
+          <div class="foot" style="display:flex;flex-direction:column;gap:9px">
+            <div><div class="nm">Tame Impala — Let It Happen</div><div class="stt" style="color:var(--text3)">läuft · 2:14 / 7:31</div></div>
+            <div class="mediabar">
+              <span class="mbtn"><svg class="i"><use href="#i-prev"/></svg></span>
+              <span class="mbtn" style="background:var(--blue);color:#0a1330"><svg class="i"><use href="#i-pause"/></svg></span>
+              <span class="mbtn"><svg class="i"><use href="#i-next"/></svg></span>
+              <svg class="i"><use href="#i-volume"/></svg>
+              <span class="vol"><i></i></span>
+            </div>
+          </div>
+        </div>
+        <div class="dev glass on a-blue">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-robot"/></svg></div><div class="sw"></div></div>
+          <div class="foot"><div class="nm">Robby A…</div><div class="stt">Reinigt · 62 %</div></div>
+        </div>
+        <div class="dev glass on a-blue">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-robot"/></svg></div><span class="btn ghost" style="height:26px;padding:0 10px;font-size:11px">Dock</span></div>
+          <div class="foot"><div class="nm">Robby C…</div><div class="stt">Reinigt · 34 %</div></div>
+        </div>
+      </div>
+
+      <div class="grouplabel">Sicherheit &amp; Sensoren</div>
+      <div class="devgrid">
+        <div class="dev glass">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-lock"/></svg></div><div class="sw"></div></div>
+          <div class="foot"><div class="nm">Terrassentür</div><div class="stt">Verriegelt</div></div>
+        </div>
+        <div class="dev glass on a-mint">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-motion"/></svg></div><span class="dot g"></span></div>
+          <div class="foot"><div class="nm">Bewegung</div><div class="stt">Erkannt · vor 1 Min</div></div>
+        </div>
+        <div class="dev glass problem">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-warning"/></svg></div><span class="dot r"></span></div>
+          <div class="foot"><div class="nm">Fenster-Sensor</div><div class="stt">Batterie 8 %</div></div>
+        </div>
+        <div class="dev glass problem">
+          <div class="top"><div class="di"><svg class="i"><use href="#i-warning"/></svg></div><span class="dot r"></span></div>
+          <div class="foot"><div class="nm">TV-Steckdose</div><div class="stt">Nicht erreichbar</div></div>
+        </div>
+      </div>
+
+    </div>
+        </div>
+        <nav class="nav">
+    <button class="tab"><svg class="i"><use href="#i-grid"/></svg><span>Übersicht</span></button>
+    <button class="tab"><svg class="i"><use href="#i-server"/></svg><span>Server</span></button>
+    <button class="home tap" aria-label="Home"><svg class="i"><use href="#i-home"/></svg></button>
+    <button class="tab"><svg class="i"><use href="#i-energy"/></svg><span>Energie</span></button>
+    <button class="tab"><svg class="i"><use href="#i-settings"/></svg><span>Einstellungen</span></button>
+  </nav>
+      </div>
+      <figcaption>Wohnzimmer</figcaption>
+    </figure></div>
+</body>
+</html>

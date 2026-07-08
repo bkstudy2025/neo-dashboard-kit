@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neo · Mobile Screens</title>
+<style>
+  :root{ --violet:#C084FC; --blue:#7C9CFF; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{ font-family:-apple-system,"SF Pro Display","Inter",system-ui,sans-serif; color:#F4F6FB;
+    background:radial-gradient(120% 80% at 50% -10%,#0d1424,#05070d); min-height:100vh; padding:48px 20px 80px; }
+  header{ max-width:1160px; margin:0 auto 34px; }
+  h1{ font-size:30px; font-weight:800; letter-spacing:-.03em; }
+  p{ color:rgba(244,246,251,.6); margin-top:8px; font-size:15px; max-width:640px; line-height:1.5; }
+  .gallery{ max-width:1160px; margin:0 auto; display:flex; gap:28px; flex-wrap:wrap; justify-content:center; }
+  .frame{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .frame iframe{ width:390px; height:800px; border:0; border-radius:44px;
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.8), 0 0 0 10px #0a0d16, 0 0 0 11px rgba(255,255,255,.08);
+    background:#06080f; }
+  figcaption{ font-size:14px; font-weight:600; color:rgba(244,246,251,.72); letter-spacing:.01em; }
+  @media (max-width:520px){ .frame iframe{ width:min(88vw,390px); height:min(180vw,800px);} }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Neo Dashboard — Mobile Screens</h1>
+    <p>Drei zusammengehörige Screens im „Neo"-Look mit identischer Design-Sprache
+       und gemeinsamer Bottom-Navigation: Server, Kalender und Wohnzimmer.
+       iPhone-Hochformat, ein-spaltig, Glaskarten mit Blur.</p>
+  </header>
+  <div class="gallery">
+    <figure class="frame">
+      <iframe src="server.html" title="Server" loading="lazy"></iframe>
+      <figcaption>Server</figcaption>
+    </figure>
+    <figure class="frame">
+      <iframe src="calendar.html" title="Kalender" loading="lazy"></iframe>
+      <figcaption>Kalender</figcaption>
+    </figure>
+    <figure class="frame">
+      <iframe src="room.html" title="Wohnzimmer" loading="lazy"></iframe>
+      <figcaption>Wohnzimmer</figcaption>
+    </figure>
+  </div>
+</body>
+</html>
