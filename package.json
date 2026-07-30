@@ -12,9 +12,9 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "eslint": "^10.6.0",
-    "globals": "^17.7.0",
-    "rollup": "^4.62.2"
+    "eslint": "^10.8.0",
+    "globals": "^17.8.0",
+    "rollup": "^4.62.3"
   },
   "keywords": [
     "home-assistant",
